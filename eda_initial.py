@@ -238,6 +238,7 @@ class DatasetProfilerETL:
         report = f"""# Reporte Diagnóstico y Plan de Acción Pre-ETL
 **Proyecto**: Análisis de Factores Determinantes en el Precio de Viajes (Uber & Lyft - Boston)  
 **Entrega**: Sprint 1 - Hito 1 (Arquitectura de Datos y Plan de Trabajo)  
+**Cátedra**: Ciencia de Datos — UTN FRC (Curso 5K1)  
 **Generado automáticamente**: {time.strftime('%Y-%m-%d %H:%M:%S')}  
 
 ---
@@ -248,6 +249,7 @@ class DatasetProfilerETL:
 - **Clave Primaria (`id`)**: Unicidad del 100% ({self.diagnostics.get('unique_ids', 0):,} IDs únicos, 0 duplicados).
 - **Filas Duplicadas Globales**: 0 registros repetidos.
 - **Ventana de Tiempo**: Del `{self.diagnostics.get('date_range', ('N/A', 'N/A'))[0]}` al `{self.diagnostics.get('date_range', ('N/A', 'N/A'))[1]}` (aprox. 23 días consecutivos en Boston, MA).
+- **Puntos Geográficos**: {self.diagnostics.get('sources_count', 0)} zonas estratégicas de Boston conectadas en {self.diagnostics.get('unique_routes', 0)} rutas origen-destino evaluadas.
 
 ---
 
@@ -255,39 +257,68 @@ class DatasetProfilerETL:
 
 ### A. Imputación / Filtrado de Valores Nulos en `price`
 - **Total de Nulos**: 55.095 registros (7.95% del total).
-- **Causa Raíz**: El 100% de los nulos corresponden al servicio `name == 'Taxi'` de Uber. En Boston, los taxis tradicionales solicitados por la aplicación liquidan el viaje con taxímetro urbano oficial, por lo que la API no genera una tarifa por adelantado (`price` = NaN).
-- **Acción ETL requerida**:
+- **Causa Raíz Identificada**: El 100% de los nulos corresponden al servicio `name == 'Taxi'` de Uber. En Boston, los taxis tradicionales solicitados por la aplicación liquidan el viaje con taxímetro urbano oficial, por lo que la API no genera una tarifa por adelantado (`price` = NaN).
+- **Acción ETL para Sprint 2**:
   1. Para modelos de predicción de tarifas por adelantado: **Filtrar y excluir** las filas de `Taxi` (quedando 637.976 registros limpios).
-  2. No intentar imputar con media o regresión, ya que desvirtuaría la naturaleza comercial del producto.
+  2. No imputar con media o regresión, ya que alteraría la realidad de mercado y la distribución del resto de los servicios.
 
 ### B. Redundancia de Columnas Meteorológicas
-- La columna `visibility.1` es una duplicación estricta de `visibility` (identidad en el 100% de las celdas).
-- Múltiples columnas climáticas expresan medidas derivadas redundantes (p. ej. pares de valor y timestamp como `temperatureHighTime`, `windGustTime`).
-- **Acción ETL requerida**:
+- La columna `visibility.1` es una duplicación estricta al 100% de `visibility` (identidad celda por celda).
+- Múltiples columnas climáticas expresan medidas derivadas con marcas de tiempo secundarias (p. ej. `temperatureHighTime`, `windGustTime`, `uvIndexTime`).
+- **Acción ETL para Sprint 2**:
   - Eliminar `visibility.1`.
   - Reducir dimensionalidad climática conservando las variables de impacto directo para el viaje (`temperature`, `apparentTemperature`, `precipIntensity`, `precipProbability`, `humidity`, `windSpeed`, `short_summary`, `icon`).
 
-### C. Diferenciación de Tarifa Dinámica (`surge_multiplier`)
-- **Uber**: `surge_multiplier` es constante en 1.0 para el 100% de los registros (debido a su migración hacia Upfront Pricing).
-- **Lyft**: Registra factores dinámicos reales entre 1.0 y 3.0 (6.82% de viajes con sobrecargo).
-- **Acción ETL requerida**:
-  - Diseñar una variable derivada (feature engineering) para Uber que estime el sobrecargo implícito (comparando la tarifa por milla vs la tarifa base por categoría).
+---
+
+## 3. Análisis de Estrategia Tarifaria: ¿Cómo determina el precio Uber vs. Lyft?
+
+Uno de los hallazgos más relevantes del EDA es la marcada asimetría en cómo ambas empresas gestionan la tarifa dinámica (*surge pricing*), lo cual condiciona el diseño analítico del proyecto:
+
+### A. Comportamiento en Lyft: Tarifa Dinámica Explícita
+* **Mecanismo**: Lyft utiliza una fórmula clásica multiplicativa y reactiva ante la escasez de oferta inmediata:
+  $$\\text{{Precio}} = (\\text{{Tarifa Base}} + \\text{{Tiempo}} \\times \\text{{TarifaTiempo}} + \\text{{Distancia}} \\times \\text{{TarifaDistancia}}) \\times \\mathbf{{SurgeMultiplier}}$$
+* **Distribución observada en los datos**:
+  * Factor x1.0 (tarifa regular): 286.433 viajes (93.18%)
+  * Factores con sobrecargo (x1.25 a x3.0): 20.975 viajes (6.82%)
+* **Implicancia**: Es una variable continua/ordinal observable directamente en el atributo `surge_multiplier`.
+
+### B. Comportamiento en Uber: Upfront Pricing (Tarifa Cerrada Predictiva)
+* **Mecanismo**: En 2018, Uber ya había implementado su sistema de Upfront Pricing y desvinculación de tarifas (Fare Decoupling):
+  1. **Tarifa cerrada al usuario**: Al solicitar el viaje, el pasajero ve una tarifa final garantizada, sin desglosar el multiplicador de surge en pantalla ni en la API pública. Por esta razón técnica, el campo `surge_multiplier` de Uber es **constantemente 1.0 en el 100% de los registros (385.663 filas)**.
+  2. **Modelos predictivos de disposición a pagar (Willingness-to-pay)**: El precio responde a modelos de Machine Learning que estiman la elasticidad del usuario según la ruta (origen-destino), hora, previsiones de demanda futura en la zona de destino y alternativas de transporte público.
+  3. **Desacoplamiento de cobro/pago**: Uber le cobra al usuario según su disposición a pagar y le paga al conductor según tiempo/distancia recorridos más incentivos puntuales.
 
 ---
 
-## 3. Plan de Transformación Recomendado (Sprint 2 - ETL)
+## 4. Nuevas Variables a Predecir Recomendadas (Sprint 3)
 
-| Paso | Operación | Justificación Técnica |
-| :--- | :--- | :--- |
-| **P1** | Filtrar `price.isna()` (excluir servicio `Taxi`) | Conservar solo registros con tarifa cerrada observable. |
-| **P2** | Estandarización de Tipos de Datos (`datetime`) | Parsear `datetime` a tipo timestamp nativo y extraer variables: `day_of_week`, `is_weekend`, `rush_hour`. |
-| **P3** | Optimización de Memoria (Downcasting) | Convertir `cab_type`, `name`, `source`, `destination` a `category`. Convertir floats a `float32`. Reduce el uso de RAM de ~350 MB a < 80 MB. |
-| **P4** | Eliminación de Atributos Irrelevantes | Descartar `visibility.1` y timestamps secundarios de pronósticos futuros. |
-| **P5** | Enriquecimiento Geoespacial | Calcular distancia Manhattan y euclidiana entre coordenadas de origen y destino como baseline de validación para `distance`. |
-| **P6** | Exportación de Tablas Limpias | Guardar el dataset curado en formato optimizado (`.parquet` y `.csv` limpio). |
+Más allá de la variable principal de regresión (`price`), el diagnóstico sugiere incorporar un enfoque dual (Regresión + Clasificación):
+
+1. **Ocurrencia de Tarifa Dinámica (`surge_pricing_active`) — Clasificación Binaria (Recomendada):**
+   * Predecir si un viaje sufrirá o no recargo por alta demanda (1 vs 0).
+   * Permite evaluar métricas de clasificación en datos desbalanceados (Precision, Recall, ROC-AUC, Matriz de Confusión) y medir el impacto real del clima y horarios pico.
+2. **Estimación de Sobrecargo Implícito en Uber (`uber_surge_ratio`) — Variable Derivada:**
+   * En el Sprint 2 (ETL), se calculará el ratio entre la tarifa observada por milla y la tarifa mediana base de cada ruta para modelar el surge oculto.
+3. **Plataforma más Económica (`cheaper_platform`) — Clasificación:**
+   * Emparejamiento de rutas y horarios para determinar qué servicio (Uber o Lyft) resulta estadísticamente más conveniente bajo condiciones climáticas dadas.
 
 ---
-*Reporte generado por el pipeline de diagnóstico preliminar de UTN TPI.*
+
+## 5. Plan de Transformación Recomendado (Sprint 2 - ETL)
+
+| Paso | Operación Técnica | Justificación Metodológica |
+| :---: | :--- | :--- |
+| **P1** | Filtrar `price.isna()` (excluir categoría `Taxi`) | Eliminar registros sin tarifa cerrada disponible por uso de taxímetro oficial. |
+| **P2** | Estandarización Temporal (`datetime`) | Parsear timestamps y generar variables derivadas: `day_of_week`, `is_weekend`, `hour`, `rush_hour` (pico laboral vs. valle). |
+| **P3** | Optimización de Memoria (Downcasting) | Convertir discretas a `category` y reales a `float32`. Reduce el uso de RAM de ~725 MB a < 85 MB. |
+| **P4** | Depuración de Redundancias | Eliminar `visibility.1` y timestamps de pronósticos climáticos secundarios. |
+| **P5** | Feature Engineering de Tarifas | Construir la métrica de **precio por milla** (`price_per_mile`) y el **indicador de sobrecargo implícito** para Uber. |
+| **P6** | Enriquecimiento Geoespacial | Calcular distancias Manhattan y euclidiana entre coordenadas de origen y destino para validar la coherencia de `distance`. |
+| **P7** | Exportación de Datos Curados | Generar el dataset procesado en formato Apache Parquet (`rideshare_clean.parquet`) y CSV limpio. |
+
+---
+*Reporte de diagnóstico actualizado para la planificación del Sprint 2 — Proyecto Integrador Ciencia de Datos UTN FRC.*
 """
         return report
 
