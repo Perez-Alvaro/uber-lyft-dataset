@@ -1,0 +1,25 @@
+# Entornos virtuales
+venv/
+env/
+ENV/
+.venv/
+
+# Bytecode y cache de Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Datasets pesados (>100MB no admitidos en GitHub estándar)
+*.csv
+*.parquet
+rideshare_kaggle.csv
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# IDE y sistema operativo
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
