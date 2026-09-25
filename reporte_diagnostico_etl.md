@@ -68,17 +68,17 @@ Más allá de la variable principal de regresión (`price`), el diagnóstico sug
 
 ---
 
-## 5. Plan de Transformación Recomendado (Sprint 2 - ETL)
+## 5. Plan de Transformación y Estado de Ejecución (Sprint 2 - ETL)
 
-| Paso | Operación Técnica | Justificación Metodológica |
-| :---: | :--- | :--- |
-| **P1** | Filtrar `price.isna()` (excluir categoría `Taxi`) | Eliminar registros sin tarifa cerrada disponible por uso de taxímetro oficial. |
-| **P2** | Estandarización Temporal (`datetime`) | Parsear timestamps y generar variables derivadas: `day_of_week`, `is_weekend`, `hour`, `rush_hour` (pico laboral vs. valle). |
-| **P3** | Optimización de Memoria (Downcasting) | Convertir discretas a `category` y reales a `float32`. Reduce el uso de RAM de ~725 MB a < 85 MB para procesamiento fluido. |
-| **P4** | Depuración de Redundancias | Eliminar `visibility.1` y timestamps de pronósticos climáticos secundarios. |
-| **P5** | Feature Engineering de Tarifas | Construir la métrica de **precio por milla** (`price_per_mile`) y el **indicador de sobrecargo implícito** para Uber. |
-| **P6** | Enriquecimiento Geoespacial | Calcular distancias Manhattan y euclidiana entre coordenadas de origen y destino para validar la coherencia de `distance`. |
-| **P7** | Exportación de Datos Curados | Generar el dataset procesado en formato Apache Parquet (`rideshare_clean.parquet`) y CSV limpio para los notebooks del Sprint 2 y 3. |
+| Paso | Operación Técnica | Script / Estado | Justificación Metodológica |
+| :---: | :--- | :---: | :--- |
+| **P1** | Filtrar `price.isna()` (excluir categoría `Taxi`) | `limpiar_dataset.py` (✅) | Eliminar registros sin tarifa cerrada disponible por uso de taxímetro oficial (55.095 filas filtradas). |
+| **P2** | Estandarización Temporal (`datetime`) | `feature_engineering.py` (✅) | Parsear timestamps y generar variables derivadas: `day_of_week`, `is_weekend`, `hour`, `rush_hour` (pico laboral 7-9 / 16-19). |
+| **P3** | Optimización de Memoria (Downcasting) | `feature_engineering.py` (✅) | Convertir discretas a `category` y reales a `float32`. Reduce memoria en RAM y en disco de ~350 MB a ~14.8 MB. |
+| **P4** | Depuración de Redundancias | `limpiar_dataset.py` & `feature_engineering.py` (✅) | Eliminación de `visibility.1` (idéntica a `visibility`), `id`, `timestamp`, `datetime`, `timezone`, `product_id` y marcas temporales secundarias. |
+| **P5** | Feature Engineering de Tarifas | `feature_engineering.py` (✅) | Construcción de `uber_surge_ratio` y unificación del target binario `is_surge` (tasa detectada: **8.54%**). |
+| **P6** | Enriquecimiento Geoespacial | Opcional Sprint 3 | Validación de distancias mediante estimaciones euclidianas/Manhattan. |
+| **P7** | Exportación de Datos Curados | `feature_engineering.py` (✅) | Generación exitosa de `rideshare_features.parquet` (637.976 filas, 44 columnas, 14.76 MB). |
 
 ---
-*Reporte de diagnóstico actualizado para la planificación del Sprint 2 — Proyecto Integrador Ciencia de Datos UTN FRC.*
+*Reporte de diagnóstico y progreso ETL actualizado — Proyecto Integrador Ciencia de Datos UTN FRC.*

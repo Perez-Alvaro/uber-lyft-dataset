@@ -20,25 +20,40 @@ El proyecto se organiza bajo el marco ágil **Scrum**, dividido en cuatro entreg
 - **Nombre:** Uber and Lyft Dataset Boston, MA  
 - **Fuente:** [Kaggle](https://www.kaggle.com/datasets/brllrb/uber-and-lyft-dataset-boston-ma)  
 - **Cobertura temporal:** 26/11/2018 – 18/12/2018  
-- **Registros:** 693.071  
-- **Variables:** 57 columnas (viaje, servicio, tiempo, ubicación, clima)  
-- **Variable objetivo:** `price` (costo del viaje en USD)  
+- **Registros crudos:** 693.071 (57 columnas, ~350 MB)  
+- **Registros procesados:** 637.976 filas limpias y 44 columnas optimizadas (~14.76 MB en Parquet)  
+- **Variables Objetivo:**  
+  - **Target 1 (Regresión):** `price` (costo del viaje en USD).  
+  - **Target 2 (Clasificación):** `is_surge` (presencia de tarifa dinámica unificada: Lyft `surge_multiplier > 1.0` o Uber `uber_surge_ratio >= 1.20`).  
+  - **Métrica Derivada:** `uber_surge_ratio` (ratio implícito entre precio por milla y la mediana base de la ruta).  
+
+## 🔄 Pipeline de Datos (ETL & Feature Engineering)
+1. **Etapa 1 - Limpieza y Consistencia (`limpiar_dataset.py`):**
+   - Exclusión de 55.095 registros correspondientes al servicio `Taxi` de Uber (`price == NaN`).
+   - Detección algorítmica y eliminación de columnas redundantes idénticas (p. ej. `visibility.1`).
+   - Generación del archivo intermedio `rideshare_clean.csv`.
+2. **Etapa 2 - Feature Engineering y Optimización (`feature_engineering.py`):**
+   - **Ingeniería Temporal:** Extracción de `hour`, `day_of_week`, `is_weekend` y definición de `rush_hour` (horas pico laborales en Boston: 7–9 AM y 16–19 PM).
+   - **Inferencia de Tarifa Dinámica:** Modelado de tarifa base por ruta (`source`, `destination`, `name`), cálculo de `uber_surge_ratio` y unificación en la etiqueta binaria `is_surge` (tasa detectada: **8.54%**).
+   - **Optimización y Curación:** Eliminación de identificadores irrelevantes (`id`, `timestamp`, `datetime`, timestamps secundarios de clima) y variables que introduzcan data leakage (`price_per_mile`, `distance_adj`).
+   - **Downcasting de Memoria:** Variables categóricas a `category`, numéricas reales a `float32`.
+   - **Exportación:** `rideshare_features.parquet` (14.76 MB, alta velocidad de lectura I/O).
 
 ## 🛠️ Metodología
 El proyecto sigue las etapas de **CRISP-DM**:  
 1. Comprensión del negocio y del problema.  
 2. Adquisición y comprensión de los datos.  
-3. Preparación de los datos (ETL).  
-4. Modelado y análisis.  
-5. Evaluación y comunicación de resultados.  
+3. Preparación de los datos (ETL & Feature Engineering) ✅.  
+4. Modelado y análisis (Sprint 3).  
+5. Evaluación y comunicación de resultados (Sprint 4).  
 
 La gestión se realiza con **Scrum**, incluyendo planificación, *daily standups*, revisiones y retrospectivas en cada sprint.
 
 ## 📅 Plan de Proyecto
 - **Sprint 1:** Planificación y selección del dataset ✅  
-- **Sprint 2:** Limpieza y preparación de datos (ETL)  
-- **Sprint 3:** Modelado y análisis de resultados  
-- **Sprint 4:** Presentación final (*data storytelling*)  
+- **Sprint 2:** Limpieza y preparación de datos (ETL & Feature Engineering) ✅  
+- **Sprint 3:** Modelado y análisis de resultados ⏳  
+- **Sprint 4:** Presentación final (*data storytelling*) ⏳  
 
 ## 👥 Integrantes
 - Alvaro Perez (97986)  
