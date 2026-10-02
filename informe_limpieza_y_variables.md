@@ -121,7 +121,7 @@ Las decisiones de ingeniería se basaron en criterios determinísticos y éticos
 
 El análisis y los gráficos resultantes de esta etapa se encuentran implementados y listos para ejecutarse en el notebook interactivo de Google Colab:
 * **Notebook principal:** `TPI_Ciencia_de_Datos_Sprint2_ETL.ipynb`
-* **Dataset fuente limpio:** `CSV Nueva Columna/dataset_nueva_columna.zip`
+* **Dataset fuente limpio:** `Nueva Version/CSV Nueva Columna/dataset_nueva_columna.zip`
 
 ---
 *Documento oficial elaborado para el Trabajo Práctico Integrador — Cátedra de Ciencia de Datos (UTN-FRC).*

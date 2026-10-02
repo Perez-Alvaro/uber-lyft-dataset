@@ -5,7 +5,8 @@ Resumen para que todo el grupo tenga la misma idea de qué se hizo. El detalle c
 ## 1. Qué hay nuevo en el repo
 | Archivo | Qué es |
 |---|---|
-| `CSV Nueva Columna/dataset_nueva_columna.zip` | **Dataset final** limpio, con la nueva columna `has_surge` (636.568 filas × 27 columnas). Va en .zip porque el CSV pesa 126 MB y GitHub no acepta más de 100 MB. |
+| `Nueva Version/CSV Nueva Columna/dataset_nueva_columna.zip` | **Dataset final** limpio, con la nueva columna `has_surge` (636.568 filas × 27 columnas). Va en .zip porque el CSV pesa 126 MB y GitHub no acepta más de 100 MB. |
+| `Nueva Version/notebook_presentacion/` | **Notebook de la defensa oral** (5 min), listo para abrir en Colab desde GitHub: orden por integrante, tabla resumen, 18 gráficos y preguntas probables. |
 | `README.md` | Actualizado con el segundo objetivo, el pipeline y cómo usar el dataset. |
 | `Explicacion_Entrega_2.md` | Este archivo. |
 

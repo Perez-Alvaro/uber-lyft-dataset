@@ -83,13 +83,13 @@ plt.rcParams['axes.titlesize'] = 13
 plt.rcParams['axes.titleweight'] = 'bold'
 
 # Si se ejecuta en Colab clonar el repo si no está disponible
-if not os.path.exists("CSV Nueva Columna") and not os.path.exists("dataset_nueva_columna.csv"):
+if not os.path.exists("Nueva Version/CSV Nueva Columna") and not os.path.exists("dataset_nueva_columna.csv"):
     os.system("git clone https://github.com/Perez-Alvaro/uber-lyft-dataset.git")
     if os.path.exists("uber-lyft-dataset"):
         os.chdir("uber-lyft-dataset")
 
 # Carga directa del dataset limpio final desde el zip
-clean_zip_path = Path("CSV Nueva Columna/dataset_nueva_columna.zip")
+clean_zip_path = Path("Nueva Version/CSV Nueva Columna/dataset_nueva_columna.zip")
 if clean_zip_path.exists():
     df_clean = pd.read_csv(clean_zip_path)
 elif Path("dataset_nueva_columna.csv").exists():

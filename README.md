@@ -22,7 +22,7 @@ El proyecto se organiza bajo el marco ágil **Scrum**, dividido en cuatro entreg
 - **Fuente:** [Kaggle](https://www.kaggle.com/datasets/brllrb/uber-and-lyft-dataset-boston-ma)
 - **Cobertura temporal:** 26/11/2018 – 18/12/2018 (hay datos en 18 de 24 fechas)
 - **Registros crudos:** 693.071 (57 columnas, ~350 MB)
-- **Dataset final (Entrega 2):** **636.568 filas y 27 columnas** → [`CSV Nueva Columna/dataset_nueva_columna.zip`](CSV%20Nueva%20Columna/dataset_nueva_columna.zip)
+- **Dataset final (Entrega 2):** **636.568 filas y 27 columnas** → [`Nueva Version/CSV Nueva Columna/dataset_nueva_columna.zip`](Nueva%20Version/CSV%20Nueva%20Columna/dataset_nueva_columna.zip)
 
 ### Variables objetivo
 | Objetivo | Variable | Tipo | Datos |
@@ -52,8 +52,13 @@ El proyecto se organiza bajo el marco ágil **Scrum**, dividido en cuatro entreg
 
 > `feature_engineering.py` corresponde a una versión exploratoria anterior (calcula la hora a partir de `datetime`, que está en UTC, y define `is_surge`). Se mantiene como referencia.
 
+## 🎤 Notebook de la presentación (Entrega 2)
+[![Abrir en Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Perez-Alvaro/uber-lyft-dataset/blob/main/Nueva%20Version/notebook_presentacion/notebook_graficos_entrega_2.ipynb)
+
+[`Nueva Version/notebook_presentacion/`](Nueva%20Version/notebook_presentacion/) contiene el soporte de la defensa oral (5 minutos, 50 s por integrante). Incluye la tabla resumen antes/después, 18 gráficos (10 para exponer y 8 de respaldo), las pautas para la Entrega 3 y las preguntas probables. En Colab: *Entorno de ejecución → Ejecutar todas*; descarga los datos solo. Instrucciones en su [`LEEME.md`](Nueva%20Version/notebook_presentacion/LEEME.md).
+
 ## 📁 Cómo usar `dataset_nueva_columna`
-1. Descomprimir `CSV Nueva Columna/dataset_nueva_columna.zip` (el CSV pesa 126 MB y supera el límite de 100 MB de GitHub).
+1. Descomprimir `Nueva Version/CSV Nueva Columna/dataset_nueva_columna.zip` (el CSV pesa 126 MB y supera el límite de 100 MB de GitHub).
 2. Columnas (27): `id`, `datetime_local`, `hour_local`, `day_of_week`, `is_weekend`, `time_slot`, `is_rush_hour`, `is_dark`, `cab_type`, `name`, `service_tier`, `source`, `destination`, `distance`, `straight_line_miles`, `temperature`, `humidity`, `windSpeed`, `visibility`, `precipIntensity`, `is_raining`, `cloudCover`, `pressure`, `short_summary`, `surge_multiplier`, `has_surge`, `price`.
 3. **Objetivo 1 (`price`):** usar todas las filas. `id` y `datetime_local` no son predictoras.
 4. **Objetivo 2 (`has_surge`):** filtrar `cab_type == "Lyft"` y `name != "Shared"`, y **no usar `price` ni `surge_multiplier`** (contienen la respuesta: fuga de datos).

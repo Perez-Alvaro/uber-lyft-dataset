@@ -99,14 +99,14 @@ plt.rcParams['axes.labelsize'] = 11
 print(f"[OK] Entorno iniciado en Python {sys.version.split()[0]}")
 
 # 1. Asegurar repositorio si se corre en Colab desde cero
-if not os.path.exists("rideshare_kaggle.csv") and not os.path.exists("dataset.zip") and not os.path.exists("CSV Nueva Columna"):
+if not os.path.exists("rideshare_kaggle.csv") and not os.path.exists("dataset.zip") and not os.path.exists("Nueva Version/CSV Nueva Columna"):
     print("[*] Clonando repositorio de GitHub para obtener datos...")
     os.system("git clone https://github.com/Perez-Alvaro/uber-lyft-dataset.git")
     if os.path.exists("uber-lyft-dataset"):
         os.chdir("uber-lyft-dataset")
 
 # 2. Descomprimir dataset limpio final (dataset_nueva_columna.csv)
-clean_zip = Path("CSV Nueva Columna/dataset_nueva_columna.zip")
+clean_zip = Path("Nueva Version/CSV Nueva Columna/dataset_nueva_columna.zip")
 clean_csv = Path("dataset_nueva_columna.csv")
 
 if not clean_csv.exists() and clean_zip.exists():
@@ -253,7 +253,7 @@ El pipeline de limpieza aplicó cuatro filtros determinísticos sobre los datos:
 csv_clean_path = "dataset_nueva_columna.csv"
 if not Path(csv_clean_path).exists():
     # Si aún está en zip en la subcarpeta
-    with zipfile.ZipFile("CSV Nueva Columna/dataset_nueva_columna.zip", "r") as zf:
+    with zipfile.ZipFile("Nueva Version/CSV Nueva Columna/dataset_nueva_columna.zip", "r") as zf:
         zf.extractall(".")
 
 df_final = pd.read_csv("dataset_nueva_columna.csv")
