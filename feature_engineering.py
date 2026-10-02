@@ -42,14 +42,15 @@ def aplicar_feature_engineering():
     )
     df["uber_surge_ratio"] = (df["price_per_mile"] / base_rates).round(3)
 
-    # TARGET 2: is_surge (Unificado)
+    # TARGET 2: has_surge (Unificado)
     # Lyft: surge_multiplier explícito > 1.0
     # Uber: ratio implícito >= 1.20 (20% por encima de la mediana base)
-    df["is_surge"] = np.where(
+    df["has_surge"] = np.where(
         (df["cab_type"] == "Lyft") & (df["surge_multiplier"] > 1.0),
         1,
         np.where((df["cab_type"] == "Uber") & (df["uber_surge_ratio"] >= 1.20), 1, 0),
     ).astype(np.int8)
+    df["is_surge"] = df["has_surge"]  # alias para compatibilidad retroactiva
 
     print("[4/4] Limpiando columnas de ruido y optimizando memoria...")
     # Columnas que no aportan al modelado predictivo o timestamps secundarios del clima
