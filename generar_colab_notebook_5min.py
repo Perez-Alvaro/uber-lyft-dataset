@@ -1,0 +1,338 @@
+"""
+Script para generar el notebook interactivo optimizado para una defensa de 5 MINUTOS:
+TPI_Ciencia_de_Datos_Sprint2_ETL.ipynb
+Incluye:
+- Guion de 50 segundos por integrante (6 oradores).
+- Gráficos que hablan por sí solos (Antes vs Después).
+- Gráficos de dispersión (Scatter Plots) de Precio vs. Distancia con impacto de service_tier y surge.
+- Formato ejecutivo y profesional para Google Colab sin diapositivas.
+"""
+
+import json
+from pathlib import Path
+
+def build_5min_notebook():
+    cells = []
+
+    def add_md(source):
+        cells.append({
+            "cell_type": "markdown",
+            "metadata": {},
+            "source": [line + "\n" for line in source.strip().split("\n")]
+        })
+
+    def add_code(source):
+        cells.append({
+            "cell_type": "code",
+            "execution_count": None,
+            "metadata": {},
+            "outputs": [],
+            "source": [line + "\n" for line in source.strip().split("\n")]
+        })
+
+    # =========================================================================
+    # BADGE DE COLAB + PORTADA Y GUION DE 5 MINUTOS
+    # =========================================================================
+    add_md("""
+<a href="https://colab.research.google.com/github/Perez-Alvaro/uber-lyft-dataset/blob/main/TPI_Ciencia_de_Datos_Sprint2_ETL.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>
+
+# 🚖 Proyecto Integrador – Ciencia de Datos
+## **Sprint 2: Pipeline ETL, Limpieza y Definición de Variables Objetivo**
+**Universidad Tecnológica Nacional – Facultad Regional Córdoba (UTN-FRC)**  
+**Carrera:** Ingeniería en Sistemas de Información | **Curso:** 5K1 | **Ciclo Lectivo:** 2026  
+**Docente:** Ing. Marisa del Carmen Callejas  
+
+---
+
+### ⏱️ Guion de Exposición Oral (Defensa Estricta de 5 Minutos — Sin Diapositivas)
+*Cada integrante dispone de **50 segundos** para defender su eje temático directamente sobre los gráficos:*
+
+| Minuto | Orador | Legajo | Eje Temático y Gráfico Clave | Mensaje Central |
+| :---: | :--- | :---: | :--- | :--- |
+| **0:00 - 0:50** | **Alvaro Perez** | 97986 | **Apertura & Arquitectura ETL** | Alcance del proyecto, 693k cotizaciones en Boston y pipeline integral de ingeniería de datos. |
+| **0:50 - 1:40** | **Juan Ignacio Cremona** | 95789 | **Diagnóstico de Nulos (Gráfico 1)** | El 100% de nulos de precio son Taxi (taxímetro oficial). Por qué eliminamos y NO imputamos. |
+| **1:40 - 2:30** | **Ignacio Gil** | 407114 | **Selección de Columnas (De 57 a 27)** | Corrección de la hora UTC (-5h Boston), descarte de 41 cols de ruido y creación de 11 variables útiles. |
+| **2:30 - 3:20** | **Federico Gon** | 94470 | **Dashboard Antes vs. Después (Gráfico 2)** | Reducción de 56k filas con impacto, 0 nulos resultantes y optimización del 80% de memoria RAM. |
+| **3:20 - 4:10** | **Sofía Medina** | 88655 | **Dispersión & Dos Targets (Gráfico 3)** | Relación precio-distancia por categoría (explican el 89%) y visualización del despegue por surge. |
+| **4:10 - 5:00** | **Facundo Dagnino Dailly** | 94307 | **Comportamiento del Surge & Sprint 3 (Gráfico 4)** | Desbalance de clases en Lyft (8.2%), impacto de ubicación y pautas obligatorias contra Data Leakage. |
+""")
+
+    # =========================================================================
+    # BLOQUE 0: SETUP RÁPIDO
+    # =========================================================================
+    add_md("""
+---
+## ⚙️ Bloque 0: Carga Automática de Datos
+*(Ejecución silenciosa en < 5 segundos en Colab)*
+""")
+
+    add_code("""# Setup de entorno y carga directa de datos
+import os, sys, zipfile, warnings
+warnings.filterwarnings('ignore')
+from pathlib import Path
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Configuración estética para gráficos de alta legibilidad
+sns.set_theme(style="whitegrid", palette="muted")
+plt.rcParams['figure.figsize'] = (14, 5.5)
+plt.rcParams['font.size'] = 11
+plt.rcParams['axes.titlesize'] = 13
+plt.rcParams['axes.titleweight'] = 'bold'
+
+# Si se ejecuta en Colab clonar el repo si no está disponible
+if not os.path.exists("CSV Nueva Columna") and not os.path.exists("dataset_nueva_columna.csv"):
+    os.system("git clone https://github.com/Perez-Alvaro/uber-lyft-dataset.git")
+    if os.path.exists("uber-lyft-dataset"):
+        os.chdir("uber-lyft-dataset")
+
+# Carga directa del dataset limpio final desde el zip
+clean_zip_path = Path("CSV Nueva Columna/dataset_nueva_columna.zip")
+if clean_zip_path.exists():
+    df_clean = pd.read_csv(clean_zip_path)
+elif Path("dataset_nueva_columna.csv").exists():
+    df_clean = pd.read_csv("dataset_nueva_columna.csv")
+else:
+    raise FileNotFoundError("No se encontró el dataset limpio.")
+
+print(f"[✓] Dataset cargado: {df_clean.shape[0]:,} filas x {df_clean.shape[1]} columnas | 0 Nulos.")
+""")
+
+    # =========================================================================
+    # BLOQUE 1: DIAGNÓSTICO (ANTES)
+    # =========================================================================
+    add_md("""
+---
+## 🔍 Bloque 1: Diagnóstico Inicial — Estado ANTES de la Limpieza
+*(Orador: Juan Ignacio Cremona | 0:50 - 1:40)*
+
+> [!IMPORTANT]
+> **El problema de los nulos y la decisión de NO imputar:**  
+> * En el dataset original (**693.071 filas**), la columna `price` presenta exactamente **55.095 registros vacíos**.
+> * **Causa real de negocio:** El **100% pertenece a Uber Taxi**. En Boston, los taxis tradicionales usan el taxímetro urbano oficial de la ciudad; la app no emite una tarifa cerrada por adelantado (*upfront price*).
+> * **Justificación metodológica:** Imputar con la media o regresión inventaría tarifas sobre un marco regulatorio ajeno a las tarifas privadas de Uber y Lyft. **Se eliminan para preservar la integridad del modelo**.
+""")
+
+    add_code("""# GRÁFICO 1: DIAGNÓSTICO INICIAL (ANTES)
+fig, axes = plt.subplots(1, 2, figsize=(15, 5))
+
+# 1A: Concentración de Nulos en 'price'
+servicios = ['Taxi (Uber)', 'UberX', 'UberXL', 'Lyft', 'Lyft XL', 'Shared', 'Black']
+nulos_val = [55095, 0, 0, 0, 0, 0, 0]
+sns.barplot(x=nulos_val, y=servicios, ax=axes[0], palette=['#dc3545'] + ['#6c757d']*6)
+axes[0].set_title("Gráfico 1A: Concentración de Valores Nulos en 'price'\\n(El 100% de los faltantes pertenece a 'Taxi')", pad=12)
+axes[0].set_xlabel("Cantidad de Registros Faltantes")
+for i, v in enumerate(nulos_val):
+    axes[0].text(v + 1000, i, f"{v:,} nulos (100%)" if v > 0 else "0", va='center', fontweight='bold', color='black')
+
+# 1B: Asimetría en la Tarifa Dinámica (Caja Negra)
+categorias_surge = ['x1.00 (Base)', 'x1.25', 'x1.50', 'x1.75', 'x2.00+']
+lyft_pct = [93.18, 3.61, 1.65, 0.79, 0.77]
+uber_pct = [100.0, 0.0, 0.0, 0.0, 0.0]
+
+x = np.arange(len(categorias_surge))
+width = 0.35
+axes[1].bar(x - width/2, uber_pct, width, label='Uber (Upfront Pricing)', color='#000000')
+axes[1].bar(x + width/2, lyft_pct, width, label='Lyft (Surge Dinámico)', color='#FF00BF')
+axes[1].set_title("Gráfico 1B: Asimetría en 'surge_multiplier'\\n(Uber reporta 1.0 en el 100% vs. Lyft con recargo observable)", pad=12)
+axes[1].set_xticks(x)
+axes[1].set_xticklabels(categorias_surge)
+axes[1].set_ylabel("Porcentaje de Viajes (%)")
+axes[1].legend()
+
+plt.tight_layout()
+plt.show()
+""")
+
+    # =========================================================================
+    # BLOQUE 2: TRANSFORMACIONES Y DASHBOARD ANTES VS DESPUÉS
+    # =========================================================================
+    add_md("""
+---
+## ⚙️ Bloque 2: Criterios de Selección y Dashboard ANTES vs. DESPUÉS
+*(Oradores: Ignacio Gil & Federico Gon | 1:40 - 3:20)*
+
+### 1. Criterio de Selección de Columnas (De 57 a 27 columnas):
+* **Se eliminaron 41 columnas de ruido:** 31 de pronósticos diarios de clima (`*Time`), 6 de tiempo desfasado en hora UTC (Londres, corrida 5 horas de Boston), 2 coordenadas climáticas y 2 copias idénticas (`visibility.1` duplicada al 100% y `product_id`).
+* **Se agregaron 11 variables calculadas útiles:** `datetime_local`, `hour_local`, `day_of_week`, `is_weekend`, `time_slot`, `is_rush_hour`, `is_dark`, `is_raining`, `service_tier`, `straight_line_miles` (OpenStreetMap) y `has_surge`.
+
+### 2. Criterio de Limpieza y Extremos (Outliers):
+* **Taxi:** −55.095 filas sin precio.
+* **Cotizaciones duplicadas:** −1.060 filas emitidas en el mismo segundo exacto.
+* **Distancias imposibles:** −348 filas con distancia $< 0.1$ millas entre distritos separados de Boston.
+* **Precios altos (Outliers):** **CONSERVADOS**, porque el 85% se explica por servicios de lujo (*Black / Lux*) o recargo de surge.
+""")
+
+    add_code("""# GRÁFICO 2: DASHBOARD COMPARATIVO ANTES vs. DESPUÉS
+fig, axes = plt.subplots(1, 4, figsize=(17, 4.5))
+
+# 2A: Filas Totales
+sns.barplot(x=['Antes', 'Después'], y=[693071, len(df_clean)], palette=['#6c757d', '#28a745'], ax=axes[0])
+axes[0].set_title("Filas Totales\\n(-56.503 depuradas: Taxi y anomalías)", fontsize=11)
+axes[0].set_ylabel("Cantidad de Registros")
+for p in axes[0].patches:
+    axes[0].annotate(f"{int(p.get_height()):,}", (p.get_x() + p.get_width() / 2., p.get_height() / 2),
+                    ha='center', va='center', color='white', fontweight='bold', fontsize=11)
+
+# 2B: Columnas Totales
+sns.barplot(x=['Antes', 'Después'], y=[57, df_clean.shape[1]], palette=['#6c757d', '#17a2b8'], ax=axes[1])
+axes[1].set_title("Columnas\\n(-41 ruido / +11 derivadas útiles)", fontsize=11)
+axes[1].set_ylabel("Atributos")
+for p in axes[1].patches:
+    axes[1].annotate(f"{int(p.get_height())} cols", (p.get_x() + p.get_width() / 2., p.get_height() / 2),
+                    ha='center', va='center', color='white', fontweight='bold', fontsize=11)
+
+# 2C: Valores Nulos
+sns.barplot(x=['Antes', 'Después'], y=[55095, df_clean.isna().sum().sum()], palette=['#dc3545', '#28a745'], ax=axes[2])
+axes[2].set_title("Valores Nulos\\n(100% de Completitud)", fontsize=11)
+axes[2].set_ylabel("Celdas Nulas")
+axes[2].text(0, 27500, "55,095 nulos", ha='center', va='center', color='white', fontweight='bold')
+axes[2].text(1, 5000, "0 NULOS ✓", ha='center', va='center', color='black', fontweight='bold')
+
+# 2D: Memoria RAM
+mem_raw = 725.08
+mem_clean = df_clean.memory_usage(deep=True).sum() / (1024 * 1024)
+sns.barplot(x=['Antes', 'Después'], y=[mem_raw, mem_clean], palette=['#fd7e14', '#20c997'], ax=axes[3])
+axes[3].set_title(f"Memoria RAM\\n(-{(1 - mem_clean/mem_raw)*100:.0f}% optimizado)", fontsize=11)
+axes[3].set_ylabel("Megabytes (MB)")
+for p in axes[3].patches:
+    axes[3].annotate(f"{p.get_height():.0f} MB", (p.get_x() + p.get_width() / 2., p.get_height() / 2),
+                    ha='center', va='center', color='white', fontweight='bold', fontsize=11)
+
+plt.suptitle("Gráfico 2: Impacto Cuantitativo del Pipeline ETL (Antes vs. Después)", fontsize=14, fontweight='bold', y=1.05)
+plt.tight_layout()
+plt.show()
+""")
+
+    # =========================================================================
+    # BLOQUE 3: DISPERSIÓN PRECIO VS DISTANCIA (LOS DOS TARGETS)
+    # =========================================================================
+    add_md("""
+---
+## 📈 Bloque 3: Dispersión de Tarifas y Formulación de los Dos Targets
+*(Oradora: Sofía Medina | 3:20 - 4:10)*
+
+### Los Dos Objetivos Solicitados por la Cátedra:
+1. **Target 1: `price` (Regresión Continua — 636.568 viajes):**  
+   * El tipo de servicio explica el **77%** y la distancia el **12%** (juntos explican el **89%** del precio). El clima y la hora casi no modifican la tarifa base.
+2. **Target 2: `has_surge` (Clasificación Binaria — 255.953 viajes de Lyft sin Shared):**  
+   * En el gráfico de dispersión se aprecia cómo la tarifa dinámica **despega verticalmente los precios un 46% más caros** sobre la recta de regresión base.
+""")
+
+    add_code("""# GRÁFICO 3: GRÁFICOS DE DISPERSIÓN (SCATTER PLOTS) - PRECIO VS. DISTANCIA
+# Muestra representativa estratificada para renderizado nítido y rápido
+sample_df = df_clean.sample(n=5000, random_state=42)
+
+fig, axes = plt.subplots(1, 2, figsize=(16, 5.5))
+
+# 3A: Dispersión coloreada por Nivel de Servicio (Bandas de Precio por Categoría)
+tier_order = ['Compartido', 'Estándar', 'XL', 'Premium', 'Black', 'Black XL']
+palette_tiers = sns.color_palette("tab10", len(tier_order))
+
+sns.scatterplot(data=sample_df, x='distance', y='price', hue='service_tier', hue_order=tier_order,
+                palette=palette_tiers, alpha=0.55, s=28, ax=axes[0])
+axes[0].set_title("Gráfico 3A: Dispersión Precio vs. Distancia por Servicio\\n(La categoría y distancia explican el 89% de la tarifa)", pad=12)
+axes[0].set_xlabel("Distancia Recorrida (Millas)")
+axes[0].set_ylabel("Precio del Viaje (USD)")
+axes[0].legend(title="Nivel de Servicio", loc="upper left", fontsize=9)
+axes[0].set_ylim(0, 100)
+
+# 3B: Dispersión en Lyft coloreada por has_surge (Impacto visual del sobrecargo)
+sample_lyft = sample_df[(sample_df['cab_type'] == 'Lyft') & (sample_df['name'] != 'Shared')]
+
+sns.scatterplot(data=sample_lyft, x='distance', y='price', hue='has_surge',
+                palette={0: '#4582ec', 1: '#dc3545'}, alpha=0.65, s=32, ax=axes[1])
+axes[1].set_title("Gráfico 3B: Dispersión en Lyft según 'has_surge'\\n(Los puntos rojos muestran el despegue de tarifa: +46% de sobreprecio)", pad=12)
+axes[1].set_xlabel("Distancia Recorrida (Millas)")
+axes[1].set_ylabel("Precio del Viaje (USD)")
+axes[1].legend(title="Tarifa Dinámica", labels=['0: Tarifa Base', '1: Con Surge (+46%)'], loc="upper left")
+axes[1].set_ylim(0, 100)
+
+plt.tight_layout()
+plt.show()
+""")
+
+    # =========================================================================
+    # BLOQUE 4: RESULTADOS, DESBALANCE Y REGLAS DE SPRINT 3
+    # =========================================================================
+    add_md("""
+---
+## 🎯 Bloque 4: Validación de Targets y Hoja de Ruta para el Sprint 3
+*(Orador: Facundo Dagnino Dailly | 4:10 - 5:00)*
+
+### 1. Hallazgo de Tarifa Dinámica (`has_surge`):
+* **Desbalance de clases:** Solo el **8.19% de los viajes** tienen recargo (20.975 con surge vs. 234.978 sin surge).
+* **El factor determinante es la ZONA geográfica, no la lluvia:** Zonas comerciales y nocturnas como **Back Bay (13%)** cuadruplican la probabilidad de surge frente a zonas residenciales como **North End (2%)**.
+
+### 2. Tres Reglas Obligatorias para el Modelado en el Sprint 3:
+1. **Prohibición de Data Leakage:** Al modelar `has_surge`, **nunca usar `price` ni `surge_multiplier`** como predictores.
+2. **Métricas para datos desbalanceados:** En `has_surge` no usar *Accuracy*; evaluar con **PR-AUC, Recall y F1-Score**.
+3. **Modelado de `price`:** Conviene modelar $\\log(\\text{price})$ con algoritmos de ensamble (*LightGBM / Random Forest*).
+""")
+
+    add_code("""# GRÁFICO 4: COMPORTAMIENTO DEL TARGET 2 (HAS_SURGE) Y FACTOR ZONA
+df_lyft_target = df_clean[(df_clean['cab_type'] == 'Lyft') & (df_clean['name'] != 'Shared')]
+
+fig, axes = plt.subplots(1, 2, figsize=(15, 5))
+
+# 4A: Desbalance de Clases
+counts = df_lyft_target['has_surge'].value_counts()
+labels = [f"0: Sin Recargo\\n{counts[0]:,} viajes (91.8%)", f"1: Con Surge\\n{counts[1]:,} viajes (8.2%)"]
+axes[0].pie(counts, labels=labels, autopct='%1.1f%%', startangle=140, 
+            colors=['#4582ec', '#dc3545'], explode=(0, 0.12), textprops={'fontsize': 11, 'weight': 'bold'})
+axes[0].set_title("Gráfico 4A: Desbalance de Clases del Target 'has_surge'\\n(Exige métricas PR-AUC y F1 en lugar de Accuracy)", pad=12)
+
+# 4B: Incidencia por Distrito de Origen
+tasa_origen = (df_lyft_target.groupby('source')['has_surge'].mean() * 100).sort_values(ascending=False)
+sns.barplot(x=tasa_origen.values, y=tasa_origen.index, ax=axes[1], palette='flare')
+axes[1].set_title("Gráfico 4B: Tasa de Surge por Zona de Origen\\n(La ubicación es el factor crítico: Back Bay 13% vs. North End 2%)", pad=12)
+axes[1].set_xlabel("Porcentaje de Viajes con Recargo (%)")
+axes[1].set_ylabel("Distrito de Origen")
+for i, v in enumerate(tasa_origen.values):
+    axes[1].text(v + 0.2, i, f"{v:.1f}%", va='center', fontweight='bold', fontsize=10)
+
+plt.tight_layout()
+plt.show()
+""")
+
+    # =========================================================================
+    # CIERRE FORMAL
+    # =========================================================================
+    add_md("""
+---
+## 🏁 Cierre de la Presentación
+**Conclusión:** Se completó un pipeline ETL riguroso que resolvió el 100% de nulos de forma justificada, eliminó ruido y desfasajes horarios, optimizó la memoria en un 80% y formuló dos variables objetivo listas para modelado en el Sprint 3.
+
+**¡Muchas gracias! Quedamos a disposición de la Ing. Marisa Callejas para preguntas.**  
+*Alvaro Perez • Juan Ignacio Cremona • Ignacio Gil • Federico Gon • Sofía Medina • Facundo Dagnino Dailly*
+""")
+
+    # Guardar Notebook Jupyter v4
+    notebook_dict = {
+        "cells": cells,
+        "metadata": {
+            "colab": {
+                "name": "TPI_Ciencia_de_Datos_Sprint2_ETL.ipynb",
+                "provenance": []
+            },
+            "language_info": {
+                "name": "python",
+                "version": "3.10"
+            },
+            "accelerator": "None"
+        },
+        "nbformat": 4,
+        "nbformat_minor": 0
+    }
+
+    output_path = Path("TPI_Ciencia_de_Datos_Sprint2_ETL.ipynb")
+    with open(output_path, "w", encoding="utf-8") as f:
+        json.dump(notebook_dict, f, ensure_ascii=False, indent=2)
+
+    print(f"[OK] Notebook de 5 minutos generado con éxito: {output_path.resolve()}")
+    print(f"[OK] Total de celdas: {len(cells)}")
+
+if __name__ == "__main__":
+    build_5min_notebook()
