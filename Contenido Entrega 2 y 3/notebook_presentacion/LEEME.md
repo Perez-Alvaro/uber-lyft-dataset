@@ -1,6 +1,6 @@
 # Notebook de la presentación – Entrega 2 (Grupo 11)
 
-[![Abrir en Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Perez-Alvaro/uber-lyft-dataset/blob/main/Nueva%20Version/notebook_presentacion/notebook_graficos_entrega_2.ipynb)
+[![Abrir en Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Perez-Alvaro/uber-lyft-dataset/blob/main/Contenido%20Entrega%202%20y%203/notebook_presentacion/notebook_graficos_entrega_2.ipynb)
 
 `notebook_graficos_entrega_2.ipynb` es el soporte de la presentación oral (sin diapositivas). Tiene el orden de exposición para 5 minutos (50 s por integrante), los textos de cada parte, una tabla resumen, **18 gráficos** (10 para la exposición y 8 de respaldo), las pautas para la Entrega 3 y las preguntas probables de la defensa.
 
