@@ -64,6 +64,13 @@ El proyecto se organiza bajo el marco ágil **Scrum**, dividido en cuatro entreg
 4. **Objetivo 2 (`has_surge`):** filtrar `cab_type == "Lyft"` y `name != "Shared"`, y **no usar `price` ni `surge_multiplier`** (contienen la respuesta: fuga de datos).
 5. Validar agrupando por fecha: las cotizaciones de una misma ruta y minuto comparten el recargo.
 
+## 🔢 Dataset Codificado (Variables Categóricas a Numéricas)
+Para los modelos predictivos y análisis que requieran variables puramente numéricas (PCA, regresiones, etc.), se generó la versión codificada:
+- **Archivo:** [`Contenido Entrega 2 y 3/Dataset Codificado/dataset_codificado.zip`](Contenido%20Entrega%202%20y%203/Dataset%20Codificado/dataset_codificado.zip) (636.568 filas × 71 columnas).
+- **Script generador:** [`Contenido Entrega 2 y 3/Dataset Codificado/codificar_bd.py`](Contenido%20Entrega%202%20y%203/Dataset%20Codificado/codificar_bd.py).
+- **Documentación técnica:** [`Contenido Entrega 2 y 3/Dataset Codificado/Explicacion_Codificacion_BD.md`](Contenido%20Entrega%202%20y%203/Dataset%20Codificado/Explicacion_Codificacion_BD.md).
+
+
 ## 🛠️ Metodología
 El proyecto sigue las etapas de **CRISP-DM**:
 1. Comprensión del negocio y del problema.
