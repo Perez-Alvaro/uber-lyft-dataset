@@ -100,6 +100,13 @@ El proyecto se organiza bajo el marco ágil **Scrum**, dividido en cuatro entreg
 │   │   └── Explicacion_Codificacion_BD.docx # Versión Word de respaldo
 │   └── graficos/                            # 18 figuras de soporte visual (Antes vs Después)
 │
+├── Contenido Entrega 3/
+│   ├── requirements.txt                     # Dependencias (scikit-learn, imbalanced-learn, etc.)
+│   ├── TPI_Ciencia_de_Datos_Sprint3_Modelado.ipynb # Notebook interactivo oficial (Google Colab / Local)
+│   ├── ejecutar_experimentos_sprint3.py     # Script ejecutor y validador experimental
+│   ├── informe_modelado_sprint3.md          # Informe técnico con métricas y matrices de confusión
+│   └── graficos/                            # Gráficos de regresión, matrices de confusión y dispersión
+│
 ├── .gitignore                               # Exclusiones de datasets intermedios y caché
 └── README.md                                # Ficha técnica y guía integral del proyecto
 ```
