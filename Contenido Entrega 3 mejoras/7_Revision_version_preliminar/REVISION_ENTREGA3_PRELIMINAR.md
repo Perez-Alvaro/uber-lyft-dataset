@@ -94,19 +94,46 @@ Predecía el servicio (`service_tier`) usando `price` y `price_per_mile`. El pre
 
 ## Cómo cambian los números (para la defensa oral)
 
-No son comparables uno a uno, porque la versión preliminar usaba partición aleatoria. Igual conviene tenerlos a mano:
+No son comparables uno a uno, porque la versión preliminar usaba partición aleatoria y umbral fijo. Igual conviene tenerlos a mano:
 
-| Métrica | Preliminar | Mejorada | Por qué cambia |
+| Métrica | Preliminar (árbol) | Versión final (gradient boosting) | Por qué cambia |
 |---|---|---|---|
-| Árbol de recargo: recall | 83,4% | 52,2% | Umbral elegido por F1 en vez de 0,5, y test en fechas nuevas |
-| Árbol de recargo: precisión | 12,0% | 13,9% | Menos alertas, pero más acertadas |
-| Árbol de recargo: F1 | 0,210 | 0,220 | Hiperparámetros ajustados (hojas de ≥ 500 cotizaciones) |
-| Árbol de recargo: ROC-AUC | 0,683 | 0,671 | La validación por fecha saca el optimismo de la partición aleatoria |
-| Árbol de recargo: PR-AUC | no se reportaba | 0,142 | Métrica principal comprometida en la Entrega 2 |
-| Mejor modelo de precio: R² | 0,906 (árbol) | 0,968 (random forest) | 12 productos (`name_*`), `surge_multiplier` y dataset completo |
-| Mejor modelo de precio: MAE | USD 1,85 (sin verificar) | USD 1,05 | Ídem; sin `surge_multiplier` da USD 1,33 |
+| Recargo: recall | 83,4% | 60,7% | Umbral elegido en validación en vez de 0,5, y prueba en fechas nuevas |
+| Recargo: precisión | 12,0% | 13,1% | Menos alertas, pero más acertadas |
+| Recargo: F1 | 0,210 | 0,215 | Hiperparámetros elegidos por validación temporal |
+| Recargo: ROC-AUC | 0,683 | 0,676 | La validación por fecha saca el optimismo de la partición aleatoria |
+| Recargo: PR-AUC | no se reportaba | 0,140 | Métrica principal comprometida en la Entrega 2 |
+| Recargo: accuracy balanceada | no se reportaba | 62,1% | Para leer la accuracy contra el azar (50%) |
+| Precio: R² | 0,906 (árbol) | 0,967 (random forest con surge) | 12 productos (`name_*`), `surge_multiplier` y dataset completo |
+| Precio: MAE | USD 1,85 (sin verificar) | USD 1,08 | Ídem; sin `surge_multiplier` da USD 1,32 |
 
 El recall baja porque antes el modelo marcaba "con recargo" a **más de la mitad** de las cotizaciones (57%): detectaba muchos recargos a costa de muchísimas falsas alarmas.
+
+---
+
+## Segunda revisión: observaciones del equipo sobre la versión mejorada
+
+Después de la primera versión mejorada, el equipo marcó 12 problemas. Todos quedaron resueltos:
+
+| # | Observación | Cómo se resolvió |
+|---|---|---|
+| 1 | Faltaba `drop_first` en la logística y Ridge | Cada grupo one-hot pierde una categoría de referencia (zona South Station, producto Lyft/UberX, franja Mañana, clima Clear). Los odds ratio ahora se leen "contra South Station", la zona con la tasa promedio. Los árboles siguen usando todas las columnas. |
+| 2 | La búsqueda del random forest podía quedarse sin memoria; los tiempos estaban contradichos | Las búsquedas de random forest y gradient boosting usan pocos procesos en paralelo (`N_JOBS_PESADO`, configurable) y la grilla de precio se achicó. Todos los documentos dicen ~25 min. |
+| 3 | Solo 3 modelos, sin boosting | Se agregó **gradient boosting** (`HistGradientBoostingClassifier`) y la variable **tasa histórica de recargo de la ruta**, calculada solo con el entrenamiento (`TargetEncoder` dentro del pipeline). Resultado en la sección 5.2 del informe. |
+| 4 | Hiperparámetros elegidos para una sola técnica / variante | Ahora cada combinación modelo × técnica de balanceo, y cada variante con/sin surge, tiene **su propia búsqueda**. |
+| 5 | `GroupKFold` no respeta el orden temporal | Se reemplazó por una **validación temporal en orden**: 5 bloques de fechas consecutivos; cada fold entrena con los anteriores y valida con el siguiente. El umbral también se elige con esas predicciones. |
+| 6 | K-Means con k=7 defendido como "óptimo"; precio por milla redundante con la distancia | Se agrupa con distancia y tasa de recargo (el precio por milla tiene correlación -0,98 con la distancia en log y solo se usa para describir). Se eligió **k = 4 por interpretabilidad**, aclarando que la silueta es plana. |
+| 7 | Importancia por permutación sobre el test | Se aclara en el informe (secciones 4.3, 5.6 y limitaciones) que se usa solo para interpretar, con el modelo ya entrenado. Además, **el modelo final ahora se elige por validación**, no por el test. |
+| 8 | Ruta de fuente de macOS | Comentado: en Windows Calibri ya viene instalada; si no está, se usa DejaVu Sans y no cambia nada más. |
+| 9 | Constante mágica 1,57 | Se calcula del dataset (mediana de `distance / straight_line_miles` = 1,567). |
+| 10 | Lux sin pareja en la comparación Uber vs Lyft | Lux es el nivel Premium, exclusivo de Lyft: se aclara en el código y el informe, y se grafica punteado como "sin par en Uber". |
+| 11 | Notebooks sin salidas | El Colab de presentación se guarda **ejecutado**, con todos los gráficos y tablas, y además en **PDF** en la misma carpeta. |
+| 12 | README desactualizado | El README raíz ahora lista las dos carpetas, marca la preliminar como borrador y el Sprint 3 como finalizado. |
+
+Además, a pedido de la profe:
+
+- **Por qué se eligió cada modelo y qué pruebas se hicieron:** el informe (secciones 3.2, 4.1 y 5.2) y el Colab (secciones 3 y 4) muestran, para cada modelo, la configuración elegida, la segunda mejor, una más simple y una más compleja, con sus puntajes de validación, y la comparación entre algoritmos.
+- **Accuracy:** se informa en todas las tablas, siempre junto a la línea base y la accuracy balanceada.
 
 ---
 

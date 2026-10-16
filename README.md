@@ -48,6 +48,13 @@ El proyecto se organiza bajo el marco ágil **Scrum**, dividido en cuatro entreg
   - Script generador: [`Contenido Entrega 2/Dataset Codificado/codificar_bd.py`](Contenido%20Entrega%202/Dataset%20Codificado/codificar_bd.py)
   - Documentación técnica: [`Contenido Entrega 2/Dataset Codificado/Explicacion_Codificacion_BD.md`](Contenido%20Entrega%202/Dataset%20Codificado/Explicacion_Codificacion_BD.md)
 
+### 4. Modelado (Entrega 3 · versión final)
+- **Carpeta oficial:** [`Contenido Entrega 3 mejoras/`](Contenido%20Entrega%203%20mejoras/) — empezar por su [`LEEME.md`](Contenido%20Entrega%203%20mejoras/LEEME.md).
+- **Informe:** [`1_Informe/Entrega3_Grupo11.docx`](Contenido%20Entrega%203%20mejoras/1_Informe/)
+- **Presentación oral (Colab):** [abrir en Google Colab](https://colab.research.google.com/github/Perez-Alvaro/uber-lyft-dataset/blob/main/Contenido%20Entrega%203%20mejoras/2_Presentacion_Colab/Presentacion_Entrega3_Grupo11.ipynb) · [versión PDF](Contenido%20Entrega%203%20mejoras/2_Presentacion_Colab/Presentacion_Entrega3_Grupo11.pdf)
+- **Datasets de modelado y balanceados:** [`4_Datasets/`](Contenido%20Entrega%203%20mejoras/4_Datasets/)
+- La carpeta `Contenido Entrega 3/` es un **borrador** (versión preliminar con partición aleatoria) y se conserva solo como registro; qué se corrigió está en [`7_Revision_version_preliminar/`](Contenido%20Entrega%203%20mejoras/7_Revision_version_preliminar/REVISION_ENTREGA3_PRELIMINAR.md).
+
 ---
 
 ## 🎯 Definición de Variables Objetivo para el Modelado (Sprint 3)
@@ -68,8 +75,8 @@ El proyecto se organiza bajo el marco ágil **Scrum**, dividido en cuatro entreg
    - **Validación temporal por fecha (`datetime_local`):** No particionar de forma aleatoria simple. Como cotizaciones en la misma ruta y minuto comparten recargo por diseño del algoritmo dinámico, un split aleatorio infla artificialmente las métricas.
 3. **Métricas en Datos Desbalanceados (`has_surge`):**
    - La tasa de viajes con surge es del **8,19%**.
-   - No utilizar *Accuracy* (una regla trivial que prediga siempre 0 obtendría ~91,8% de precisión aparente).
-   - Utilizar **PR-AUC (Precision-Recall AUC)**, **F1-Score**, **Recall** y **Matriz de Confusión**.
+   - La *Accuracy* se informa siempre, pero **junto a la línea base** (una regla trivial que prediga siempre 0 obtiene ~91,7%) y a la **accuracy balanceada** (50% = azar).
+   - Se complementa con **PR-AUC (Precision-Recall AUC)**, **F1-Score**, **Recall**, **Precisión** y **Matriz de Confusión**.
 4. **Tratamiento de Multicolinealidad y Escalamiento:**
    - En modelos lineales: aplicar `drop_first=True` en las variables dummy para evitar la trampa de multicolinealidad perfecta.
    - En PCA o modelos basados en distancias (KNN, SVM, K-Means): aplicar estandarización previa (`StandardScaler`).
@@ -100,12 +107,18 @@ El proyecto se organiza bajo el marco ágil **Scrum**, dividido en cuatro entreg
 │   │   └── Explicacion_Codificacion_BD.docx # Versión Word de respaldo
 │   └── graficos/                            # 18 figuras de soporte visual (Antes vs Después)
 │
-├── Contenido Entrega 3/
-│   ├── requirements.txt                     # Dependencias (scikit-learn, imbalanced-learn, etc.)
-│   ├── TPI_Ciencia_de_Datos_Sprint3_Modelado.ipynb # Notebook interactivo oficial (Google Colab / Local)
-│   ├── ejecutar_experimentos_sprint3.py     # Script ejecutor y validador experimental
-│   ├── informe_modelado_sprint3.md          # Informe técnico con métricas y matrices de confusión
-│   └── graficos/                            # Gráficos de regresión, matrices de confusión y dispersión
+├── Contenido Entrega 3/                     # BORRADOR (versión preliminar, solo como registro)
+│
+├── Contenido Entrega 3 mejoras/             # VERSIÓN FINAL de la Entrega 3
+│   ├── LEEME.md                             # Guía de la carpeta y resultados principales
+│   ├── EXPLICACION_KMEANS_RUTAS.md          # Para qué se usó K-Means y qué muestra
+│   ├── 1_Informe/                           # Entrega3_Grupo11.docx (formato paper)
+│   ├── 2_Presentacion_Colab/                # Notebook de la defensa oral (ya ejecutado) + PDF
+│   ├── 3_Codigo/                            # modelado_entrega3.py + requirements.txt
+│   ├── 4_Datasets/                          # datasets de modelado y datasets balanceados
+│   ├── 5_Graficos/                          # fig01 a fig10 (numeradas como en el informe)
+│   ├── 6_Resultados/                        # metricas.json y tablas CSV
+│   └── 7_Revision_version_preliminar/       # Qué se corrigió respecto del borrador
 │
 ├── .gitignore                               # Exclusiones de datasets intermedios y caché
 └── README.md                                # Ficha técnica y guía integral del proyecto
@@ -118,8 +131,8 @@ El proyecto sigue las etapas de **CRISP-DM**:
 1. Comprensión del negocio y del problema ✅
 2. Adquisición y comprensión de los datos ✅
 3. Preparación de los datos (ETL y Encoding) ✅
-4. **Modelado y análisis (Sprint 3 - En curso)** ⏳
-5. Evaluación y comunicación de resultados (Sprint 4) ⏳
+4. Modelado y análisis (Sprint 3) ✅
+5. Comunicación de resultados (Sprint 4) ⏳
 
 La gestión se realiza con **Scrum**, incluyendo planificación, revisiones y retrospectivas en cada sprint.
 
@@ -128,7 +141,7 @@ La gestión se realiza con **Scrum**, incluyendo planificación, revisiones y re
 ## 📅 Cronograma de Sprints
 - **Sprint 1:** Planificación y comprensión del dataset ✅
 - **Sprint 2:** Limpieza, ETL, correcciones espaciotemporales y encoding ✅
-- **Sprint 3:** Modelado predictivo (Regresión + Clasificación) y evaluación (30/10) ⏳
+- **Sprint 3:** Modelado predictivo (Regresión + Clasificación), balanceo y evaluación (30/10) ✅
 - **Sprint 4:** Presentación final (*data storytelling*) ⏳
 
 ---

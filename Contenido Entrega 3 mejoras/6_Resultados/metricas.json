@@ -3,9 +3,16 @@
     "filas": 636568,
     "columnas": 71
   },
+  "referencias": {
+    "zona": "South Station",
+    "producto_recargo": "Lyft",
+    "producto_precio": "UberX",
+    "franja": "Mañana",
+    "clima": "Clear"
+  },
   "A_datos": {
     "filas": 255953,
-    "predictoras": 59,
+    "predictoras": 60,
     "positivos": 20975,
     "tasa": 0.08194863900794286,
     "train": 196558,
@@ -13,7 +20,67 @@
     "tasa_train": 0.08164002482727745,
     "tasa_test": 0.08296994696523276,
     "fechas_train": 14,
-    "fechas_test": 4
+    "fechas_test": 4,
+    "bloques_cv": [
+      {
+        "bloque": 1,
+        "fechas": [
+          "2018-11-25",
+          "2018-11-26"
+        ],
+        "filas": 17875
+      },
+      {
+        "bloque": 2,
+        "fechas": [
+          "2018-11-27",
+          "2018-11-28"
+        ],
+        "filas": 58291
+      },
+      {
+        "bloque": 3,
+        "fechas": [
+          "2018-11-29",
+          "2018-11-30"
+        ],
+        "filas": 33141
+      },
+      {
+        "bloque": 4,
+        "fechas": [
+          "2018-12-01",
+          "2018-12-02"
+        ],
+        "filas": 33319
+      },
+      {
+        "bloque": 5,
+        "fechas": [
+          "2018-12-03",
+          "2018-12-04",
+          "2018-12-09",
+          "2018-12-12",
+          "2018-12-13",
+          "2018-12-14"
+        ],
+        "filas": 53932
+      }
+    ],
+    "tasa_por_origen": {
+      "North End": 0.018280678728789725,
+      "Haymarket Square": 0.019229867267013742,
+      "North Station": 0.040073982737361284,
+      "West End": 0.04641191160533384,
+      "Financial District": 0.06891025641025642,
+      "South Station": 0.07965140795577004,
+      "Beacon Hill": 0.0966935521909344,
+      "Boston University": 0.11577220529646122,
+      "Theatre District": 0.11578650098842135,
+      "Fenway": 0.12326006467638374,
+      "Northeastern University": 0.12473037606677295,
+      "Back Bay": 0.1343570057581574
+    }
   },
   "A_lineas_base": [
     {
@@ -53,38 +120,289 @@
   ],
   "A_tuning": {
     "Regresión logística": {
-      "params": {
-        "C": 0.001
+      "sin": {
+        "params": {
+          "C": 0.0003
+        },
+        "combinaciones": 7,
+        "pr_auc_cv": 0.1199135462604609,
+        "pr_auc_cv_std": 0.0034336571340272118,
+        "roc_auc_cv": 0.6493795862414988,
+        "pr_auc_train": 0.13237295972804913
       },
-      "combinaciones": 7,
-      "pr_auc_cv": 0.1199640647520109,
-      "pr_auc_cv_std": 0.005753082809819064,
-      "roc_auc_cv": 0.6493989189082284,
-      "pr_auc_train": 0.12636353039270132
+      "rus": {
+        "params": {
+          "C": 0.001
+        },
+        "combinaciones": 7,
+        "pr_auc_cv": 0.1187453417305575,
+        "pr_auc_cv_std": 0.0017091436190398593,
+        "roc_auc_cv": 0.6481593349510837,
+        "pr_auc_train": 0.1304770131440003
+      },
+      "smote": {
+        "params": {
+          "C": 0.0001
+        },
+        "combinaciones": 7,
+        "pr_auc_cv": 0.11869467823152997,
+        "pr_auc_cv_std": 0.0022728435932918424,
+        "roc_auc_cv": 0.647278769023795,
+        "pr_auc_train": 0.13034329449534035
+      },
+      "pesos": {
+        "params": {
+          "C": 0.0001
+        },
+        "combinaciones": 7,
+        "pr_auc_cv": 0.11960451721176678,
+        "pr_auc_cv_std": 0.0031356988678284464,
+        "roc_auc_cv": 0.6492695012775012,
+        "pr_auc_train": 0.13168496382770098
+      }
     },
     "Árbol de decisión": {
-      "params": {
-        "criterion": "gini",
-        "max_depth": 20,
-        "min_samples_leaf": 500
+      "sin": {
+        "params": {
+          "criterion": "entropy",
+          "max_depth": 12,
+          "min_samples_leaf": 500
+        },
+        "combinaciones": 60,
+        "pr_auc_cv": 0.1253577393617031,
+        "pr_auc_cv_std": 0.009955783029355493,
+        "roc_auc_cv": 0.6422248237027655,
+        "pr_auc_train": 0.1581692169154185
       },
-      "combinaciones": 60,
-      "pr_auc_cv": 0.14151697316665585,
-      "pr_auc_cv_std": 0.0029254599784976467,
-      "roc_auc_cv": 0.6644506605064036,
-      "pr_auc_train": 0.17870623552926426
+      "rus": {
+        "params": {
+          "criterion": "gini",
+          "max_depth": 9,
+          "min_samples_leaf": 500
+        },
+        "combinaciones": 60,
+        "pr_auc_cv": 0.11743891405109454,
+        "pr_auc_cv_std": 0.004931217872882044,
+        "roc_auc_cv": 0.6390435388758194,
+        "pr_auc_train": 0.12873782680549992
+      },
+      "smote": {
+        "params": {
+          "criterion": "entropy",
+          "max_depth": 7,
+          "min_samples_leaf": 20
+        },
+        "combinaciones": 60,
+        "pr_auc_cv": 0.10805431750362882,
+        "pr_auc_cv_std": 0.004715737149048956,
+        "roc_auc_cv": 0.6132881149477968,
+        "pr_auc_train": 0.11787578650172426
+      },
+      "pesos": {
+        "params": {
+          "criterion": "gini",
+          "max_depth": 12,
+          "min_samples_leaf": 500
+        },
+        "combinaciones": 60,
+        "pr_auc_cv": 0.12458061455538413,
+        "pr_auc_cv_std": 0.013796478127211999,
+        "roc_auc_cv": 0.6373781459937372,
+        "pr_auc_train": 0.1593242098926546
+      }
     },
     "Random forest": {
-      "params": {
-        "max_depth": 16,
-        "min_samples_leaf": 50
+      "sin": {
+        "params": {
+          "max_depth": 10,
+          "min_samples_leaf": 50
+        },
+        "combinaciones": 9,
+        "pr_auc_cv": 0.1263398095904594,
+        "pr_auc_cv_std": 0.0071505389174666804,
+        "roc_auc_cv": 0.6529787440173346,
+        "pr_auc_train": 0.23653652955796262
       },
-      "combinaciones": 9,
-      "pr_auc_cv": 0.13146821020040472,
-      "pr_auc_cv_std": 0.0057368871959765895,
-      "roc_auc_cv": 0.6650822552639297,
-      "pr_auc_train": 0.29066138106182016
+      "rus": {
+        "params": {
+          "max_depth": null,
+          "min_samples_leaf": 10
+        },
+        "combinaciones": 9,
+        "pr_auc_cv": 0.12414701859119572,
+        "pr_auc_cv_std": 0.005187908743455532,
+        "roc_auc_cv": 0.6510171589871586,
+        "pr_auc_train": 0.26968435851486305
+      },
+      "smote": {
+        "params": {
+          "max_depth": 10,
+          "min_samples_leaf": 50
+        },
+        "combinaciones": 9,
+        "pr_auc_cv": 0.11745255251269399,
+        "pr_auc_cv_std": 0.0035539081716902186,
+        "roc_auc_cv": 0.6389757101713602,
+        "pr_auc_train": 0.1716326161753966
+      },
+      "pesos": {
+        "params": {
+          "max_depth": 16,
+          "min_samples_leaf": 10
+        },
+        "combinaciones": 9,
+        "pr_auc_cv": 0.1260713169219185,
+        "pr_auc_cv_std": 0.005836903096604035,
+        "roc_auc_cv": 0.6543991501836779,
+        "pr_auc_train": 0.4377708321688721
+      }
+    },
+    "Gradient boosting": {
+      "sin": {
+        "params": {
+          "learning_rate": 0.05,
+          "max_leaf_nodes": 15
+        },
+        "combinaciones": 4,
+        "pr_auc_cv": 0.1344335404224124,
+        "pr_auc_cv_std": 0.009471081800315487,
+        "roc_auc_cv": 0.6589126320680017,
+        "pr_auc_train": 0.2843562533857342
+      },
+      "rus": {
+        "params": {
+          "learning_rate": 0.05,
+          "max_leaf_nodes": 15
+        },
+        "combinaciones": 4,
+        "pr_auc_cv": 0.1302238999374014,
+        "pr_auc_cv_std": 0.008104259935686711,
+        "roc_auc_cv": 0.6516702889702641,
+        "pr_auc_train": 0.19975395143245844
+      },
+      "smote": {
+        "params": {
+          "learning_rate": 0.1,
+          "max_leaf_nodes": 63
+        },
+        "combinaciones": 4,
+        "pr_auc_cv": 0.11684144133944024,
+        "pr_auc_cv_std": 0.003909549576708558,
+        "roc_auc_cv": 0.6283684213126788,
+        "pr_auc_train": 0.41651441867218675
+      },
+      "pesos": {
+        "params": {
+          "learning_rate": 0.05,
+          "max_leaf_nodes": 15
+        },
+        "combinaciones": 4,
+        "pr_auc_cv": 0.1359320966221036,
+        "pr_auc_cv_std": 0.011715194103755962,
+        "roc_auc_cv": 0.6589250370518321,
+        "pr_auc_train": 0.24036573259729999
+      }
     }
+  },
+  "A_elegido": "Gradient boosting",
+  "A_tecnica_elegida": {
+    "clave": "pesos",
+    "nombre": "Pesos de clase (balanced)",
+    "pr_auc_val": 0.1359320966221036,
+    "mejor_por_modelo": {
+      "Regresión logística": "Sin balanceo",
+      "Árbol de decisión": "Sin balanceo",
+      "Random forest": "Sin balanceo",
+      "Gradient boosting": "Pesos de clase (balanced)"
+    }
+  },
+  "A_pruebas": {
+    "Regresión logística": [
+      {
+        "rol": "Elegida (mejor en validación)",
+        "params": "C=0.0001",
+        "validacion": 0.11960451721176678,
+        "entrenamiento": 0.13168496382770098
+      },
+      {
+        "rol": "Segunda mejor",
+        "params": "C=0.0003",
+        "validacion": 0.11886624666371907,
+        "entrenamiento": 0.13204024512957777
+      },
+      {
+        "rol": "Más compleja",
+        "params": "C=10",
+        "validacion": 0.11233639557848715,
+        "entrenamiento": 0.1315407816894899
+      }
+    ],
+    "Árbol de decisión": [
+      {
+        "rol": "Elegida (mejor en validación)",
+        "params": "criterion=gini · max_depth=12 · min_samples_leaf=500",
+        "validacion": 0.12458061455538413,
+        "entrenamiento": 0.1593242098926546
+      },
+      {
+        "rol": "Segunda mejor",
+        "params": "criterion=gini · max_depth=40 · min_samples_leaf=500",
+        "validacion": 0.12390621719524328,
+        "entrenamiento": 0.16497732456957132
+      },
+      {
+        "rol": "Más simple",
+        "params": "criterion=gini · max_depth=3 · min_samples_leaf=500",
+        "validacion": 0.11417731166957323,
+        "entrenamiento": 0.1215554120900848
+      },
+      {
+        "rol": "Más compleja",
+        "params": "criterion=gini · max_depth=40 · min_samples_leaf=20",
+        "validacion": 0.1026257431115941,
+        "entrenamiento": 0.4269752329156429
+      }
+    ],
+    "Random forest": [
+      {
+        "rol": "Elegida (mejor en validación)",
+        "params": "max_depth=16 · min_samples_leaf=10",
+        "validacion": 0.1260713169219185,
+        "entrenamiento": 0.4377708321688721
+      },
+      {
+        "rol": "Segunda mejor",
+        "params": "max_depth=None · min_samples_leaf=10",
+        "validacion": 0.12592121139585566,
+        "entrenamiento": 0.517098438461071
+      },
+      {
+        "rol": "Más simple",
+        "params": "max_depth=10 · min_samples_leaf=200",
+        "validacion": 0.12456476881623868,
+        "entrenamiento": 0.17557331980701527
+      }
+    ],
+    "Gradient boosting": [
+      {
+        "rol": "Elegida (mejor en validación)",
+        "params": "learning_rate=0.05 · max_leaf_nodes=15",
+        "validacion": 0.1359320966221036,
+        "entrenamiento": 0.24036573259729999
+      },
+      {
+        "rol": "Segunda mejor",
+        "params": "learning_rate=0.1 · max_leaf_nodes=15",
+        "validacion": 0.1342679383602944,
+        "entrenamiento": 0.3029060868980784
+      },
+      {
+        "rol": "Más compleja",
+        "params": "learning_rate=0.1 · max_leaf_nodes=63",
+        "validacion": 0.1327298675291374,
+        "entrenamiento": 0.552162553149806
+      }
+    ]
   },
   "A_distribucion": [
     {
@@ -116,6 +434,7 @@
     {
       "modelo": "Regresión logística",
       "tecnica": "Sin balanceo",
+      "pr_auc_validacion": 0.1199135462604609,
       "umbral": 0.5,
       "accuracy": 0.9170300530347673,
       "accuracy_balanceada": 0.5,
@@ -124,8 +443,8 @@
       "f1": 0.0,
       "f1_macro": 0.47835976884298537,
       "f1_weighted": 0.8773405683835637,
-      "roc_auc": 0.6514723077735143,
-      "pr_auc": 0.12064905117706323,
+      "roc_auc": 0.6506953010419272,
+      "pr_auc": 0.12088632673276167,
       "tn": 54467,
       "fp": 0,
       "fn": 4928,
@@ -134,60 +453,64 @@
     {
       "modelo": "Regresión logística",
       "tecnica": "Submuestreo (RUS 1:1)",
+      "pr_auc_validacion": 0.1187453417305575,
       "umbral": 0.5,
-      "accuracy": 0.5241181917669837,
-      "accuracy_balanceada": 0.6223187867507766,
-      "precision": 0.11906238777708857,
-      "recall": 0.7400568181818182,
-      "f1": 0.20512387862425827,
-      "f1_macro": 0.43276342673868895,
-      "f1_weighted": 0.6226284923846319,
-      "roc_auc": 0.6505391053983837,
-      "pr_auc": 0.12133410546372726,
-      "tn": 27483,
-      "fp": 26984,
-      "fn": 1281,
-      "tp": 3647
+      "accuracy": 0.5290512669416617,
+      "accuracy_balanceada": 0.620209868005982,
+      "precision": 0.11890586756631606,
+      "recall": 0.7295048701298701,
+      "f1": 0.20448211137022923,
+      "f1_macro": 0.4350004185779256,
+      "f1_weighted": 0.6272665423385463,
+      "roc_auc": 0.650285232059374,
+      "pr_auc": 0.12141535407761235,
+      "tn": 27828,
+      "fp": 26639,
+      "fn": 1333,
+      "tp": 3595
     },
     {
       "modelo": "Regresión logística",
       "tecnica": "Sobremuestreo (SMOTE 1:1)",
+      "pr_auc_validacion": 0.11869467823152997,
       "umbral": 0.5,
-      "accuracy": 0.529876252209782,
-      "accuracy_balanceada": 0.6189986206201586,
-      "precision": 0.11864406779661017,
-      "recall": 0.7258522727272727,
-      "f1": 0.2039513071243265,
-      "f1_macro": 0.4351974948532411,
-      "f1_weighted": 0.6280707147185951,
-      "roc_auc": 0.6519787579438665,
-      "pr_auc": 0.12229260287066153,
-      "tn": 27895,
-      "fp": 26572,
-      "fn": 1351,
-      "tp": 3577
+      "accuracy": 0.537873558380335,
+      "accuracy_balanceada": 0.6177299077673387,
+      "precision": 0.11897671900378994,
+      "recall": 0.713474025974026,
+      "f1": 0.20394431554524362,
+      "f1_macro": 0.43919194190261823,
+      "f1_weighted": 0.6354026020948563,
+      "roc_auc": 0.6501690903064383,
+      "pr_auc": 0.12113171540719714,
+      "tn": 28431,
+      "fp": 26036,
+      "fn": 1412,
+      "tp": 3516
     },
     {
       "modelo": "Regresión logística",
       "tecnica": "Pesos de clase (balanced)",
+      "pr_auc_validacion": 0.11960451721176678,
       "umbral": 0.5,
-      "accuracy": 0.5214411987541039,
-      "accuracy_balanceada": 0.6216897178775472,
-      "precision": 0.11867047520124643,
-      "recall": 0.7418831168831169,
-      "f1": 0.20461159614954108,
-      "f1_macro": 0.4311882119259998,
-      "f1_weighted": 0.6201667281133892,
-      "roc_auc": 0.6519663666090918,
-      "pr_auc": 0.12209606847667787,
-      "tn": 27315,
-      "fp": 27152,
-      "fn": 1272,
-      "tp": 3656
+      "accuracy": 0.5397087296910514,
+      "accuracy_balanceada": 0.6205761370103999,
+      "precision": 0.11993352101210868,
+      "recall": 0.7175324675324676,
+      "f1": 0.20551567812618057,
+      "f1_macro": 0.44075663023150896,
+      "f1_weighted": 0.6369617236963775,
+      "roc_auc": 0.6509449011214701,
+      "pr_auc": 0.12091617405718968,
+      "tn": 28520,
+      "fp": 25947,
+      "fn": 1392,
+      "tp": 3536
     },
     {
       "modelo": "Árbol de decisión",
       "tecnica": "Sin balanceo",
+      "pr_auc_validacion": 0.1253577393617031,
       "umbral": 0.5,
       "accuracy": 0.9170300530347673,
       "accuracy_balanceada": 0.5,
@@ -196,8 +519,8 @@
       "f1": 0.0,
       "f1_macro": 0.47835976884298537,
       "f1_weighted": 0.8773405683835637,
-      "roc_auc": 0.6687698771763149,
-      "pr_auc": 0.14089174527654194,
+      "roc_auc": 0.6716786312467529,
+      "pr_auc": 0.13898823802477261,
       "tn": 54467,
       "fp": 0,
       "fn": 4928,
@@ -206,60 +529,64 @@
     {
       "modelo": "Árbol de decisión",
       "tecnica": "Submuestreo (RUS 1:1)",
+      "pr_auc_validacion": 0.11743891405109454,
       "umbral": 0.5,
-      "accuracy": 0.5367791901675225,
-      "accuracy_balanceada": 0.6262690518821238,
-      "precision": 0.12124769411370116,
-      "recall": 0.7335633116883117,
-      "f1": 0.20809947327519213,
-      "f1_macro": 0.4403734602684217,
-      "f1_weighted": 0.6341039264971884,
-      "roc_auc": 0.6627515109381136,
-      "pr_auc": 0.12907514966505748,
-      "tn": 28267,
-      "fp": 26200,
-      "fn": 1313,
-      "tp": 3615
+      "accuracy": 0.5066083003619833,
+      "accuracy_balanceada": 0.6256910851566503,
+      "precision": 0.11852524177647022,
+      "recall": 0.7684659090909091,
+      "f1": 0.20537433227582091,
+      "f1_macro": 0.4238039880543808,
+      "f1_weighted": 0.6059874499217783,
+      "roc_auc": 0.6577068051928977,
+      "pr_auc": 0.12462473015563141,
+      "tn": 26303,
+      "fp": 28164,
+      "fn": 1141,
+      "tp": 3787
     },
     {
       "modelo": "Árbol de decisión",
       "tecnica": "Sobremuestreo (SMOTE 1:1)",
+      "pr_auc_validacion": 0.10805431750362882,
       "umbral": 0.5,
-      "accuracy": 0.7908578163145046,
-      "accuracy_balanceada": 0.5418511724989443,
-      "precision": 0.12120905782450465,
-      "recall": 0.24330357142857142,
-      "f1": 0.16180836707152496,
-      "f1_macro": 0.5211657974628569,
-      "f1_weighted": 0.8208914939719264,
-      "roc_auc": 0.6112260962732349,
-      "pr_auc": 0.11018547530278117,
-      "tn": 45774,
-      "fp": 8693,
-      "fn": 3729,
-      "tp": 1199
+      "accuracy": 0.6757807896287567,
+      "accuracy_balanceada": 0.577386202988632,
+      "precision": 0.12006151561754255,
+      "recall": 0.4594155844155844,
+      "f1": 0.19037208324574312,
+      "f1_macro": 0.4938387441122142,
+      "f1_weighted": 0.7469481794630705,
+      "roc_auc": 0.6293366858885602,
+      "pr_auc": 0.11381370718890489,
+      "tn": 37874,
+      "fp": 16593,
+      "fn": 2664,
+      "tp": 2264
     },
     {
       "modelo": "Árbol de decisión",
       "tecnica": "Pesos de clase (balanced)",
+      "pr_auc_validacion": 0.12458061455538413,
       "umbral": 0.5,
-      "accuracy": 0.6012122232511155,
-      "accuracy_balanceada": 0.6295634126668859,
-      "precision": 0.12925922997865444,
-      "recall": 0.6635551948051948,
-      "f1": 0.21637001257195793,
-      "f1_macro": 0.47446250052743144,
-      "f1_weighted": 0.6897271484073239,
-      "roc_auc": 0.6712127546877544,
-      "pr_auc": 0.1416416848600274,
-      "tn": 32439,
-      "fp": 22028,
-      "fn": 1658,
-      "tp": 3270
+      "accuracy": 0.5154979375368297,
+      "accuracy_balanceada": 0.6328450859319321,
+      "precision": 0.1211196898929241,
+      "recall": 0.773538961038961,
+      "f1": 0.20944479547265185,
+      "f1_macro": 0.4300813655597004,
+      "f1_weighted": 0.6141055266093225,
+      "roc_auc": 0.6721560478416695,
+      "pr_auc": 0.13789958644550412,
+      "tn": 26806,
+      "fp": 27661,
+      "fn": 1116,
+      "tp": 3812
     },
     {
       "modelo": "Random forest",
       "tecnica": "Sin balanceo",
+      "pr_auc_validacion": 0.1263398095904594,
       "umbral": 0.5,
       "accuracy": 0.9170300530347673,
       "accuracy_balanceada": 0.5,
@@ -268,8 +595,8 @@
       "f1": 0.0,
       "f1_macro": 0.47835976884298537,
       "f1_weighted": 0.8773405683835637,
-      "roc_auc": 0.6728215251090914,
-      "pr_auc": 0.13645102272023218,
+      "roc_auc": 0.6659003685419911,
+      "pr_auc": 0.13139457338425803,
       "tn": 54467,
       "fp": 0,
       "fn": 4928,
@@ -278,476 +605,947 @@
     {
       "modelo": "Random forest",
       "tecnica": "Submuestreo (RUS 1:1)",
+      "pr_auc_validacion": 0.12414701859119572,
       "umbral": 0.5,
-      "accuracy": 0.516575469315599,
-      "accuracy_balanceada": 0.6257732606440597,
-      "precision": 0.11935473546074321,
-      "recall": 0.7566964285714286,
-      "f1": 0.20618727710043958,
-      "f1_macro": 0.42932610323751935,
-      "f1_weighted": 0.6154372962336435,
-      "roc_auc": 0.6615491472377293,
-      "pr_auc": 0.1271961927786126,
-      "tn": 26953,
-      "fp": 27514,
-      "fn": 1199,
-      "tp": 3729
+      "accuracy": 0.5629935179728933,
+      "accuracy_balanceada": 0.6269044971141826,
+      "precision": 0.12398970030756026,
+      "recall": 0.7035308441558441,
+      "f1": 0.2108239586500456,
+      "f1_macro": 0.45432932507589596,
+      "f1_weighted": 0.6574274368255415,
+      "roc_auc": 0.6674438199383923,
+      "pr_auc": 0.13135378689605198,
+      "tn": 29972,
+      "fp": 24495,
+      "fn": 1461,
+      "tp": 3467
     },
     {
       "modelo": "Random forest",
       "tecnica": "Sobremuestreo (SMOTE 1:1)",
+      "pr_auc_validacion": 0.11745255251269399,
       "umbral": 0.5,
-      "accuracy": 0.8879703678760839,
-      "accuracy_balanceada": 0.51580798454694,
-      "precision": 0.14220563847429518,
-      "recall": 0.06960227272727272,
-      "f1": 0.09346049046321526,
-      "f1_macro": 0.5168782936838284,
-      "f1_weighted": 0.8700341915497423,
-      "roc_auc": 0.6469178402644136,
-      "pr_auc": 0.12223286817378992,
-      "tn": 52398,
-      "fp": 2069,
-      "fn": 4585,
-      "tp": 343
+      "accuracy": 0.7593063389174173,
+      "accuracy_balanceada": 0.5632216238731709,
+      "precision": 0.12831296619584193,
+      "recall": 0.328125,
+      "f1": 0.18448374215630348,
+      "f1_macro": 0.5216513121210117,
+      "f1_weighted": 0.8028693312889834,
+      "roc_auc": 0.6495365454514457,
+      "pr_auc": 0.12108832030258596,
+      "tn": 43482,
+      "fp": 10985,
+      "fn": 3311,
+      "tp": 1617
     },
     {
       "modelo": "Random forest",
       "tecnica": "Pesos de clase (balanced)",
+      "pr_auc_validacion": 0.1260713169219185,
       "umbral": 0.5,
-      "accuracy": 0.5671016078794512,
-      "accuracy_balanceada": 0.6230538283606253,
-      "precision": 0.12328717465380991,
-      "recall": 0.690137987012987,
-      "f1": 0.20920218982592115,
-      "f1_macro": 0.4555909414519749,
-      "f1_weighted": 0.6610939697675414,
-      "roc_auc": 0.6711353367873887,
-      "pr_auc": 0.13535119739401225,
-      "tn": 30282,
-      "fp": 24185,
-      "fn": 1527,
-      "tp": 3401
+      "accuracy": 0.6433033083592895,
+      "accuracy_balanceada": 0.6148623718364915,
+      "precision": 0.13019743426439814,
+      "recall": 0.580762987012987,
+      "f1": 0.21270903010033446,
+      "f1_macro": 0.4910628302438982,
+      "f1_weighted": 0.7232266303164969,
+      "roc_auc": 0.6747259290833554,
+      "pr_auc": 0.14109942945440393,
+      "tn": 35347,
+      "fp": 19120,
+      "fn": 2066,
+      "tp": 2862
+    },
+    {
+      "modelo": "Gradient boosting",
+      "tecnica": "Sin balanceo",
+      "pr_auc_validacion": 0.1344335404224124,
+      "umbral": 0.5,
+      "accuracy": 0.9170300530347673,
+      "accuracy_balanceada": 0.5,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "f1_macro": 0.47835976884298537,
+      "f1_weighted": 0.8773405683835637,
+      "roc_auc": 0.6772432868621272,
+      "pr_auc": 0.14440746434853102,
+      "tn": 54467,
+      "fp": 0,
+      "fn": 4928,
+      "tp": 0
+    },
+    {
+      "modelo": "Gradient boosting",
+      "tecnica": "Submuestreo (RUS 1:1)",
+      "pr_auc_validacion": 0.1302238999374014,
+      "umbral": 0.5,
+      "accuracy": 0.5381261048909841,
+      "accuracy_balanceada": 0.6279262531983503,
+      "precision": 0.1218282641572845,
+      "recall": 0.7355925324675324,
+      "f1": 0.20903612720929562,
+      "f1_macro": 0.4414341347996732,
+      "f1_weighted": 0.6352680416608519,
+      "roc_auc": 0.6752143902098232,
+      "pr_auc": 0.1407934133250953,
+      "tn": 28337,
+      "fp": 26130,
+      "fn": 1303,
+      "tp": 3625
+    },
+    {
+      "modelo": "Gradient boosting",
+      "tecnica": "Sobremuestreo (SMOTE 1:1)",
+      "pr_auc_validacion": 0.11684144133944024,
+      "umbral": 0.5,
+      "accuracy": 0.8544153548278475,
+      "accuracy_balanceada": 0.529441787208101,
+      "precision": 0.13517755542475965,
+      "recall": 0.13981331168831168,
+      "f1": 0.13745635910224438,
+      "f1_macro": 0.5289773405863817,
+      "f1_weighted": 0.8555293719314894,
+      "roc_auc": 0.6437928059889236,
+      "pr_auc": 0.1223807275531022,
+      "tn": 50059,
+      "fp": 4408,
+      "fn": 4239,
+      "tp": 689
+    },
+    {
+      "modelo": "Gradient boosting",
+      "tecnica": "Pesos de clase (balanced)",
+      "pr_auc_validacion": 0.1359320966221036,
+      "umbral": 0.5,
+      "accuracy": 0.5424699048741477,
+      "accuracy_balanceada": 0.631125190273677,
+      "precision": 0.12312383533796374,
+      "recall": 0.7374188311688312,
+      "f1": 0.2110153006416398,
+      "f1_macro": 0.44441715510462965,
+      "f1_weighted": 0.6390883305948569,
+      "roc_auc": 0.67636241421888,
+      "pr_auc": 0.14007849575537804,
+      "tn": 28586,
+      "fp": 25881,
+      "fn": 1294,
+      "tp": 3634
     }
   ],
   "A_finales": {
     "Regresión logística": {
       "umbral_0.5": {
         "umbral": 0.5,
-        "accuracy": 0.5214411987541039,
-        "accuracy_balanceada": 0.6216897178775472,
-        "precision": 0.11867047520124643,
-        "recall": 0.7418831168831169,
-        "f1": 0.20461159614954108,
-        "f1_macro": 0.4311882119259998,
-        "f1_weighted": 0.6201667281133892,
-        "roc_auc": 0.6519663666090918,
-        "pr_auc": 0.12209606847667787,
-        "tn": 27315,
-        "fp": 27152,
-        "fn": 1272,
-        "tp": 3656
+        "accuracy": 0.5397087296910514,
+        "accuracy_balanceada": 0.6205761370103999,
+        "precision": 0.11993352101210868,
+        "recall": 0.7175324675324676,
+        "f1": 0.20551567812618057,
+        "f1_macro": 0.44075663023150896,
+        "f1_weighted": 0.6369617236963775,
+        "roc_auc": 0.6509449011214701,
+        "pr_auc": 0.12091617405718968,
+        "tn": 28520,
+        "fp": 25947,
+        "fn": 1392,
+        "tp": 3536
       },
       "umbral_opt": {
-        "umbral": 0.537884785968501,
-        "accuracy": 0.5722872295647782,
-        "accuracy_balanceada": 0.6144383635337161,
-        "precision": 0.12123566407695154,
-        "recall": 0.6649756493506493,
-        "f1": 0.20508166969147004,
-        "f1_macro": 0.4562583583393779,
-        "f1_weighted": 0.6657548139152464,
-        "roc_auc": 0.6519663666090918,
-        "pr_auc": 0.12209606847667787,
-        "tn": 30714,
-        "fp": 23753,
-        "fn": 1651,
-        "tp": 3277
+        "umbral": 0.5288672704567187,
+        "accuracy": 0.5663944776496338,
+        "accuracy_balanceada": 0.6139938439580597,
+        "precision": 0.12051749271137026,
+        "recall": 0.6710633116883117,
+        "f1": 0.20433761739990114,
+        "f1_macro": 0.4531673970223685,
+        "f1_weighted": 0.6607063894075426,
+        "roc_auc": 0.6509449011214701,
+        "pr_auc": 0.12091617405718968,
+        "tn": 30334,
+        "fp": 24133,
+        "fn": 1621,
+        "tp": 3307
       },
-      "f1_oof": 0.2039728774711107
+      "f1_validacion": 0.20047499611568598,
+      "pr_auc_validacion": 0.11960451721176678
     },
     "Árbol de decisión": {
       "umbral_0.5": {
         "umbral": 0.5,
-        "accuracy": 0.6012122232511155,
-        "accuracy_balanceada": 0.6295634126668859,
-        "precision": 0.12925922997865444,
-        "recall": 0.6635551948051948,
-        "f1": 0.21637001257195793,
-        "f1_macro": 0.47446250052743144,
-        "f1_weighted": 0.6897271484073239,
-        "roc_auc": 0.6712127546877544,
-        "pr_auc": 0.1416416848600274,
-        "tn": 32439,
-        "fp": 22028,
-        "fn": 1658,
-        "tp": 3270
+        "accuracy": 0.5154979375368297,
+        "accuracy_balanceada": 0.6328450859319321,
+        "precision": 0.1211196898929241,
+        "recall": 0.773538961038961,
+        "f1": 0.20944479547265185,
+        "f1_macro": 0.4300813655597004,
+        "f1_weighted": 0.6141055266093225,
+        "roc_auc": 0.6721560478416695,
+        "pr_auc": 0.13789958644550412,
+        "tn": 26806,
+        "fp": 27661,
+        "fn": 1116,
+        "tp": 3812
       },
       "umbral_opt": {
-        "umbral": 0.5686981918639877,
-        "accuracy": 0.6920447849145551,
-        "accuracy_balanceada": 0.6146765576988235,
-        "precision": 0.13897444210298807,
-        "recall": 0.5219155844155844,
-        "f1": 0.2195007467463196,
-        "f1_macro": 0.513840352923262,
-        "f1_weighted": 0.7593372760716677,
-        "roc_auc": 0.6712127546877544,
-        "pr_auc": 0.1416416848600274,
-        "tn": 38532,
-        "fp": 15935,
-        "fn": 2356,
-        "tp": 2572
+        "umbral": 0.48692823237829325,
+        "accuracy": 0.4966242949743244,
+        "accuracy_balanceada": 0.6315980057566133,
+        "precision": 0.11924367185117414,
+        "recall": 0.7934253246753247,
+        "f1": 0.20732806617530092,
+        "f1_macro": 0.41927238122264154,
+        "f1_weighted": 0.5960466791118613,
+        "roc_auc": 0.6721560478416695,
+        "pr_auc": 0.13789958644550412,
+        "tn": 25587,
+        "fp": 28880,
+        "fn": 1018,
+        "tp": 3910
       },
-      "f1_oof": 0.21406760168673747
+      "f1_validacion": 0.19702545697861856,
+      "pr_auc_validacion": 0.12458061455538413
     },
     "Random forest": {
       "umbral_0.5": {
         "umbral": 0.5,
-        "accuracy": 0.5671016078794512,
-        "accuracy_balanceada": 0.6230538283606253,
-        "precision": 0.12328717465380991,
-        "recall": 0.690137987012987,
-        "f1": 0.20920218982592115,
-        "f1_macro": 0.4555909414519749,
-        "f1_weighted": 0.6610939697675414,
-        "roc_auc": 0.6711353367873887,
-        "pr_auc": 0.13535119739401225,
-        "tn": 30282,
-        "fp": 24185,
-        "fn": 1527,
-        "tp": 3401
+        "accuracy": 0.6433033083592895,
+        "accuracy_balanceada": 0.6148623718364915,
+        "precision": 0.13019743426439814,
+        "recall": 0.580762987012987,
+        "f1": 0.21270903010033446,
+        "f1_macro": 0.4910628302438982,
+        "f1_weighted": 0.7232266303164969,
+        "roc_auc": 0.6747259290833554,
+        "pr_auc": 0.14109942945440393,
+        "tn": 35347,
+        "fp": 19120,
+        "fn": 2066,
+        "tp": 2862
       },
       "umbral_opt": {
-        "umbral": 0.5350139166384777,
-        "accuracy": 0.6539102618065493,
-        "accuracy_balanceada": 0.611233010980794,
-        "precision": 0.13050879515793457,
-        "recall": 0.560064935064935,
-        "f1": 0.2116889093419236,
-        "f1_macro": 0.494987410427374,
-        "f1_weighted": 0.7312753882920449,
-        "roc_auc": 0.6711353367873887,
-        "pr_auc": 0.13535119739401225,
-        "tn": 36079,
-        "fp": 18388,
-        "fn": 2168,
-        "tp": 2760
+        "umbral": 0.46070075442011366,
+        "accuracy": 0.5608384544153548,
+        "accuracy_balanceada": 0.6235147256595737,
+        "precision": 0.12278011554097425,
+        "recall": 0.6986607142857143,
+        "f1": 0.20885653624507128,
+        "f1_macro": 0.4524590301826615,
+        "f1_weighted": 0.6556381521150512,
+        "roc_auc": 0.6747259290833554,
+        "pr_auc": 0.14109942945440393,
+        "tn": 29868,
+        "fp": 24599,
+        "fn": 1485,
+        "tp": 3443
       },
-      "f1_oof": 0.20803380721618706
+      "f1_validacion": 0.20274684574190335,
+      "pr_auc_validacion": 0.1260713169219185
+    },
+    "Gradient boosting": {
+      "umbral_0.5": {
+        "umbral": 0.5,
+        "accuracy": 0.5424699048741477,
+        "accuracy_balanceada": 0.631125190273677,
+        "precision": 0.12312383533796374,
+        "recall": 0.7374188311688312,
+        "f1": 0.2110153006416398,
+        "f1_macro": 0.44441715510462965,
+        "f1_weighted": 0.6390883305948569,
+        "roc_auc": 0.67636241421888,
+        "pr_auc": 0.14007849575537804,
+        "tn": 28586,
+        "fp": 25881,
+        "fn": 1294,
+        "tp": 3634
+      },
+      "umbral_opt": {
+        "umbral": 0.5479155167332748,
+        "accuracy": 0.6327300277801162,
+        "accuracy_balanceada": 0.6210016839846313,
+        "precision": 0.13079412279167396,
+        "recall": 0.606939935064935,
+        "f1": 0.21521082170096417,
+        "f1_macro": 0.48774036480349,
+        "f1_weighted": 0.7150463844306645,
+        "roc_auc": 0.67636241421888,
+        "pr_auc": 0.14007849575537804,
+        "tn": 34590,
+        "fp": 19877,
+        "fn": 1937,
+        "tp": 2991
+      },
+      "f1_validacion": 0.20475229704033793,
+      "pr_auc_validacion": 0.1359320966221036
     }
   },
+  "A_aporte_ruta": [
+    {
+      "modelo": "Regresión logística",
+      "pr_auc_val_con": 0.11960450528085334,
+      "pr_auc_val_sin": 0.11958008707855718,
+      "pr_auc_test_con": 0.12091617405718968,
+      "pr_auc_test_sin": 0.11962084550859
+    },
+    {
+      "modelo": "Árbol de decisión",
+      "pr_auc_val_con": 0.12458061455538413,
+      "pr_auc_val_sin": 0.12191040989152002,
+      "pr_auc_test_con": 0.13789958644550412,
+      "pr_auc_test_sin": 0.1326590732049226
+    },
+    {
+      "modelo": "Random forest",
+      "pr_auc_val_con": 0.1260713169219185,
+      "pr_auc_val_sin": 0.1257895157100372,
+      "pr_auc_test_con": 0.14109942945440393,
+      "pr_auc_test_sin": 0.13952809746814743
+    },
+    {
+      "modelo": "Gradient boosting",
+      "pr_auc_val_con": 0.1359320966221036,
+      "pr_auc_val_sin": 0.13666760874430434,
+      "pr_auc_test_con": 0.14007849575537804,
+      "pr_auc_test_sin": 0.14072685333352172
+    }
+  ],
+  "A_seleccion": [
+    {
+      "modelo": "Regresión logística",
+      "params": "C=0.0001",
+      "pr_auc_val": 0.11960451721176678,
+      "pr_auc_val_std": 0.0031356988678284464,
+      "roc_auc_val": 0.6492695012775012,
+      "pr_auc_train": 0.13168496382770098,
+      "f1_val": 0.20047499611568598
+    },
+    {
+      "modelo": "Árbol de decisión",
+      "params": "criterion=gini · max_depth=12 · min_samples_leaf=500",
+      "pr_auc_val": 0.12458061455538413,
+      "pr_auc_val_std": 0.013796478127211999,
+      "roc_auc_val": 0.6373781459937372,
+      "pr_auc_train": 0.1593242098926546,
+      "f1_val": 0.19702545697861856
+    },
+    {
+      "modelo": "Random forest",
+      "params": "max_depth=16 · min_samples_leaf=10",
+      "pr_auc_val": 0.1260713169219185,
+      "pr_auc_val_std": 0.005836903096604035,
+      "roc_auc_val": 0.6543991501836779,
+      "pr_auc_train": 0.4377708321688721,
+      "f1_val": 0.20274684574190335
+    },
+    {
+      "modelo": "Gradient boosting",
+      "params": "learning_rate=0.05 · max_leaf_nodes=15",
+      "pr_auc_val": 0.1359320966221036,
+      "pr_auc_val_std": 0.011715194103755962,
+      "roc_auc_val": 0.6589250370518321,
+      "pr_auc_train": 0.24036573259729999,
+      "f1_val": 0.20475229704033793
+    }
+  ],
   "A_reporte": [
     {
       "modelo": "Regresión logística",
       "clase": "0",
-      "precision": 0.948988104433802,
-      "recall": 0.5639010777167827,
-      "f1": 0.7074350469872858,
+      "precision": 0.9492724143326553,
+      "recall": 0.5569243762278077,
+      "f1": 0.7019971766448359,
       "soporte": 54467
     },
     {
       "modelo": "Regresión logística",
       "clase": "1",
-      "precision": 0.12123566407695154,
-      "recall": 0.6649756493506493,
-      "f1": 0.20508166969147004,
+      "precision": 0.12051749271137026,
+      "recall": 0.6710633116883117,
+      "f1": 0.20433761739990114,
       "soporte": 4928
     },
     {
       "modelo": "Regresión logística",
       "clase": "macro avg",
-      "precision": 0.5351118842553768,
-      "recall": 0.6144383635337161,
-      "f1": 0.4562583583393779,
+      "precision": 0.5348949535220128,
+      "recall": 0.6139938439580597,
+      "f1": 0.4531673970223685,
       "soporte": 59395
     },
     {
       "modelo": "Regresión logística",
       "clase": "weighted avg",
-      "precision": 0.8803095283570521,
-      "recall": 0.5722872295647782,
-      "f1": 0.6657548139152464,
+      "precision": 0.8805106624385617,
+      "recall": 0.5663944776496338,
+      "f1": 0.6607063894075426,
       "soporte": 59395
     },
     {
       "modelo": "Árbol de decisión",
       "clase": "0",
-      "precision": 0.9423791821561338,
-      "recall": 0.7074375309820625,
-      "f1": 0.8081799591002045,
+      "precision": 0.961736515692539,
+      "recall": 0.46977068683790185,
+      "f1": 0.6312166962699822,
       "soporte": 54467
     },
     {
       "modelo": "Árbol de decisión",
       "clase": "1",
-      "precision": 0.13897444210298807,
-      "recall": 0.5219155844155844,
-      "f1": 0.2195007467463196,
+      "precision": 0.11924367185117414,
+      "recall": 0.7934253246753247,
+      "f1": 0.20732806617530092,
       "soporte": 4928
     },
     {
       "modelo": "Árbol de decisión",
       "clase": "macro avg",
-      "precision": 0.540676812129561,
-      "recall": 0.6146765576988235,
-      "f1": 0.513840352923262,
+      "precision": 0.5404900937718566,
+      "recall": 0.6315980057566133,
+      "f1": 0.41927238122264154,
       "soporte": 59395
     },
     {
       "modelo": "Árbol de decisión",
       "clase": "weighted avg",
-      "precision": 0.8757207334823076,
-      "recall": 0.6920447849145551,
-      "f1": 0.7593372760716677,
+      "precision": 0.8918349291204328,
+      "recall": 0.4966242949743244,
+      "f1": 0.5960466791118613,
       "soporte": 59395
     },
     {
       "modelo": "Random forest",
       "clase": "0",
-      "precision": 0.9433158156195257,
-      "recall": 0.662401086896653,
-      "f1": 0.7782859115128243,
+      "precision": 0.9526361113769017,
+      "recall": 0.5483687370334331,
+      "f1": 0.6960615241202517,
       "soporte": 54467
     },
     {
       "modelo": "Random forest",
       "clase": "1",
-      "precision": 0.13050879515793457,
-      "recall": 0.560064935064935,
-      "f1": 0.2116889093419236,
+      "precision": 0.12278011554097425,
+      "recall": 0.6986607142857143,
+      "f1": 0.20885653624507128,
       "soporte": 4928
     },
     {
       "modelo": "Random forest",
       "clase": "macro avg",
-      "precision": 0.5369123053887301,
-      "recall": 0.611233010980794,
-      "f1": 0.494987410427374,
+      "precision": 0.537708113458938,
+      "recall": 0.6235147256595737,
+      "f1": 0.4524590301826615,
       "soporte": 59395
     },
     {
       "modelo": "Random forest",
       "clase": "weighted avg",
-      "precision": 0.8758772602388586,
-      "recall": 0.6539102618065493,
-      "f1": 0.7312753882920449,
+      "precision": 0.8837830034136145,
+      "recall": 0.5608384544153548,
+      "f1": 0.6556381521150512,
+      "soporte": 59395
+    },
+    {
+      "modelo": "Gradient boosting",
+      "clase": "0",
+      "precision": 0.9469707339776056,
+      "recall": 0.6350634329043274,
+      "f1": 0.7602699079060158,
+      "soporte": 54467
+    },
+    {
+      "modelo": "Gradient boosting",
+      "clase": "1",
+      "precision": 0.13079412279167396,
+      "recall": 0.606939935064935,
+      "f1": 0.21521082170096417,
+      "soporte": 4928
+    },
+    {
+      "modelo": "Gradient boosting",
+      "clase": "macro avg",
+      "precision": 0.5388824283846397,
+      "recall": 0.6210016839846313,
+      "f1": 0.48774036480349,
+      "soporte": 59395
+    },
+    {
+      "modelo": "Gradient boosting",
+      "clase": "weighted avg",
+      "precision": 0.8792526038332454,
+      "recall": 0.6327300277801162,
+      "f1": 0.7150463844306645,
       "soporte": 59395
     }
   ],
   "A_importancia": {
-    "base_pr_auc": 0.13535119739401225,
+    "modelo": "Gradient boosting",
+    "base_pr_auc": 0.14007849575537804,
     "grupos": [
       {
-        "grupo": "Zona de origen",
-        "caida": 0.03424824205996117,
-        "desvio": 0.0019056522298134737
+        "grupo": "Ruta (tasa histórica)",
+        "caida": 0.04741008306409736,
+        "desvio": 0.0014334400182720003
       },
       {
         "grupo": "Distancia",
-        "caida": 0.018346810503669236,
-        "desvio": 0.0005873858367545781
+        "caida": 0.02543233588967023,
+        "desvio": 0.0005245647389390994
       },
       {
         "grupo": "Zona de destino",
-        "caida": 0.007870166240563628,
-        "desvio": 0.0005877521832954565
+        "caida": 0.00835627135213086,
+        "desvio": 0.0013769102218547037
       },
       {
         "grupo": "Clima",
-        "caida": 0.00416261689351452,
-        "desvio": 0.0006486231078791273
+        "caida": 0.00214966307209243,
+        "desvio": 0.0009352255483654142
       },
       {
-        "grupo": "Hora y día",
-        "caida": 0.0005790909544129327,
-        "desvio": 0.00039819831977182057
+        "grupo": "Zona de origen",
+        "caida": 0.0004262201063380174,
+        "desvio": 0.0006671882773583708
       },
       {
         "grupo": "Producto",
-        "caida": 1.5427107535492812e-05,
-        "desvio": 2.9227410700565495e-05
+        "caida": 0.0,
+        "desvio": 0.0
+      },
+      {
+        "grupo": "Hora y día",
+        "caida": -0.0004900901888308292,
+        "desvio": 0.0002801185524984432
       }
     ]
   },
   "A_odds": [
     {
-      "variable": "source_North_End",
-      "coef_estandarizado": -0.3462923536337158,
-      "odds_ratio": 0.28640074261597565,
-      "tipo": "0 → 1"
-    },
-    {
-      "variable": "source_Haymarket_Square",
-      "coef_estandarizado": -0.34456102992003845,
-      "odds_ratio": 0.2859538863730746,
-      "tipo": "0 → 1"
-    },
-    {
-      "variable": "source_Northeastern_University",
-      "coef_estandarizado": 0.20047566605870928,
-      "odds_ratio": 2.066734446200202,
-      "tipo": "0 → 1"
-    },
-    {
-      "variable": "source_Fenway",
-      "coef_estandarizado": 0.19534159665983028,
-      "odds_ratio": 2.03062629244909,
-      "tipo": "0 → 1"
-    },
-    {
-      "variable": "source_Back_Bay",
-      "coef_estandarizado": 0.19043345892685995,
-      "odds_ratio": 1.9994884541842493,
-      "tipo": "0 → 1"
-    },
-    {
-      "variable": "source_Boston_University",
-      "coef_estandarizado": 0.1763260483497168,
-      "odds_ratio": 1.8932361921668561,
-      "tipo": "0 → 1"
-    },
-    {
-      "variable": "source_North_Station",
-      "coef_estandarizado": -0.15710682931408507,
-      "odds_ratio": 0.5660822255152983,
-      "tipo": "0 → 1"
-    },
-    {
-      "variable": "source_West_End",
-      "coef_estandarizado": -0.14630812494777137,
-      "odds_ratio": 0.5878946526719351,
-      "tipo": "0 → 1"
-    },
-    {
-      "variable": "source_Theatre_District",
-      "coef_estandarizado": 0.13087797575919835,
-      "odds_ratio": 1.606310770838267,
-      "tipo": "0 → 1"
-    },
-    {
-      "variable": "short_summary_Rain",
-      "coef_estandarizado": -0.08757815714754433,
-      "odds_ratio": 0.6284082968948236,
-      "tipo": "0 → 1"
-    },
-    {
-      "variable": "precipIntensity",
-      "coef_estandarizado": 0.08420338396517989,
-      "odds_ratio": 1.0878501225823232,
+      "variable": "ruta",
+      "coef_estandarizado": 0.2896373623095517,
+      "odds_ratio": 1.3359429369113216,
       "tipo": "+1 desvío"
     },
     {
-      "variable": "source_Beacon_Hill",
-      "coef_estandarizado": 0.07727052397540278,
-      "odds_ratio": 1.3225559949937902,
-      "tipo": "0 → 1"
+      "variable": "source_North_End",
+      "coef_estandarizado": -0.18093205411484287,
+      "odds_ratio": 0.5203288751173661,
+      "tipo": "vs South Station"
     },
     {
-      "variable": "straight_line_miles",
-      "coef_estandarizado": -0.06649204926004824,
-      "odds_ratio": 0.935670355098431,
+      "variable": "source_Haymarket_Square",
+      "coef_estandarizado": -0.17886256793940647,
+      "odds_ratio": 0.52210971743836,
+      "tipo": "vs South Station"
+    },
+    {
+      "variable": "source_North_Station",
+      "coef_estandarizado": -0.07690204516154703,
+      "odds_ratio": 0.7568978533784528,
+      "tipo": "vs South Station"
+    },
+    {
+      "variable": "source_Back_Bay",
+      "coef_estandarizado": 0.07070309878253024,
+      "odds_ratio": 1.293372231941578,
+      "tipo": "vs South Station"
+    },
+    {
+      "variable": "source_West_End",
+      "coef_estandarizado": -0.0687204788989821,
+      "odds_ratio": 0.7791851828042784,
+      "tipo": "vs South Station"
+    },
+    {
+      "variable": "source_Fenway",
+      "coef_estandarizado": 0.06557814881770507,
+      "odds_ratio": 1.2684533586129432,
+      "tipo": "vs South Station"
+    },
+    {
+      "variable": "source_Northeastern_University",
+      "coef_estandarizado": 0.06513101046282246,
+      "odds_ratio": 1.2659904653852447,
+      "tipo": "vs South Station"
+    },
+    {
+      "variable": "source_Boston_University",
+      "coef_estandarizado": 0.05771256826970841,
+      "odds_ratio": 1.232340681029301,
+      "tipo": "vs South Station"
+    },
+    {
+      "variable": "source_Theatre_District",
+      "coef_estandarizado": 0.056989061915732324,
+      "odds_ratio": 1.2292089976100655,
+      "tipo": "vs South Station"
+    },
+    {
+      "variable": "source_Beacon_Hill",
+      "coef_estandarizado": 0.03924124345708175,
+      "odds_ratio": 1.1525484851274277,
+      "tipo": "vs South Station"
+    },
+    {
+      "variable": "short_summary_Foggy",
+      "coef_estandarizado": 0.02052375119866192,
+      "odds_ratio": 1.1721308667439914,
+      "tipo": "vs Clear"
+    },
+    {
+      "variable": "short_summary_Rain",
+      "coef_estandarizado": -0.019953898290596364,
+      "odds_ratio": 0.8995622609033301,
+      "tipo": "vs Clear"
+    },
+    {
+      "variable": "short_summary_Overcast",
+      "coef_estandarizado": -0.019209369218864642,
+      "odds_ratio": 0.9579801990987356,
+      "tipo": "vs Clear"
+    },
+    {
+      "variable": "distance",
+      "coef_estandarizado": 0.01777625486450523,
+      "odds_ratio": 1.0179351928603642,
+      "tipo": "+1 desvío"
+    },
+    {
+      "variable": "is_rush_hour",
+      "coef_estandarizado": 0.01655008941715029,
+      "odds_ratio": 1.0383168175343056,
+      "tipo": "sí vs no"
+    },
+    {
+      "variable": "hour_cos",
+      "coef_estandarizado": 0.01634282336420948,
+      "odds_ratio": 1.016477097779034,
+      "tipo": "+1 desvío"
+    },
+    {
+      "variable": "windSpeed",
+      "coef_estandarizado": 0.01417142979479742,
+      "odds_ratio": 1.0142723205313153,
       "tipo": "+1 desvío"
     },
     {
       "variable": "short_summary_Light_Rain",
-      "coef_estandarizado": -0.06367927594985956,
-      "odds_ratio": 0.7963345392114358,
-      "tipo": "0 → 1"
+      "coef_estandarizado": -0.012681151728181343,
+      "odds_ratio": 0.9556614643200223,
+      "tipo": "vs Clear"
     },
     {
-      "variable": "short_summary_Clear",
-      "coef_estandarizado": 0.06088031658643962,
-      "odds_ratio": 1.1958393453021758,
-      "tipo": "0 → 1"
+      "variable": "precipIntensity",
+      "coef_estandarizado": 0.01250044247358478,
+      "odds_ratio": 1.0125788995799507,
+      "tipo": "+1 desvío"
+    },
+    {
+      "variable": "time_slot_Tarde",
+      "coef_estandarizado": 0.011662686600129462,
+      "odds_ratio": 1.027122663116559,
+      "tipo": "vs Mañana"
+    },
+    {
+      "variable": "time_slot_Madrugada",
+      "coef_estandarizado": -0.0116482355201618,
+      "odds_ratio": 0.9721674072036877,
+      "tipo": "vs Mañana"
+    },
+    {
+      "variable": "pressure",
+      "coef_estandarizado": -0.011627904382134804,
+      "odds_ratio": 0.9884394384267159,
+      "tipo": "+1 desvío"
+    },
+    {
+      "variable": "cloudCover",
+      "coef_estandarizado": -0.01147757096043761,
+      "odds_ratio": 0.9885880450796284,
+      "tipo": "+1 desvío"
+    },
+    {
+      "variable": "straight_line_miles",
+      "coef_estandarizado": 0.011342848425531913,
+      "odds_ratio": 1.0114074224509064,
+      "tipo": "+1 desvío"
+    },
+    {
+      "variable": "destination_Beacon_Hill",
+      "coef_estandarizado": -0.011166603476901765,
+      "odds_ratio": 0.9604225441935885,
+      "tipo": "vs South Station"
+    },
+    {
+      "variable": "is_raining",
+      "coef_estandarizado": -0.010602039321170795,
+      "odds_ratio": 0.9734121543659192,
+      "tipo": "sí vs no"
+    },
+    {
+      "variable": "is_dark",
+      "coef_estandarizado": -0.01008197276284532,
+      "odds_ratio": 0.979591199534091,
+      "tipo": "sí vs no"
+    },
+    {
+      "variable": "temperature",
+      "coef_estandarizado": -0.009846757575773296,
+      "odds_ratio": 0.9902015630111801,
+      "tipo": "+1 desvío"
+    },
+    {
+      "variable": "destination_North_End",
+      "coef_estandarizado": 0.009772408651878471,
+      "odds_ratio": 1.0360524479106588,
+      "tipo": "vs South Station"
+    },
+    {
+      "variable": "short_summary_Possible_Drizzle",
+      "coef_estandarizado": -0.009419009947264167,
+      "odds_ratio": 0.9402387527506075,
+      "tipo": "vs Clear"
+    },
+    {
+      "variable": "short_summary_Mostly_Cloudy",
+      "coef_estandarizado": 0.009393341846846773,
+      "odds_ratio": 1.02260405722743,
+      "tipo": "vs Clear"
+    },
+    {
+      "variable": "destination_North_Station",
+      "coef_estandarizado": -0.009383812579380205,
+      "odds_ratio": 0.9664128855955845,
+      "tipo": "vs South Station"
+    },
+    {
+      "variable": "visibility",
+      "coef_estandarizado": -0.009264870685589371,
+      "odds_ratio": 0.9907779159891945,
+      "tipo": "+1 desvío"
+    },
+    {
+      "variable": "short_summary_Partly_Cloudy",
+      "coef_estandarizado": -0.009091591949306359,
+      "odds_ratio": 0.9772577463263913,
+      "tipo": "vs Clear"
+    },
+    {
+      "variable": "humidity",
+      "coef_estandarizado": 0.00901223265287871,
+      "odds_ratio": 1.00905296509303,
+      "tipo": "+1 desvío"
+    },
+    {
+      "variable": "day_of_week",
+      "coef_estandarizado": 0.007407412906214615,
+      "odds_ratio": 1.0074349156553297,
+      "tipo": "+1 desvío"
+    },
+    {
+      "variable": "time_slot_Noche",
+      "coef_estandarizado": 0.006577734204854432,
+      "odds_ratio": 1.0149348381597867,
+      "tipo": "vs Mañana"
+    },
+    {
+      "variable": "short_summary_Drizzle",
+      "coef_estandarizado": -0.006556180302648315,
+      "odds_ratio": 0.890483524638284,
+      "tipo": "vs Clear"
+    },
+    {
+      "variable": "is_weekend",
+      "coef_estandarizado": 0.005716419118804367,
+      "odds_ratio": 1.0150427704773926,
+      "tipo": "sí vs no"
+    },
+    {
+      "variable": "destination_Fenway",
+      "coef_estandarizado": -0.005145796741278327,
+      "odds_ratio": 0.981474952384969,
+      "tipo": "vs South Station"
+    },
+    {
+      "variable": "destination_Boston_University",
+      "coef_estandarizado": 0.0049372439244254026,
+      "odds_ratio": 1.017966828318573,
+      "tipo": "vs South Station"
+    },
+    {
+      "variable": "destination_Haymarket_Square",
+      "coef_estandarizado": 0.00465162933305247,
+      "odds_ratio": 1.0169973350678798,
+      "tipo": "vs South Station"
+    },
+    {
+      "variable": "hour_sin",
+      "coef_estandarizado": 0.00309242223638955,
+      "odds_ratio": 1.003097208706691,
+      "tipo": "+1 desvío"
+    },
+    {
+      "variable": "destination_Back_Bay",
+      "coef_estandarizado": -0.002318858482802059,
+      "odds_ratio": 0.9916044474250855,
+      "tipo": "vs South Station"
+    },
+    {
+      "variable": "name_Lux",
+      "coef_estandarizado": 0.0023074834591225667,
+      "odds_ratio": 1.0057785690431018,
+      "tipo": "vs Lyft"
+    },
+    {
+      "variable": "destination_West_End",
+      "coef_estandarizado": -0.001994436397603133,
+      "odds_ratio": 0.9928100633745649,
+      "tipo": "vs South Station"
+    },
+    {
+      "variable": "destination_Theatre_District",
+      "coef_estandarizado": 0.001936345231652608,
+      "odds_ratio": 1.0070496065076664,
+      "tipo": "vs South Station"
+    },
+    {
+      "variable": "destination_Northeastern_University",
+      "coef_estandarizado": -0.0017176362996170341,
+      "odds_ratio": 0.9938355820027035,
+      "tipo": "vs South Station"
+    },
+    {
+      "variable": "name_Lux_Black_XL",
+      "coef_estandarizado": -0.0016763838184663466,
+      "odds_ratio": 0.995819377419612,
+      "tipo": "vs Lyft"
+    },
+    {
+      "variable": "hour_local",
+      "coef_estandarizado": 0.0011781585072996033,
+      "odds_ratio": 1.0011788528086727,
+      "tipo": "+1 desvío"
+    },
+    {
+      "variable": "source_Financial_District",
+      "coef_estandarizado": 0.0010903641378158745,
+      "odds_ratio": 1.0038981378255372,
+      "tipo": "vs South Station"
+    },
+    {
+      "variable": "name_Lyft_XL",
+      "coef_estandarizado": 0.0007380651651986781,
+      "odds_ratio": 1.0018501352295603,
+      "tipo": "vs Lyft"
+    },
+    {
+      "variable": "destination_Financial_District",
+      "coef_estandarizado": 0.0005723719504346072,
+      "odds_ratio": 1.0020528416141268,
+      "tipo": "vs South Station"
+    },
+    {
+      "variable": "name_Lux_Black",
+      "coef_estandarizado": -4.722136386253457e-05,
+      "odds_ratio": 0.9998819145680856,
+      "tipo": "vs Lyft"
     }
   ],
   "A_deciles": [
     {
       "decil": 1,
-      "tasa": 0.15521885521885523,
-      "positivos": 922,
-      "captura_acum": 0.18709415584415584,
-      "lift": 1.8707840717783901
+      "tasa": 0.15673400673400673,
+      "positivos": 931,
+      "captura_acum": 0.18892045454545456,
+      "lift": 1.8890455215029078
     },
     {
       "decil": 2,
-      "tasa": 0.13099848459336588,
-      "positivos": 778,
-      "captura_acum": 0.3449675324675325,
-      "lift": 1.578866678657258
+      "tasa": 0.13301902677218386,
+      "positivos": 790,
+      "captura_acum": 0.3492288961038961,
+      "lift": 1.6032193780709945
     },
     {
       "decil": 3,
       "tasa": 0.11582491582491583,
       "positivos": 688,
-      "captura_acum": 0.48457792207792205,
+      "captura_acum": 0.4888392857142857,
       "lift": 1.3959863789409246
     },
     {
       "decil": 4,
-      "tasa": 0.11180333389459506,
-      "positivos": 664,
-      "captura_acum": 0.6193181818181818,
-      "lift": 1.34751603422676
+      "tasa": 0.11584441825223102,
+      "positivos": 688,
+      "captura_acum": 0.6284496753246753,
+      "lift": 1.3962214330542333
     },
     {
       "decil": 5,
-      "tasa": 0.09242424242424242,
-      "positivos": 549,
-      "captura_acum": 0.7307224025974026,
-      "lift": 1.1139484331955924
+      "tasa": 0.09410774410774411,
+      "positivos": 559,
+      "captura_acum": 0.7418831168831169,
+      "lift": 1.1342389328895013
     },
     {
       "decil": 6,
-      "tasa": 0.08839872032328674,
-      "positivos": 525,
-      "captura_acum": 0.8372564935064936,
-      "lift": 1.0654305993509774
+      "tasa": 0.0823370937868328,
+      "positivos": 489,
+      "captura_acum": 0.841112012987013,
+      "lift": 0.9923725011097675
     },
     {
       "decil": 7,
-      "tasa": 0.05539653140259303,
-      "positivos": 329,
-      "captura_acum": 0.9040178571428571,
-      "lift": 0.6676698422599459
+      "tasa": 0.05169220407476006,
+      "positivos": 307,
+      "captura_acum": 0.9034090909090909,
+      "lift": 0.6230232266680954
     },
     {
       "decil": 8,
-      "tasa": 0.040067340067340064,
-      "positivos": 238,
-      "captura_acum": 0.9523133116883117,
-      "lift": 0.48291389271502905
+      "tasa": 0.04663299663299663,
+      "positivos": 277,
+      "captura_acum": 0.9596185064935064,
+      "lift": 0.5620468415212734
     },
     {
       "decil": 9,
-      "tasa": 0.02929786159286075,
-      "positivos": 174,
-      "captura_acum": 0.9876217532467533,
-      "lift": 0.3531141414991811
+      "tasa": 0.02256272099680081,
+      "positivos": 134,
+      "captura_acum": 0.986810064935065,
+      "lift": 0.27193847678672567
     },
     {
       "decil": 10,
-      "tasa": 0.01026936026936027,
-      "positivos": 61,
+      "tasa": 0.010942760942760943,
+      "positivos": 65,
       "captura_acum": 1.0,
-      "lift": 0.1237720481328436
+      "lift": 0.1318882480104071
     }
   ],
   "A_particion": [
     {
       "modelo": "Árbol de decisión",
-      "roc_auc_aleatoria": 0.7064427022661065,
-      "pr_auc_aleatoria": 0.16318131582565853,
-      "roc_auc_temporal": 0.6712127546877544,
-      "pr_auc_temporal": 0.1416416848600274
+      "roc_auc_aleatoria": 0.7003641382985416,
+      "pr_auc_aleatoria": 0.15263867051211844,
+      "roc_auc_temporal": 0.6721560478416695,
+      "pr_auc_temporal": 0.13789958644550412
     },
     {
       "modelo": "Random forest",
-      "roc_auc_aleatoria": 0.7404853093296027,
-      "pr_auc_aleatoria": 0.2018910974876321,
-      "roc_auc_temporal": 0.6711353367873887,
-      "pr_auc_temporal": 0.13535119739401225
+      "roc_auc_aleatoria": 0.7914658348643724,
+      "pr_auc_aleatoria": 0.26432487144206906,
+      "roc_auc_temporal": 0.6747259290833554,
+      "pr_auc_temporal": 0.14109942945440393
+    },
+    {
+      "modelo": "Gradient boosting",
+      "roc_auc_aleatoria": 0.7115269365151676,
+      "pr_auc_aleatoria": 0.17210057616656646,
+      "roc_auc_temporal": 0.67636241421888,
+      "pr_auc_temporal": 0.14007849575537804
     }
   ],
   "B_datos": {
@@ -758,34 +1556,137 @@
   },
   "B_tuning": {
     "Ridge": {
-      "params": {
-        "alpha": 10
+      "sin surge": {
+        "params": {
+          "alpha": 1000
+        },
+        "rmse_log_cv": 0.15316792640271892,
+        "rmse_log_train": 0.15261324435517423,
+        "combinaciones": 6,
+        "filas_busqueda": 488074
       },
-      "rmse_log_cv": 0.13704611367891628,
-      "rmse_log_train": 0.13698009285177534,
-      "combinaciones": 6,
-      "filas_busqueda": 488074
+      "con surge": {
+        "params": {
+          "alpha": 1000
+        },
+        "rmse_log_cv": 0.13800578757484458,
+        "rmse_log_train": 0.13798414626721278,
+        "combinaciones": 6,
+        "filas_busqueda": 488074
+      }
     },
     "Árbol de decisión": {
-      "params": {
-        "max_depth": 18,
-        "min_samples_leaf": 20
+      "sin surge": {
+        "params": {
+          "max_depth": 24,
+          "min_samples_leaf": 100
+        },
+        "rmse_log_cv": 0.14498421942177045,
+        "rmse_log_train": 0.1406080371534264,
+        "combinaciones": 15,
+        "filas_busqueda": 150000
       },
-      "rmse_log_cv": 0.12964909604577818,
-      "rmse_log_train": 0.1170805302108437,
-      "combinaciones": 15,
-      "filas_busqueda": 150000
+      "con surge": {
+        "params": {
+          "max_depth": 18,
+          "min_samples_leaf": 20
+        },
+        "rmse_log_cv": 0.1342547811997059,
+        "rmse_log_train": 0.1200146127495566,
+        "combinaciones": 15,
+        "filas_busqueda": 150000
+      }
     },
     "Random forest": {
-      "params": {
-        "max_depth": 24,
-        "min_samples_leaf": 5
+      "sin surge": {
+        "params": {
+          "max_depth": 24,
+          "min_samples_leaf": 20
+        },
+        "rmse_log_cv": 0.14187757103633045,
+        "rmse_log_train": 0.13107317126032286,
+        "combinaciones": 4,
+        "filas_busqueda": 150000
       },
-      "rmse_log_cv": 0.12425673168467548,
-      "rmse_log_train": 0.09765976776236694,
-      "combinaciones": 9,
-      "filas_busqueda": 150000
+      "con surge": {
+        "params": {
+          "max_depth": 16,
+          "min_samples_leaf": 5
+        },
+        "rmse_log_cv": 0.12694737767940897,
+        "rmse_log_train": 0.10873024249352461,
+        "combinaciones": 4,
+        "filas_busqueda": 150000
+      }
     }
+  },
+  "B_pruebas": {
+    "Ridge": [
+      {
+        "rol": "Elegida (mejor en validación)",
+        "params": "alpha=1000",
+        "validacion": 0.1380057875748445,
+        "entrenamiento": 0.1379841462672127
+      },
+      {
+        "rol": "Segunda mejor",
+        "params": "alpha=100",
+        "validacion": 0.1394199714110445,
+        "entrenamiento": 0.1372448854854089
+      },
+      {
+        "rol": "Más compleja",
+        "params": "alpha=0.01",
+        "validacion": 0.1496946669814543,
+        "entrenamiento": 0.1372316418752631
+      }
+    ],
+    "Árbol de decisión": [
+      {
+        "rol": "Elegida (mejor en validación)",
+        "params": "max_depth=18 · min_samples_leaf=20",
+        "validacion": 0.1342547811997059,
+        "entrenamiento": 0.1200146127495566
+      },
+      {
+        "rol": "Segunda mejor",
+        "params": "max_depth=14 · min_samples_leaf=20",
+        "validacion": 0.1349424152071758,
+        "entrenamiento": 0.1243638536561399
+      },
+      {
+        "rol": "Más simple",
+        "params": "max_depth=6 · min_samples_leaf=100",
+        "validacion": 0.2654215141178052,
+        "entrenamiento": 0.2652604200372447
+      },
+      {
+        "rol": "Más compleja",
+        "params": "max_depth=24 · min_samples_leaf=5",
+        "validacion": 0.1473610726469645,
+        "entrenamiento": 0.0987870873234147
+      }
+    ],
+    "Random forest": [
+      {
+        "rol": "Elegida (mejor en validación)",
+        "params": "max_depth=16 · min_samples_leaf=5",
+        "validacion": 0.1269473776794089,
+        "entrenamiento": 0.1087302424935246
+      },
+      {
+        "rol": "Segunda mejor",
+        "params": "max_depth=24 · min_samples_leaf=5",
+        "validacion": 0.1270811683737898,
+        "entrenamiento": 0.1000162773773296
+      },
+      {
+        "rol": "Más simple",
+        "params": "max_depth=16 · min_samples_leaf=20",
+        "validacion": 0.1294637765815665,
+        "entrenamiento": 0.1216114719181853
+      }
+    ]
   },
   "B_regresion": [
     {
@@ -796,37 +1697,41 @@
       "r2": 0.7582638204505873,
       "r2_log": 0.7942258941809544,
       "mape": 0.19796434359231424,
-      "dentro_10pct": 0.34128651662693443
+      "dentro_10pct": 0.34128651662693443,
+      "rmse_log_validacion": null
     },
     {
       "modelo": "Ridge",
       "variante": "sin surge",
-      "mae": 1.6172145535621598,
-      "rmse": 2.803814024392379,
-      "r2": 0.9099600879880908,
-      "r2_log": 0.9282772411073826,
-      "mape": 0.1041169152020431,
-      "dentro_10pct": 0.6212910959365362
+      "mae": 1.615431924375958,
+      "rmse": 2.802699341745596,
+      "r2": 0.9100316661854001,
+      "r2_log": 0.9282344524931071,
+      "mape": 0.10419463960986526,
+      "dentro_10pct": 0.6196479319029725,
+      "rmse_log_validacion": 0.15316792640271892
     },
     {
       "modelo": "Ridge",
       "variante": "con surge",
-      "mae": 1.3895775859654966,
-      "rmse": 2.0616901596156487,
-      "r2": 0.951316314226894,
-      "r2_log": 0.9416434264635439,
-      "mape": 0.09577250591425825,
-      "dentro_10pct": 0.6567874796288066
+      "mae": 1.3895997170621235,
+      "rmse": 2.058936307917456,
+      "r2": 0.9514462834284634,
+      "r2_log": 0.941603256133059,
+      "mape": 0.09594164100134463,
+      "dentro_10pct": 0.6547941330962868,
+      "rmse_log_validacion": 0.13800578757484458
     },
     {
       "modelo": "Árbol de decisión",
       "variante": "sin surge",
-      "mae": 1.3849336354931097,
-      "rmse": 2.583383840758755,
-      "r2": 0.9235610818275043,
-      "r2_log": 0.9362771023436075,
-      "mape": 0.09094807386764049,
-      "dentro_10pct": 0.6975635379207241
+      "mae": 1.3524210590557137,
+      "rmse": 2.5303326047408996,
+      "r2": 0.9266682789363199,
+      "r2_log": 0.9389295685674806,
+      "mape": 0.08918395919872614,
+      "dentro_10pct": 0.7092879173569302,
+      "rmse_log_validacion": 0.14498421942177045
     },
     {
       "modelo": "Árbol de decisión",
@@ -836,27 +1741,30 @@
       "r2": 0.9656146209517646,
       "r2_log": 0.9499009706655273,
       "mape": 0.07958667637763964,
-      "dentro_10pct": 0.7357603674222527
+      "dentro_10pct": 0.7357603674222527,
+      "rmse_log_validacion": 0.1342547811997059
     },
     {
       "modelo": "Random forest",
       "variante": "sin surge",
-      "mae": 1.3337110165835109,
-      "rmse": 2.499580856023526,
-      "r2": 0.9284398842934503,
-      "r2_log": 0.940765506775664,
-      "mape": 0.08795615567719416,
-      "dentro_10pct": 0.7109984241787547
+      "mae": 1.3206453091142656,
+      "rmse": 2.4993383416681847,
+      "r2": 0.9284537694321604,
+      "r2_log": 0.94097005316889,
+      "mape": 0.0871382037871229,
+      "dentro_10pct": 0.7175172060824007,
+      "rmse_log_validacion": 0.14187757103633045
     },
     {
       "modelo": "Random forest",
       "variante": "con surge",
-      "mae": 1.0519538499958834,
-      "rmse": 1.671558128045437,
-      "r2": 0.9679978157078006,
-      "r2_log": 0.9536566454836087,
-      "mape": 0.07697925473845676,
-      "dentro_10pct": 0.7556264899591902
+      "mae": 1.0776539451022662,
+      "rmse": 1.6956458753119696,
+      "r2": 0.9670688444666662,
+      "r2_log": 0.9529454245071863,
+      "mape": 0.07849849978076931,
+      "dentro_10pct": 0.7495589047368917,
+      "rmse_log_validacion": 0.12694737767940897
     }
   ],
   "B_mejor": {
@@ -866,263 +1774,272 @@
   "B_por_producto": [
     {
       "producto": "Shared",
-      "mae": 1.1484264268106605,
+      "mae": 1.139072358992345,
       "precio_medio": 6.0130282278269584,
-      "mae_rel": 0.19098969492542847
+      "mae_rel": 0.18943406148019917
     },
     {
       "producto": "UberPool",
-      "mae": 0.929256678641726,
+      "mae": 0.9228970365483548,
       "precio_medio": 8.772288781702194,
-      "mae_rel": 0.10593092655362983
+      "mae_rel": 0.1052059570215464
     },
     {
       "producto": "Lyft",
-      "mae": 0.5237692106317418,
+      "mae": 0.539210915997902,
       "precio_medio": 9.604499703966844,
-      "mae_rel": 0.05453373176901811
+      "mae_rel": 0.05614148915796181
     },
     {
       "producto": "WAV",
-      "mae": 0.9347685126353003,
+      "mae": 0.9315013989897963,
       "precio_medio": 9.759608638029157,
-      "mae_rel": 0.09577930297254893
+      "mae_rel": 0.09544454429864337
     },
     {
       "producto": "UberX",
-      "mae": 0.9437325924232668,
+      "mae": 0.9444350375858899,
       "precio_medio": 9.788625701761132,
-      "mae_rel": 0.09641114301198318
+      "mae_rel": 0.09648290437910714
     },
     {
       "producto": "Lyft XL",
-      "mae": 0.8668742919795261,
+      "mae": 1.038521247330205,
       "precio_medio": 15.286508463325589,
-      "mae_rel": 0.056708455960317906
+      "mae_rel": 0.06793711263901489
     },
     {
       "producto": "UberXL",
-      "mae": 1.5240441672663896,
+      "mae": 1.515371924797419,
       "precio_medio": 15.735753927929336,
-      "mae_rel": 0.0968523131618987
+      "mae_rel": 0.09630119610016209
     },
     {
       "producto": "Lux",
-      "mae": 0.8762402597707695,
+      "mae": 1.0085811941927483,
       "precio_medio": 17.813159237836,
-      "mae_rel": 0.049190615099290944
+      "mae_rel": 0.056620006632539036
     },
     {
       "producto": "Black",
-      "mae": 1.1997127161532752,
+      "mae": 1.2049723021330077,
       "precio_medio": 20.591592296852983,
-      "mae_rel": 0.05826226057984975
+      "mae_rel": 0.058517684536574854
     },
     {
       "producto": "Lux Black",
-      "mae": 0.9663898500934709,
+      "mae": 0.9900644623003263,
       "precio_medio": 23.07424204249601,
-      "mae_rel": 0.04188175924971504
+      "mae_rel": 0.042907778313017474
     },
     {
       "producto": "Black SUV",
-      "mae": 1.342812051016755,
+      "mae": 1.3392759772666902,
       "precio_medio": 30.39700170887059,
-      "mae_rel": 0.04417580601789713
+      "mae_rel": 0.0440594763290702
     },
     {
       "producto": "Lux Black XL",
-      "mae": 1.3235822394036743,
+      "mae": 1.3272228889397835,
       "precio_medio": 32.32722020747238,
-      "mae_rel": 0.04094327414819696
+      "mae_rel": 0.041055892848869145
     }
   ],
   "B_importancia": {
-    "base_r2_log": 0.9539562852744824,
+    "base_r2_log": 0.9532201434429353,
     "grupos": [
       {
         "grupo": "Producto",
-        "caida": 1.6213888786057051,
-        "desvio": 0.004908764334957935
+        "caida": 1.6215931943334292,
+        "desvio": 0.004819350233636423
       },
       {
         "grupo": "Distancia",
-        "caida": 0.262166036743066,
-        "desvio": 0.001069233802651371
+        "caida": 0.2559909156669566,
+        "desvio": 0.0009426405072763884
       },
       {
         "grupo": "Recargo (surge)",
-        "caida": 0.018549923875025003,
-        "desvio": 0.00022637149596950798
+        "caida": 0.017947903502382328,
+        "desvio": 0.0002227920276459028
       },
       {
         "grupo": "Zona de destino",
-        "caida": 0.004229901242668384,
-        "desvio": 7.102925415488213e-05
+        "caida": 0.0030929584928999962,
+        "desvio": 7.711787662093148e-05
       },
       {
         "grupo": "Zona de origen",
-        "caida": 0.002855527892887418,
-        "desvio": 6.722770452797811e-05
+        "caida": 0.002231087912110352,
+        "desvio": 2.7302973332133537e-05
       },
       {
         "grupo": "Clima",
-        "caida": 4.8887852759212556e-05,
-        "desvio": 7.93978534254408e-05
+        "caida": 2.4467580089782004e-06,
+        "desvio": 5.700885771520753e-05
       },
       {
         "grupo": "Hora y día",
-        "caida": -1.2145233308946679e-05,
-        "desvio": 4.361523897504704e-05
+        "caida": -3.9665255146167e-05,
+        "desvio": 2.3155773642785723e-05
       }
     ]
   },
+  "B_relacion_recorrido": 1.5665488810365136,
   "B_h2": [
     {
       "nivel": "Compartido",
       "uber": "UberPool",
       "lyft": "Shared",
-      "dif_lyft_vs_uber": -0.30328331730055275
+      "dif_lyft_vs_uber": -0.29466748739609055
     },
     {
       "nivel": "Estándar",
       "uber": "UberX",
       "lyft": "Lyft",
-      "dif_lyft_vs_uber": -0.04696204510542981
+      "dif_lyft_vs_uber": -0.033060788577969874
     },
     {
       "nivel": "XL",
       "uber": "UberXL",
       "lyft": "Lyft XL",
-      "dif_lyft_vs_uber": -0.0633125195804353
+      "dif_lyft_vs_uber": -0.04429208597835227
     },
     {
       "nivel": "Black",
       "uber": "Black",
       "lyft": "Lux Black",
-      "dif_lyft_vs_uber": 0.07665655619279271
+      "dif_lyft_vs_uber": 0.07963325039398696
     },
     {
       "nivel": "Black XL",
       "uber": "Black SUV",
       "lyft": "Lux Black XL",
-      "dif_lyft_vs_uber": 0.04509496503084005
+      "dif_lyft_vs_uber": 0.04741341596363113
     }
   ],
   "C": {
     "rutas": 72,
-    "k": 7,
+    "k": 4,
+    "ks": [
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8
+    ],
     "inercia": [
-      117.72723862321368,
-      79.93057893149475,
-      55.27947435420803,
-      41.65302119716167,
-      30.32048012307683,
-      25.988809930870076,
-      21.91546325449783
+      73.14888640605152,
+      47.946397294227275,
+      34.34828059812747,
+      23.236894138517478,
+      18.240576471675475,
+      14.485652198044242,
+      12.494559005322255
     ],
     "silueta": [
-      0.43750838736718095,
-      0.4265156895350403,
-      0.412090011329546,
-      0.441408389889837,
-      0.44866478340107524,
-      0.4565473165751405,
-      0.44708007987156634
+      0.44826795313699225,
+      0.44400008698408766,
+      0.4507567267977083,
+      0.4604196661233456,
+      0.4613854121064241,
+      0.4573146230248421,
+      0.4607408886442431
     ],
+    "corr_log_ppm_distancia": -0.9803403562629234,
     "perfil": [
       {
-        "cluster": 4,
-        "rutas": 7,
-        "distancia": 0.589703374194465,
-        "precio_milla": 13.020729736733799,
-        "tasa_recargo": 0.057993257314548595
+        "cluster": 0,
+        "rutas": 18,
+        "distancia": 0.9756854495433301,
+        "precio_milla": 8.805151508833436,
+        "tasa_recargo": 0.03901101997064352
       },
       {
         "cluster": 1,
-        "rutas": 9,
-        "distancia": 1.2290987122555683,
-        "precio_milla": 6.657381277736747,
-        "tasa_recargo": 0.020551133982404157
-      },
-      {
-        "cluster": 6,
-        "rutas": 7,
-        "distancia": 1.4406368616723533,
-        "precio_milla": 5.903431056683851,
-        "tasa_recargo": 0.06933899383086874
+        "rutas": 34,
+        "distancia": 2.2513734741317464,
+        "precio_milla": 4.619662802366319,
+        "tasa_recargo": 0.11699320132186676
       },
       {
         "cluster": 2,
-        "rutas": 11,
-        "distancia": 1.6081533180977738,
-        "precio_milla": 5.279884554182765,
-        "tasa_recargo": 0.125385137272077
+        "rutas": 13,
+        "distancia": 2.54261313953188,
+        "precio_milla": 4.089006256627543,
+        "tasa_recargo": 0.04059412727049058
       },
       {
         "cluster": 3,
-        "rutas": 10,
-        "distancia": 2.7188929204885772,
-        "precio_milla": 3.8241524168878356,
-        "tasa_recargo": 0.036922292926140285
-      },
-      {
-        "cluster": 5,
-        "rutas": 22,
-        "distancia": 2.746497984352231,
-        "precio_milla": 3.7808184834776615,
-        "tasa_recargo": 0.11309631135415778
-      },
-      {
-        "cluster": 0,
-        "rutas": 6,
-        "distancia": 4.491808566303117,
-        "precio_milla": 2.994514202267099,
-        "tasa_recargo": 0.09799841392265284
+        "rutas": 7,
+        "distancia": 4.337669398960452,
+        "precio_milla": 3.0189370561342055,
+        "tasa_recargo": 0.09902341107282367
       }
     ],
     "ejemplos": {
       "0": [
+        "South Station → Financial District",
+        "Beacon Hill → Haymarket Square",
+        "Financial District → Haymarket Square"
+      ],
+      "1": [
+        "Back Bay → Boston University",
+        "Back Bay → Fenway",
+        "Northeastern University → North Station"
+      ],
+      "2": [
+        "South Station → West End",
+        "South Station → North Station",
+        "West End → Northeastern University"
+      ],
+      "3": [
         "Fenway → Financial District",
         "Northeastern University → Financial District",
         "Boston University → Financial District"
+      ]
+    },
+    "extremos": {
+      "max_recargo": [
+        [
+          "Back Bay → Boston University",
+          0.15309069901790873
+        ],
+        [
+          "Back Bay → Fenway",
+          0.15112631879098945
+        ]
       ],
-      "1": [
-        "North Station → North End",
-        "Haymarket Square → Financial District",
-        "North End → Financial District"
+      "min_recargo": [
+        [
+          "Haymarket Square → Beacon Hill",
+          0.005689900426742532
+        ],
+        [
+          "North End → Back Bay",
+          0.013196093956188967
+        ]
       ],
-      "2": [
-        "Back Bay → Boston University",
-        "Back Bay → Fenway",
-        "Fenway → Back Bay"
-      ],
-      "3": [
-        "West End → Northeastern University",
-        "North Station → Northeastern University",
-        "West End → Boston University"
-      ],
-      "4": [
-        "Theatre District → South Station",
-        "South Station → Financial District",
-        "Financial District → South Station"
-      ],
-      "5": [
-        "Northeastern University → North Station",
-        "Boston University → Theatre District",
-        "Back Bay → North End"
-      ],
-      "6": [
-        "South Station → Theatre District",
-        "Beacon Hill → Haymarket Square",
-        "South Station → West End"
+      "max_precio_milla": [
+        [
+          "Financial District → South Station",
+          17.94871794871795,
+          0.41128344481605356
+        ],
+        [
+          "Haymarket Square → North Station",
+          14.285714285714286,
+          0.5071017101710171
+        ]
       ]
     }
   },
   "datasets": {
     "surge": [
       255953,
-      64
+      65
     ],
     "price": [
       636568,
@@ -1132,19 +2049,19 @@
   "datasets_balanceados": {
     "surge_train_submuestreo": {
       "filas": 32094,
-      "columnas": 63,
+      "columnas": 64,
       "positivos": 16047,
       "tasa": 0.5
     },
     "surge_train_smote": {
       "filas": 361022,
-      "columnas": 62,
+      "columnas": 63,
       "positivos": 180511,
       "tasa": 0.5
     },
     "surge_test_sin_balancear": {
       "filas": 59395,
-      "columnas": 63,
+      "columnas": 64,
       "positivos": 4928,
       "tasa": 0.08296994696523276
     }
