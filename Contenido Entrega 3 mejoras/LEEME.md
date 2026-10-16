@@ -15,12 +15,14 @@ Grupo 11 · Ciencia de Datos 5K1 · UTN FRC · Uber y Lyft en Boston
 | Los datasets balanceados | [`4_Datasets/datasets balanceados/`](4_Datasets/datasets%20balanceados/) (con su propio LEEME) |
 | Un gráfico | [`5_Graficos/`](5_Graficos/): `figNN` = número de figura del informe |
 | Un número exacto | [`6_Resultados/metricas.json`](6_Resultados/) y las tablas CSV |
+| Entender el K-Means de rutas (para qué sirve y qué dice) | [`EXPLICACION_KMEANS_RUTAS.md`](EXPLICACION_KMEANS_RUTAS.md) |
 
 ## Estructura
 
 ```
 Contenido Entrega 3 mejoras/
 ├── LEEME.md                              ← este archivo
+├── EXPLICACION_KMEANS_RUTAS.md           por qué usamos K-Means en las rutas y qué nos dice
 ├── 1_Informe/
 │   └── Entrega3_Grupo11.docx             informe en formato paper (mismo estilo que la Entrega 2)
 ├── 2_Presentacion_Colab/
