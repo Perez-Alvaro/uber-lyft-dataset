@@ -111,7 +111,7 @@ El proyecto se organiza bajo el marco ágil **Scrum**, dividido en cuatro entreg
 │
 ├── Contenido Entrega 3 mejoras/             # VERSIÓN FINAL de la Entrega 3
 │   ├── LEEME.md                             # Guía de la carpeta y resultados principales
-│   ├── EXPLICACION_KMEANS_RUTAS.md          # Para qué se usó K-Means y qué muestra
+│   ├── EXPLICACION_KMEANS_PRODUCTOS.md      # K-Means de productos: familias de tarifa
 │   ├── 1_Informe/                           # Entrega3_Grupo11.docx (formato paper)
 │   ├── 2_Presentacion_Colab/                # Notebook de la defensa oral (ya ejecutado) + PDF
 │   ├── 3_Codigo/                            # modelado_entrega3.py + requirements.txt

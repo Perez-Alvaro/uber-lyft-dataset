@@ -11,7 +11,8 @@ Parte A · has_surge  -> clasificación binaria (Lyft sin Shared). Regresión lo
                         búsqueda de hiperparámetros), elección del modelo por validación y ajuste del umbral.
 Parte B · price      -> regresión sobre log(price) (Uber + Lyft). Ridge, árbol y random forest, cada uno
                         con y sin surge_multiplier (cada variante con su propia búsqueda).
-Parte C · rutas      -> segmentación complementaria con K-Means (codo + silueta).
+Parte C · productos  -> familias tarifarias de los 12 productos con K-Means (tarifa base y precio por
+                        milla; codo + silueta).
 
 Validación (compromiso de la Entrega 2): las filas no son independientes (comparten recargo por ruta y
 minuto), así que NO se separa al azar.
@@ -937,77 +938,97 @@ fig.tight_layout()
 guardar(fig, "fig02_precio_importancia_y_tarifas.png")
 
 # ==============================================================================================
-# PARTE C · Segmentación de rutas con K-Means (complementario)
+# PARTE C · Familias tarifarias de los productos con K-Means (complementario)
 # ==============================================================================================
-log("PARTE C · rutas")
-# UberX, WAV y Lyft: mismo nivel de servicio, para describir el precio por milla de cada ruta
-estandar = df[df["service_tier_ord"] == 1].assign(ppm=lambda d: d["price"] / d["distance"])
-rutas = estandar.groupby(["origen", "destino"]).agg(distancia=("distance", "mean"), precio_milla=("ppm", "median"))
-lyft_r = df[(df["is_uber"] == 0) & (df["name_Shared"] == 0)]
-rutas["tasa_recargo"] = lyft_r.groupby(["origen", "destino"])["has_surge"].mean()
-rutas = rutas.dropna()
-# El precio por milla está casi determinado por la distancia (tarifa base): no se usa para agrupar,
-# porque duplicaría la distancia. Se agrupa con distancia y tasa de recargo, y el precio se describe.
-corr_ppm = float(np.corrcoef(np.log(rutas["distancia"]), np.log(rutas["precio_milla"]))[0, 1])
-Z = StandardScaler().fit_transform(rutas[["distancia", "tasa_recargo"]])
-ks = list(range(2, 9))
+log("PARTE C · productos")
+# Tarifa base y precio por milla de cada producto: recta precio = base + por_milla × distancia, ajustada
+# con los viajes SIN recargo del entrenamiento (así no se mezcla el surge ni se usa la prueba).
+UBER = ["UberPool", "UberX", "WAV", "UberXL", "Black", "Black SUV"]
+sin_recargo = df[tr_b & (df["surge_multiplier"] == 1)]
+producto_sr = sin_recargo[GRUPOS["Producto"]].idxmax(axis=1).str.replace("name_", "").str.replace("_", " ")
+filas = []
+for prod, g in sin_recargo.groupby(producto_sr):
+    por_milla, tarifa_base = np.polyfit(g["distance"], g["price"], 1)
+    r2_recta = r2_score(g["price"], tarifa_base + por_milla * g["distance"])
+    filas.append({"producto": prod, "plataforma": "Uber" if prod in UBER else "Lyft", "tarifa_base": tarifa_base,
+                  "por_milla": por_milla, "r2_recta": r2_recta, "cotizaciones": len(g)})
+productos = pd.DataFrame(filas).set_index("producto")
+Z = StandardScaler().fit_transform(productos[["tarifa_base", "por_milla"]])
+ks = list(range(2, 7))
 inercia, silueta = [], []
 for k in ks:
-    km = KMeans(n_clusters=k, n_init=20, random_state=SEED).fit(Z)
+    km = KMeans(n_clusters=k, n_init=50, random_state=SEED).fit(Z)
     inercia.append(km.inertia_)
     silueta.append(silhouette_score(Z, km.labels_))
-# La silueta es casi plana (no hay un k claramente mejor): se elige k = 4 por interpretabilidad
-# (rutas cortas / medias / largas combinadas con poco / mucho recargo), con silueta similar al máximo.
-K_ELEGIDO = 4
-km = KMeans(n_clusters=K_ELEGIDO, n_init=20, random_state=SEED).fit(Z)
-rutas["cluster"] = km.labels_
-perfil = rutas.groupby("cluster").agg(rutas=("distancia", "size"), distancia=("distancia", "mean"),
-                                      precio_milla=("precio_milla", "mean"), tasa_recargo=("tasa_recargo", "mean"))
-# Grupos numerados por distancia media (1 = más cortas) para que el número signifique algo
-orden = perfil.sort_values("distancia").index
-renumerar = {c: i for i, c in enumerate(orden)}
-rutas["cluster"] = rutas["cluster"].map(renumerar)
-perfil = perfil.rename(index=renumerar).sort_index()
-rutas.to_csv(RES / "rutas_clusters.csv")
-perfil.to_csv(RES / "rutas_perfil_clusters.csv")
-ejemplos = {int(c): [f"{o} → {d}" for o, d in g.sort_values("tasa_recargo", ascending=False).index[:3]]
-            for c, g in rutas.groupby("cluster")}
-extremos = {
-    "max_recargo": [(f"{o} → {d}", float(v)) for (o, d), v in rutas["tasa_recargo"].nlargest(2).items()],
-    "min_recargo": [(f"{o} → {d}", float(v)) for (o, d), v in rutas["tasa_recargo"].nsmallest(2).items()],
-    "max_precio_milla": [(f"{o} → {d}", float(v), float(rutas.loc[(o, d), "distancia"]))
-                         for (o, d), v in rutas["precio_milla"].nlargest(2).items()],
-}
-M["C"] = {"rutas": int(len(rutas)), "k": K_ELEGIDO, "ks": ks, "inercia": [float(v) for v in inercia],
-          "silueta": [float(v) for v in silueta], "corr_log_ppm_distancia": corr_ppm,
-          "perfil": perfil.reset_index().to_dict("records"), "ejemplos": ejemplos, "extremos": extremos}
+K_ELEGIDO = ks[int(np.argmax(silueta))]  # la silueta tiene un máximo claro
+km = KMeans(n_clusters=K_ELEGIDO, n_init=50, random_state=SEED).fit(Z)
+productos["cluster"] = km.labels_
+# Grupos numerados por tarifa base (0 = el más barato) para que el número signifique algo
+orden = productos.groupby("cluster")["tarifa_base"].mean().sort_values().index
+productos["cluster"] = productos["cluster"].map({c: i for i, c in enumerate(orden)})
+NOMBRES_GRUPO = ["Económico", "Intermedio", "Premium"] if K_ELEGIDO == 3 else [f"Grupo {i + 1}" for i in range(K_ELEGIDO)]
+productos["grupo"] = productos["cluster"].map(lambda c: NOMBRES_GRUPO[c])
+productos = productos.sort_values(["cluster", "tarifa_base"])
+perfil = productos.groupby("cluster").agg(
+    productos=("tarifa_base", "size"), tarifa_base_min=("tarifa_base", "min"), tarifa_base_max=("tarifa_base", "max"),
+    por_milla_min=("por_milla", "min"), por_milla_max=("por_milla", "max"))
+perfil["grupo"] = [NOMBRES_GRUPO[c] for c in perfil.index]
+perfil["lista"] = [", ".join(productos[productos["cluster"] == c].index) for c in perfil.index]
+productos.to_csv(RES / "productos_tarifa_clusters.csv")
+perfil.to_csv(RES / "productos_perfil_clusters.csv")
+# Por qué los viajes cortos son caros por milla (H4): precio por milla = base / distancia + por_milla
+ejemplo = productos.loc["UberX"]
+estandar = df[df["service_tier_ord"] == 1].assign(ppm=lambda d: d["price"] / d["distance"])
+ppm_ruta = estandar.groupby(["origen", "destino"]).agg(ppm=("ppm", "median"), distancia=("distance", "mean"))
+ruta_max = ppm_ruta["ppm"].idxmax()
+M["C"] = {"productos": int(len(productos)), "k": K_ELEGIDO, "ks": ks, "inercia": [float(v) for v in inercia],
+          "silueta": [float(v) for v in silueta], "tabla": productos.reset_index().to_dict("records"),
+          "perfil": perfil.reset_index().to_dict("records"),
+          "ejemplo_uberx": {"base": float(ejemplo["tarifa_base"]), "por_milla": float(ejemplo["por_milla"]),
+                            "ppm_1_milla": float(ejemplo["tarifa_base"] / 1 + ejemplo["por_milla"]),
+                            "ppm_5_millas": float(ejemplo["tarifa_base"] / 5 + ejemplo["por_milla"])},
+          "ruta_max_ppm": {"ruta": f"{ruta_max[0]} → {ruta_max[1]}", "ppm": float(ppm_ruta.loc[ruta_max, "ppm"]),
+                           "distancia": float(ppm_ruta.loc[ruta_max, "distancia"])}}
+log(f"K-Means productos: k = {K_ELEGIDO} · silueta {max(silueta):.3f}")
 
-fig, axes = plt.subplots(1, 3, figsize=(15, 4.5), gridspec_kw={"width_ratios": [1, 1, 1.5]})
+fig, axes = plt.subplots(1, 3, figsize=(15.5, 4.6), gridspec_kw={"width_ratios": [1, 1, 1.7]})
 axes[0].plot(ks, inercia, "-o", color=AZUL)
 axes[0].axvline(K_ELEGIDO, color="#404040", ls="--", lw=1)
 axes[0].set_title("Método del codo (inercia)", loc="left", fontsize=11)
 axes[0].set_xlabel("k")
 axes[1].plot(ks, silueta, "-o", color=NARANJA)
 axes[1].axvline(K_ELEGIDO, color="#404040", ls="--", lw=1)
-axes[1].set_ylim(0, 0.6)
-axes[1].set_title("Coeficiente de silueta (casi plano)", loc="left", fontsize=11)
+axes[1].set_ylim(0, 1)
+axes[1].set_title("Coeficiente de silueta", loc="left", fontsize=11)
 axes[1].set_xlabel("k")
-paleta = [AZUL, NARANJA, VERDE, VIOLETA, "#B5B5B5", "#D4A017"]
-for c, g in rutas.groupby("cluster"):
-    axes[2].scatter(g["distancia"], g["tasa_recargo"], s=60, color=paleta[c], alpha=0.85,
-                    label=f"Grupo {c + 1} ({len(g)} rutas)", edgecolor="white")
-axes[2].set_xlabel("Distancia media de la ruta (millas)")
-axes[2].set_ylabel("Tasa de recargo en Lyft")
-axes[2].yaxis.set_major_formatter(lambda v, _: f"{v:.0%}")
-axes[2].set_title("Rutas por grupo", loc="left", fontsize=11)
-axes[2].legend(frameon=False, fontsize=8.5)
-for ax in axes:
-    estilo(ax, "both")
-titular(fig, f"Las {len(rutas)} rutas en {K_ELEGIDO} perfiles: largo del viaje × nivel de recargo",
-        "K-Means sobre distancia media y tasa de recargo (estandarizadas) · la silueta es pareja para todo k: "
-        "se eligió k = 4 por interpretabilidad")
+paleta = [VERDE, AZUL, NARANJA, VIOLETA, GRIS, "#D4A017"]
+ax = axes[2]
+for c, g in productos.groupby("cluster"):
+    for plataforma, marcador in [("Uber", "o"), ("Lyft", "s")]:
+        sub_p = g[g["plataforma"] == plataforma]
+        ax.scatter(sub_p["tarifa_base"], sub_p["por_milla"], s=90, color=paleta[c], marker=marcador, edgecolor="white",
+                   label=f"{NOMBRES_GRUPO[c]}" if plataforma == "Uber" else None, zorder=3)
+etiquetados = []
+for prod, r in productos.iterrows():
+    # Productos con tarifa casi igual (UberX y WAV): la segunda etiqueta va más abajo para no pisarse
+    cerca = sum(abs(x - r["tarifa_base"]) < 0.6 and abs(y - r["por_milla"]) < 0.08 for x, y in etiquetados)
+    ax.annotate(prod, (r["tarifa_base"], r["por_milla"]), xytext=(6, 4 - 12 * cerca), textcoords="offset points",
+                fontsize=8.5, color="#404040")
+    etiquetados.append((r["tarifa_base"], r["por_milla"]))
+ax.scatter([], [], marker="o", color=GRIS, label="Uber")
+ax.scatter([], [], marker="s", color=GRIS, label="Lyft")
+ax.set_xlabel("Tarifa base estimada (USD)")
+ax.set_ylabel("Precio por milla estimado (USD)")
+ax.set_xlim(0, productos["tarifa_base"].max() * 1.18)
+ax.set_title("Los 12 productos según su tarifa", loc="left", fontsize=11)
+ax.legend(frameon=False, fontsize=8.5, loc="lower right")
+for a in axes:
+    estilo(a, "both")
+titular(fig, f"Los 12 productos de Uber y Lyft forman {K_ELEGIDO} familias de tarifa",
+        "K-Means sobre tarifa base y precio por milla (estandarizados), estimados con viajes sin recargo del entrenamiento · "
+        f"k = {K_ELEGIDO}: máximo coeficiente de silueta")
 fig.tight_layout()
-guardar(fig, "fig10_rutas_kmeans.png")
+guardar(fig, "fig10_productos_kmeans.png")
 
 # ==============================================================================================
 # DATASETS DE MODELADO (salida de la Entrega 3)

@@ -16,14 +16,14 @@ Grupo 11 · Ciencia de Datos 5K1 · UTN FRC · Uber y Lyft en Boston
 | Los datasets balanceados | [`4_Datasets/datasets balanceados/`](4_Datasets/datasets%20balanceados/) (con su propio LEEME) |
 | Un gráfico | [`5_Graficos/`](5_Graficos/): `figNN` = número de figura del informe |
 | Un número exacto | [`6_Resultados/metricas.json`](6_Resultados/) y las tablas CSV |
-| Entender el K-Means de rutas | [`EXPLICACION_KMEANS_RUTAS.md`](EXPLICACION_KMEANS_RUTAS.md) |
+| Entender el K-Means de productos | [`EXPLICACION_KMEANS_PRODUCTOS.md`](EXPLICACION_KMEANS_PRODUCTOS.md) |
 
 ## Estructura
 
 ```
 Contenido Entrega 3 mejoras/
 ├── LEEME.md                              ← este archivo
-├── EXPLICACION_KMEANS_RUTAS.md           por qué usamos K-Means en las rutas y qué nos dice
+├── EXPLICACION_KMEANS_PRODUCTOS.md       por qué usamos K-Means en los productos y qué nos dice
 ├── 1_Informe/
 │   └── Entrega3_Grupo11.docx             informe en formato paper (mismo estilo que la Entrega 2)
 ├── 2_Presentacion_Colab/
@@ -42,7 +42,7 @@ Contenido Entrega 3 mejoras/
 │       ├── surge_train_smote.zip         361.022 filas · 50% con recargo
 │       └── surge_test_sin_balancear.zip  59.395 filas · 8,3% con recargo (proporción real)
 ├── 5_Graficos/                           fig01 a fig10, igual que en el informe
-├── 6_Resultados/                         metricas.json + CSV (prefijos precio_, recargo_, rutas_)
+├── 6_Resultados/                         metricas.json + CSV (prefijos precio_, recargo_, productos_)
 └── 7_Revision_version_preliminar/
     └── REVISION_ENTREGA3_PRELIMINAR.md   qué estaba mal en la versión preliminar y qué se corrigió
 ```

@@ -1919,121 +1919,193 @@
     }
   ],
   "C": {
-    "rutas": 72,
-    "k": 4,
+    "productos": 12,
+    "k": 3,
     "ks": [
       2,
       3,
       4,
       5,
-      6,
-      7,
-      8
+      6
     ],
     "inercia": [
-      73.14888640605152,
-      47.946397294227275,
-      34.34828059812747,
-      23.236894138517478,
-      18.240576471675475,
-      14.485652198044242,
-      12.494559005322255
+      8.114376608152414,
+      2.003618220542792,
+      0.9582051843726886,
+      0.6945281987968999,
+      0.47918231147251394
     ],
     "silueta": [
-      0.44826795313699225,
-      0.44400008698408766,
-      0.4507567267977083,
-      0.4604196661233456,
-      0.4613854121064241,
-      0.4573146230248421,
-      0.4607408886442431
+      0.5739203025987692,
+      0.6820000244398456,
+      0.6114492320105543,
+      0.5472328901839408,
+      0.41644449832622454
     ],
-    "corr_log_ppm_distancia": -0.9803403562629234,
+    "tabla": [
+      {
+        "producto": "Shared",
+        "plataforma": "Lyft",
+        "tarifa_base": 3.2985531098064835,
+        "por_milla": 1.2500558251725913,
+        "r2_recta": 0.41432176385147235,
+        "cotizaciones": 39227,
+        "cluster": 0,
+        "grupo": "Económico"
+      },
+      {
+        "producto": "Lyft",
+        "plataforma": "Lyft",
+        "tarifa_base": 5.585840153045569,
+        "por_milla": 1.7001074441981006,
+        "r2_recta": 0.8053880396921271,
+        "cotizaciones": 36163,
+        "cluster": 0,
+        "grupo": "Económico"
+      },
+      {
+        "producto": "UberPool",
+        "plataforma": "Uber",
+        "tarifa_base": 6.125478917213666,
+        "por_milla": 1.198807214260361,
+        "r2_recta": 0.4488083581936031,
+        "cotizaciones": 42070,
+        "cluster": 0,
+        "grupo": "Económico"
+      },
+      {
+        "producto": "WAV",
+        "plataforma": "Uber",
+        "tarifa_base": 6.390296435338202,
+        "por_milla": 1.542077729637606,
+        "r2_recta": 0.5403861372118884,
+        "cotizaciones": 42066,
+        "cluster": 0,
+        "grupo": "Económico"
+      },
+      {
+        "producto": "UberX",
+        "plataforma": "Uber",
+        "tarifa_base": 6.402403407911015,
+        "por_milla": 1.5339552841880069,
+        "r2_recta": 0.5404568221021545,
+        "cotizaciones": 41866,
+        "cluster": 0,
+        "grupo": "Económico"
+      },
+      {
+        "producto": "Lyft XL",
+        "plataforma": "Lyft",
+        "tarifa_base": 7.794609983486996,
+        "por_milla": 3.194210189714004,
+        "r2_recta": 0.8644813608707891,
+        "cotizaciones": 35929,
+        "cluster": 1,
+        "grupo": "Intermedio"
+      },
+      {
+        "producto": "Lux",
+        "plataforma": "Lyft",
+        "tarifa_base": 8.762530535390177,
+        "por_milla": 3.842135518535836,
+        "r2_recta": 0.8914556544534976,
+        "cotizaciones": 36196,
+        "cluster": 1,
+        "grupo": "Intermedio"
+      },
+      {
+        "producto": "UberXL",
+        "plataforma": "Uber",
+        "tarifa_base": 9.065195142560182,
+        "por_milla": 3.0144422349147297,
+        "r2_recta": 0.6188304317066702,
+        "cotizaciones": 42138,
+        "cluster": 1,
+        "grupo": "Intermedio"
+      },
+      {
+        "producto": "Black",
+        "plataforma": "Uber",
+        "tarifa_base": 12.105300422064577,
+        "por_milla": 3.8396082065609325,
+        "r2_recta": 0.834313530335828,
+        "cotizaciones": 42123,
+        "cluster": 1,
+        "grupo": "Intermedio"
+      },
+      {
+        "producto": "Lux Black",
+        "plataforma": "Lyft",
+        "tarifa_base": 12.313272173989503,
+        "por_milla": 4.539472622030009,
+        "r2_recta": 0.8949417590045927,
+        "cotizaciones": 36070,
+        "cluster": 1,
+        "grupo": "Intermedio"
+      },
+      {
+        "producto": "Lux Black XL",
+        "plataforma": "Lyft",
+        "tarifa_base": 21.888801135544618,
+        "por_milla": 4.2382977192447555,
+        "r2_recta": 0.8217260921264352,
+        "cotizaciones": 36153,
+        "cluster": 2,
+        "grupo": "Premium"
+      },
+      {
+        "producto": "Black SUV",
+        "plataforma": "Uber",
+        "tarifa_base": 22.538251320451387,
+        "por_milla": 3.5275602589053308,
+        "r2_recta": 0.7375472235119115,
+        "cotizaciones": 42026,
+        "cluster": 2,
+        "grupo": "Premium"
+      }
+    ],
     "perfil": [
       {
         "cluster": 0,
-        "rutas": 18,
-        "distancia": 0.9756854495433301,
-        "precio_milla": 8.805151508833436,
-        "tasa_recargo": 0.03901101997064352
+        "productos": 5,
+        "tarifa_base_min": 3.2985531098064835,
+        "tarifa_base_max": 6.402403407911015,
+        "por_milla_min": 1.198807214260361,
+        "por_milla_max": 1.7001074441981006,
+        "grupo": "Económico",
+        "lista": "Shared, Lyft, UberPool, WAV, UberX"
       },
       {
         "cluster": 1,
-        "rutas": 34,
-        "distancia": 2.2513734741317464,
-        "precio_milla": 4.619662802366319,
-        "tasa_recargo": 0.11699320132186676
+        "productos": 5,
+        "tarifa_base_min": 7.794609983486996,
+        "tarifa_base_max": 12.313272173989503,
+        "por_milla_min": 3.0144422349147297,
+        "por_milla_max": 4.539472622030009,
+        "grupo": "Intermedio",
+        "lista": "Lyft XL, Lux, UberXL, Black, Lux Black"
       },
       {
         "cluster": 2,
-        "rutas": 13,
-        "distancia": 2.54261313953188,
-        "precio_milla": 4.089006256627543,
-        "tasa_recargo": 0.04059412727049058
-      },
-      {
-        "cluster": 3,
-        "rutas": 7,
-        "distancia": 4.337669398960452,
-        "precio_milla": 3.0189370561342055,
-        "tasa_recargo": 0.09902341107282367
+        "productos": 2,
+        "tarifa_base_min": 21.888801135544618,
+        "tarifa_base_max": 22.538251320451387,
+        "por_milla_min": 3.5275602589053308,
+        "por_milla_max": 4.2382977192447555,
+        "grupo": "Premium",
+        "lista": "Lux Black XL, Black SUV"
       }
     ],
-    "ejemplos": {
-      "0": [
-        "South Station → Financial District",
-        "Beacon Hill → Haymarket Square",
-        "Financial District → Haymarket Square"
-      ],
-      "1": [
-        "Back Bay → Boston University",
-        "Back Bay → Fenway",
-        "Northeastern University → North Station"
-      ],
-      "2": [
-        "South Station → West End",
-        "South Station → North Station",
-        "West End → Northeastern University"
-      ],
-      "3": [
-        "Fenway → Financial District",
-        "Northeastern University → Financial District",
-        "Boston University → Financial District"
-      ]
+    "ejemplo_uberx": {
+      "base": 6.402403407911015,
+      "por_milla": 1.5339552841880069,
+      "ppm_1_milla": 7.936358692099022,
+      "ppm_5_millas": 2.81443596577021
     },
-    "extremos": {
-      "max_recargo": [
-        [
-          "Back Bay → Boston University",
-          0.15309069901790873
-        ],
-        [
-          "Back Bay → Fenway",
-          0.15112631879098945
-        ]
-      ],
-      "min_recargo": [
-        [
-          "Haymarket Square → Beacon Hill",
-          0.005689900426742532
-        ],
-        [
-          "North End → Back Bay",
-          0.013196093956188967
-        ]
-      ],
-      "max_precio_milla": [
-        [
-          "Financial District → South Station",
-          17.94871794871795,
-          0.41128344481605356
-        ],
-        [
-          "Haymarket Square → North Station",
-          14.285714285714286,
-          0.5071017101710171
-        ]
-      ]
+    "ruta_max_ppm": {
+      "ruta": "Financial District → South Station",
+      "ppm": 17.94871794871795,
+      "distancia": 0.41128344481605356
     }
   },
   "datasets": {
