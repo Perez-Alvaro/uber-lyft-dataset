@@ -576,13 +576,14 @@ for ax, nombre in zip(axes, MODELOS_A):
     for i in range(2):
         for j in range(2):
             v = cm[i, j] / cm[i].sum()
-            ax.text(j, i, f"{cm[i, j]:,}".replace(",", ".") + f"\n{pct(v)} de la fila", ha="center",
-                    va="center", fontsize=10, color="white" if v > 0.55 else "#1A1A1A")
+            etiqueta = [["VN · acierto", "FP · falsa alarma"], ["FN · no detectado", "VP · detectado"]][i][j]
+            ax.text(j, i, f"{etiqueta}\n{cm[i, j]:,}".replace(",", ".") + f"\n{pct(v)} de la fila", ha="center",
+                    va="center", fontsize=9.5, color="white" if v > 0.55 else "#1A1A1A")
     ax.set_xticks([0, 1], ["Sin recargo", "Con recargo"])
     ax.set_yticks([0, 1], ["Sin recargo", "Con recargo"])
     ax.set_xlabel("Predicho")
     ax.set_ylabel("Real")
-    marca = "  ★ elegido" if nombre == ELEGIDO else ""
+    marca = "  (elegido)" if nombre == ELEGIDO else ""
     ax.set_title(f"{nombre}{marca}\numbral {r['umbral']:.2f} · recall {pct(r['recall'])} · precisión {pct(r['precision'])}",
                  fontsize=10.5, loc="left")
     for s in ax.spines.values():
