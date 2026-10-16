@@ -1,7 +1,10 @@
 """Entrega 3 — Modelado y análisis de resultados · Grupo 11 · Ciencia de Datos 5K1 (UTN FRC).
 
-Entrada : ../Contenido Entrega 2/Dataset Codificado/dataset_codificado.zip  (636.568 filas x 71 columnas)
-Salidas : graficos/*.png · resultados/*.csv · resultados/metricas.json
+Entrada : Contenido Entrega 2/Dataset Codificado/dataset_codificado.zip  (636.568 filas x 71 columnas)
+Salidas (dentro de "Contenido Entrega 3 mejoras"):
+  4_Datasets/  datasets de modelado y datasets balanceados
+  5_Graficos/  figuras, numeradas igual que en el informe
+  6_Resultados/ métricas (metricas.json) y tablas CSV
 
 Parte A · has_surge  -> clasificación binaria (Lyft sin Shared). Regresión logística, árbol de decisión
                         y random forest; comparación de 4 técnicas de balanceo y ajuste del umbral.
@@ -13,11 +16,13 @@ Validación (compromiso de la Entrega 2): las filas no son independientes (compa
 minuto), así que NO se separa al azar. Prueba = fechas del 15 al 18/12/2018 (holdout temporal) y la
 búsqueda de hiperparámetros usa GroupKFold agrupando por fecha dentro del entrenamiento.
 
-Uso: python modelado_entrega3.py            (completo, ~15-25 min con 8+ núcleos)
-     python modelado_entrega3.py --rapido   (muestra del 15% y grillas chicas, para probar el código)
+Uso: python modelado_entrega3.py            (completo, ~7 min con 10 núcleos)
+     python modelado_entrega3.py --rapido   (muestra del 15% y grillas chicas; escribe en una carpeta
+                                             temporal para no pisar los resultados oficiales)
 """
 import json
 import sys
+import tempfile
 import time
 import warnings
 from pathlib import Path
@@ -40,7 +45,7 @@ from sklearn.cluster import KMeans
 from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.linear_model import LogisticRegression, Ridge
-from sklearn.metrics import (accuracy_score, average_precision_score, classification_report,
+from sklearn.metrics import (accuracy_score, average_precision_score, balanced_accuracy_score, classification_report,
                              confusion_matrix, mean_absolute_error, mean_squared_error,
                              precision_recall_curve, r2_score, roc_auc_score, roc_curve,
                              silhouette_score)
@@ -53,12 +58,18 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 warnings.filterwarnings("ignore", category=UserWarning)
 
 RAPIDO = "--rapido" in sys.argv
-AQUI = Path(__file__).resolve().parent
-ENTRADA = AQUI.parent / "Contenido Entrega 2" / "Dataset Codificado" / "dataset_codificado.zip"
-GRAF = AQUI / "graficos"
-RES = AQUI / "resultados"
-GRAF.mkdir(exist_ok=True)
-RES.mkdir(exist_ok=True)
+SLUG = {"Regresión logística": "logistica", "Árbol de decisión": "arbol", "Random forest": "random_forest",
+        "Ridge": "ridge"}
+AQUI = Path(__file__).resolve().parent          # 3_Codigo
+RAIZ = AQUI.parent                               # Contenido Entrega 3 mejoras
+ENTRADA = RAIZ.parent / "Contenido Entrega 2" / "Dataset Codificado" / "dataset_codificado.zip"
+SALIDA = Path(tempfile.gettempdir()) / "entrega3_rapido" if RAPIDO else RAIZ
+GRAF = SALIDA / "5_Graficos"
+RES = SALIDA / "6_Resultados"
+DS = SALIDA / "4_Datasets" / "datasets modelado"
+DSB = SALIDA / "4_Datasets" / "datasets balanceados"
+for carpeta in (GRAF, RES, DS, DSB):
+    carpeta.mkdir(parents=True, exist_ok=True)
 
 SEED = 42
 FECHAS_TEST = ["2018-12-15", "2018-12-16", "2018-12-17", "2018-12-18"]
@@ -211,6 +222,7 @@ def metricas_clf(y, proba, umbral=0.5):
     tn, fp, fn, tp = confusion_matrix(y, pred, labels=[0, 1]).ravel()
     rep = classification_report(y, pred, output_dict=True, zero_division=0)
     return {"umbral": float(umbral), "accuracy": accuracy_score(y, pred),
+            "accuracy_balanceada": balanced_accuracy_score(y, pred),
             "precision": rep["1"]["precision"], "recall": rep["1"]["recall"], "f1": rep["1"]["f1-score"],
             "f1_macro": rep["macro avg"]["f1-score"], "f1_weighted": rep["weighted avg"]["f1-score"],
             "roc_auc": roc_auc_score(y, proba), "pr_auc": average_precision_score(y, proba),
@@ -246,7 +258,7 @@ for nombre, (modelo, grilla) in MODELOS_A.items():
                       return_train_score=True)
     gs.fit(Xtr, ytr, groups=gtr)
     res = pd.DataFrame(gs.cv_results_)
-    res.to_csv(RES / f"A_busqueda_{nombre.split()[0].lower()}.csv", index=False)
+    res.to_csv(RES / f"recargo_busqueda_{SLUG[nombre]}.csv", index=False)
     i = int(res["mean_test_pr_auc"].idxmax())
     mejores_a[nombre] = {k.replace("modelo__", ""): v for k, v in res.loc[i, "params"].items()}
     tuning_a[nombre] = {"params": mejores_a[nombre], "combinaciones": int(len(res)),
@@ -283,7 +295,7 @@ estilo(ax, "y")
 titular(fig, "A mayor profundidad, entrenamiento y validación se separan: el árbol empieza a memorizar",
         f"PR-AUC en entrenamiento y validación cruzada agrupada por fecha (5 folds) · min_samples_leaf = {mejor_hoja}, "
         f"criterio = {mejor_crit}")
-guardar(fig, "01_validacion_profundidad_arbol.png")
+guardar(fig, "fig03_recargo_validacion_profundidad.png")
 
 # --- A.2 Laboratorio de balanceo (mismos hiperparámetros, cuatro técnicas) ----------------------
 TECNICAS = {"sin": "Sin balanceo", "rus": "Submuestreo (RUS 1:1)", "smote": "Sobremuestreo (SMOTE 1:1)",
@@ -324,7 +336,7 @@ for nombre in MODELOS_A:
         log(f"{nombre} · {etiqueta}: recall {balanceo[-1]['recall']:.3f} · F1 {balanceo[-1]['f1']:.3f} · "
             f"PR-AUC {balanceo[-1]['pr_auc']:.3f}")
 balanceo = pd.DataFrame(balanceo)
-balanceo.to_csv(RES / "A_balanceo_test.csv", index=False)
+balanceo.to_csv(RES / "recargo_balanceo_test.csv", index=False)
 M["A_balanceo"] = balanceo.to_dict("records")
 
 fig, axes = plt.subplots(1, 2, figsize=(13, 4.6), gridspec_kw={"width_ratios": [1, 1.5]})
@@ -365,7 +377,7 @@ estilo(ax, "y")
 titular(fig, "Sin balanceo, ningún modelo detecta el recargo: el modelo aprende a decir siempre que no",
         "Lyft sin Shared · entrenamiento: fechas hasta el 14/12 · prueba: 15 al 18/12/2018 · el balanceo se aplica solo al entrenamiento")
 fig.tight_layout()
-guardar(fig, "02_balanceo_distribucion_y_recall.png")
+guardar(fig, "fig04_recargo_balanceo.png")
 
 # --- A.3 Umbral de decisión (elegido con predicciones fuera de fold sobre el entrenamiento) -------
 finales_a, umbrales = {}, {}
@@ -394,7 +406,7 @@ for nombre in MODELOS_A:
         filas_rep.append({"modelo": nombre, "clase": clase, "precision": rep[clase]["precision"],
                           "recall": rep[clase]["recall"], "f1": rep[clase]["f1-score"],
                           "soporte": int(rep[clase]["support"])})
-pd.DataFrame(filas_rep).to_csv(RES / "A_reporte_clasificacion.csv", index=False)
+pd.DataFrame(filas_rep).to_csv(RES / "recargo_reporte_clasificacion.csv", index=False)
 M["A_reporte"] = filas_rep
 
 # Matrices de confusión de los modelos finales
@@ -419,7 +431,7 @@ for ax, nombre in zip(axes, MODELOS_A):
 titular(fig, "Matrices de confusión en el período de prueba (15 al 18/12)",
         "Modelos finales: hiperparámetros por validación agrupada, pesos de clase y umbral elegido sobre el entrenamiento")
 fig.tight_layout()
-guardar(fig, "03_matrices_confusion_finales.png")
+guardar(fig, "fig05_recargo_matrices_confusion.png")
 
 # Curvas ROC y Precisión-Recall
 fig, axes = plt.subplots(1, 2, figsize=(12.5, 4.8))
@@ -445,14 +457,14 @@ for ax in axes:
 titular(fig, "Los modelos ordenan el riesgo mejor que el azar, pero con poco margen",
         "Período de prueba · con 8% de positivos, la curva Precisión-Recall es más exigente que la ROC")
 fig.tight_layout()
-guardar(fig, "04_curvas_roc_pr.png")
+guardar(fig, "fig06_recargo_curvas_roc_pr.png")
 
 # --- A.4 Interpretación ------------------------------------------------------------------------
 # (a) Importancia por familias de variables (random forest, caída de PR-AUC al permutar)
 rf_pipe = pipe_clf(modelo_final("Random forest"), "pesos").fit(Xtr, ytr)
 base_ap, imp_a = importancia_por_grupo(lambda X: rf_pipe.predict_proba(X)[:, 1], Xte, yte,
                                        average_precision_score, GRUPOS)
-imp_a.to_csv(RES / "A_importancia_grupos.csv", index=False)
+imp_a.to_csv(RES / "recargo_importancia_grupos.csv", index=False)
 M["A_importancia"] = {"base_pr_auc": float(base_ap), "grupos": imp_a.to_dict("records")}
 
 # (b) Coeficientes de la regresión logística (odds ratio)
@@ -465,7 +477,7 @@ odds = pd.DataFrame({"coef_estandarizado": coef,
                      "odds_ratio": np.where(binaria, np.exp(coef / desv), np.exp(coef)),
                      "tipo": np.where(binaria, "0 → 1", "+1 desvío")})
 odds = odds.reindex(odds["coef_estandarizado"].abs().sort_values(ascending=False).index)
-odds.to_csv(RES / "A_odds_ratio_logistica.csv")
+odds.to_csv(RES / "recargo_odds_ratio_logistica.csv")
 M["A_odds"] = odds.head(15).reset_index(names="variable").to_dict("records")
 
 fig, axes = plt.subplots(1, 2, figsize=(13.5, 5.2), gridspec_kw={"width_ratios": [1, 1.25]})
@@ -497,7 +509,7 @@ estilo(ax, "x")
 titular(fig, "El recargo depende sobre todo de la zona de origen; la hora y el clima casi no aportan",
         "Importancia por permutación en el período de prueba (3 repeticiones) y odds ratio de la regresión logística")
 fig.tight_layout()
-guardar(fig, "05_importancia_y_odds_ratio.png")
+guardar(fig, "fig07_recargo_importancia_odds_ratio.png")
 
 # (c) Árbol: primeros niveles de decisión
 # Los árboles no dependen de la escala: se ajusta sin StandardScaler para que los umbrales se lean en
@@ -510,7 +522,7 @@ plot_tree(dt_legible, max_depth=2, feature_names=[f.replace("_", " ") for f in F
 titular(fig, "Las primeras reglas del árbol de decisión",
         "Tres primeros niveles · en las dummies, '≤ 0.5' significa 'no' · value = proporción [sin, con] recargo "
         "ponderada por los pesos de clase")
-guardar(fig, "06_arbol_primeros_niveles.png")
+guardar(fig, "fig08_recargo_arbol_reglas.png")
 
 # (d) Utilidad práctica: captura de recargos por decil de riesgo
 p_rf = probas[("Random forest", "pesos")]
@@ -519,7 +531,7 @@ dec["decil"] = pd.qcut(dec["p"].rank(method="first", ascending=False), 10, label
 tabla_dec = dec.groupby("decil", observed=True).agg(tasa=("y", "mean"), positivos=("y", "sum"))
 tabla_dec["captura_acum"] = tabla_dec["positivos"].cumsum() / dec["y"].sum()
 tabla_dec["lift"] = tabla_dec["tasa"] / dec["y"].mean()
-tabla_dec.to_csv(RES / "A_deciles_riesgo.csv")
+tabla_dec.to_csv(RES / "recargo_deciles_riesgo.csv")
 M["A_deciles"] = tabla_dec.reset_index().astype({"decil": int}).to_dict("records")
 
 fig, ax = plt.subplots(figsize=(9, 4.4))
@@ -535,7 +547,7 @@ ax.yaxis.set_major_formatter(lambda v, _: f"{v:.0%}")
 estilo(ax, "y")
 titular(fig, f"El 20% de mayor riesgo concentra el {pct(tabla_dec['captura_acum'].iloc[1])} de los recargos",
         "Random forest con pesos de clase · período de prueba · tasa real de recargo en cada decil de probabilidad predicha")
-guardar(fig, "07_deciles_riesgo.png")
+guardar(fig, "fig09_recargo_deciles_riesgo.png")
 
 # (e) Por qué validar por fecha: la misma receta con partición aleatoria da métricas infladas
 X_all, y_all = lyft[FEATS_A], lyft["has_surge"]
@@ -587,7 +599,7 @@ for nombre, (modelo, grilla, en_submuestra) in MODELOS_B.items():
                       return_train_score=True)
     gs.fit(Xb_full.iloc[filas_cv], y_log.iloc[filas_cv], groups=df["fecha"].iloc[filas_cv])
     res = pd.DataFrame(gs.cv_results_)
-    res.to_csv(RES / f"B_busqueda_{nombre.split()[0].lower()}.csv", index=False)
+    res.to_csv(RES / f"precio_busqueda_{SLUG[nombre]}.csv", index=False)
     i = int(res["mean_test_score"].idxmax())
     mejores_b[nombre] = res.loc[i, "params"]
     tuning_b[nombre] = {"params": {k.replace("modelo__", ""): v for k, v in mejores_b[nombre].items()},
@@ -602,7 +614,9 @@ def metricas_reg(y_usd, pred_usd, y_l, pred_l):
     return {"mae": mean_absolute_error(y_usd, pred_usd),
             "rmse": float(np.sqrt(mean_squared_error(y_usd, pred_usd))),
             "r2": r2_score(y_usd, pred_usd), "r2_log": r2_score(y_l, pred_l),
-            "mape": float(np.mean(np.abs(pred_usd - y_usd) / y_usd))}
+            "mape": float(np.mean(np.abs(pred_usd - y_usd) / y_usd)),
+            # "Eficacia" en términos simples: porcentaje de viajes cuyo precio se predijo con error ≤ 10%
+            "dentro_10pct": float(np.mean(np.abs(pred_usd - y_usd) / y_usd <= 0.10))}
 
 
 precio_te = df.loc[te_b, "price"].values
@@ -626,7 +640,7 @@ for nombre, (modelo, _, _) in MODELOS_B.items():
         pred_b[(nombre, variante)] = np.exp(pl)
         log(f"{nombre} ({variante}): MAE {regresion[-1]['mae']:.3f} · R² {regresion[-1]['r2']:.4f}")
 regresion = pd.DataFrame(regresion)
-regresion.to_csv(RES / "B_regresion_test.csv", index=False)
+regresion.to_csv(RES / "precio_resultados_test.csv", index=False)
 M["B_regresion"] = regresion.to_dict("records")
 
 # Error por producto del mejor modelo
@@ -637,7 +651,7 @@ err = pd.DataFrame({"producto": prod_te, "real": precio_te, "pred": pred_b[clave
 err["abs"] = (err["real"] - err["pred"]).abs()
 por_prod = err.groupby("producto").agg(mae=("abs", "mean"), precio_medio=("real", "mean")).sort_values("precio_medio")
 por_prod["mae_rel"] = por_prod["mae"] / por_prod["precio_medio"]
-por_prod.to_csv(RES / "B_error_por_producto.csv")
+por_prod.to_csv(RES / "precio_error_por_producto.csv")
 M["B_mejor"] = {"modelo": clave_b[0], "variante": clave_b[1]}
 M["B_por_producto"] = por_prod.reset_index().to_dict("records")
 
@@ -665,14 +679,14 @@ estilo(ax, "x")
 titular(fig, "El precio se predice con un error típico de pocos dólares",
         "Regresión sobre log(price) · período de prueba 15 al 18/12/2018 · Uber + Lyft")
 fig.tight_layout()
-guardar(fig, "08_regresion_real_vs_predicho.png")
+guardar(fig, "fig01_precio_real_vs_predicho.png")
 
 # Importancia por familias (R² en log) para el random forest con surge, y comparación con el EDA (η²/R²)
 rf_b = modelos_b[("Random forest", "con surge")]
 muestra_te = df.loc[te_b].sample(n=min(40_000, int(te_b.sum())), random_state=SEED)
 base_r2, imp_b = importancia_por_grupo(lambda X: rf_b.predict(X), muestra_te[VARIANTES["con surge"]],
                                        np.log(muestra_te["price"]), r2_score, GRUPOS)
-imp_b.to_csv(RES / "B_importancia_grupos.csv", index=False)
+imp_b.to_csv(RES / "precio_importancia_grupos.csv", index=False)
 M["B_importancia"] = {"base_r2_log": float(base_r2), "grupos": imp_b.to_dict("records")}
 
 # Curvas tarifarias aprendidas: precio predicho por producto según distancia (sin recargo)
@@ -688,7 +702,7 @@ for prod in GRUPOS["Producto"]:
         curvas.append({"producto": prod.replace("name_", "").replace("_", " "), "distancia": d,
                        "precio": float(np.median(np.exp(rf_b.predict(Xp))))})
 curvas = pd.DataFrame(curvas)
-curvas.to_csv(RES / "B_curvas_tarifa.csv", index=False)
+curvas.to_csv(RES / "precio_curvas_tarifa.csv", index=False)
 PARES = [("Compartido", "UberPool", "Shared"), ("Estándar", "UberX", "Lyft"), ("XL", "UberXL", "Lyft XL"),
          ("Black", "Black", "Lux Black"), ("Black XL", "Black SUV", "Lux Black XL")]
 dif_h2 = []
@@ -724,7 +738,7 @@ estilo(ax, "both")
 titular(fig, "El producto y la distancia explican el precio; el momento y el clima casi no aportan",
         "Importancia por permutación en una muestra del período de prueba · curvas: mediana de la predicción variando solo producto y distancia")
 fig.tight_layout()
-guardar(fig, "09_importancia_precio_y_curvas.png")
+guardar(fig, "fig02_precio_importancia_y_tarifas.png")
 
 # ==============================================================================================
 # PARTE C · Segmentación de rutas con K-Means (complementario)
@@ -751,8 +765,8 @@ rutas["cluster"] = km.labels_
 perfil = rutas.groupby("cluster").agg(rutas=("distancia", "size"), distancia=("distancia", "mean"),
                                       precio_milla=("precio_milla", "mean"), tasa_recargo=("tasa_recargo", "mean"))
 perfil = perfil.sort_values("precio_milla", ascending=False)
-rutas.to_csv(RES / "C_rutas_clusters.csv")
-perfil.to_csv(RES / "C_perfil_clusters.csv")
+rutas.to_csv(RES / "rutas_clusters.csv")
+perfil.to_csv(RES / "rutas_perfil_clusters.csv")
 ejemplos = {int(c): [f"{o} → {d}" for o, d in g.sort_values("tasa_recargo", ascending=False).index[:3]]
             for c, g in rutas.groupby("cluster")}
 M["C"] = {"rutas": int(len(rutas)), "k": int(k_opt), "inercia": [float(v) for v in inercia],
@@ -782,31 +796,57 @@ for ax in axes:
 titular(fig, f"Las {len(rutas)} rutas se ordenan en {k_opt} perfiles tarifarios",
         "K-Means sobre distancia media, precio por milla y tasa de recargo (variables estandarizadas)")
 fig.tight_layout()
-guardar(fig, "10_kmeans_rutas.png")
+guardar(fig, "fig10_rutas_kmeans.png")
 
 # ==============================================================================================
 # DATASETS DE MODELADO (salida de la Entrega 3)
 # ==============================================================================================
-if not RAPIDO:
-    DS = AQUI / "datasets"
-    DS.mkdir(exist_ok=True)
-    surge_out = lyft[["id", "datetime_local", "fecha"] + FEATS_A + ["has_surge"]].copy()
-    surge_out.insert(3, "particion", np.where(test_a, "test", "train"))
-    price_out = df[["id", "datetime_local", "fecha"] + VARIANTES["con surge"] + ["surge_multiplier", "price"]].copy()
-    price_out.insert(3, "particion", np.where(es_test, "test", "train"))
-    price_out["log_price"] = np.log(price_out["price"])
-    for tabla_out, nombre in [(surge_out, "dataset_modelado_surge"), (price_out, "dataset_modelado_price")]:
-        tabla_out.to_csv(DS / f"{nombre}.zip", index=False,
-                         compression={"method": "zip", "archive_name": f"{nombre}.csv"})
-        log(f"{nombre}: {tabla_out.shape[0]:,} x {tabla_out.shape[1]}")
-    pred_out = lyft.loc[test_a, ["id", "datetime_local", "has_surge"]].copy()
-    for nombre in MODELOS_A:
-        pred_out[f"prob_{nombre.split()[0].lower()}"] = probas[(nombre, "pesos")]
-        pred_out[f"pred_{nombre.split()[0].lower()}"] = (probas[(nombre, "pesos")] >= umbrales[nombre]).astype(int)
-    pred_out.to_csv(RES / "A_predicciones_test.csv", index=False)
-    M["datasets"] = {"surge": list(surge_out.shape), "price": list(price_out.shape)}
+surge_out = lyft[["id", "datetime_local", "fecha"] + FEATS_A + ["has_surge"]].copy()
+surge_out.insert(3, "particion", np.where(test_a, "test", "train"))
+price_out = df[["id", "datetime_local", "fecha"] + VARIANTES["con surge"] + ["surge_multiplier", "price"]].copy()
+price_out.insert(3, "particion", np.where(es_test, "test", "train"))
+price_out["log_price"] = np.log(price_out["price"])
+for tabla_out, nombre in [(surge_out, "dataset_modelado_surge"), (price_out, "dataset_modelado_price")]:
+    tabla_out.to_csv(DS / f"{nombre}.zip", index=False,
+                     compression={"method": "zip", "archive_name": f"{nombre}.csv"})
+    log(f"{nombre}: {tabla_out.shape[0]:,} x {tabla_out.shape[1]}")
+pred_out = lyft.loc[test_a, ["id", "datetime_local", "has_surge"]].copy()
+for nombre in MODELOS_A:
+    pred_out[f"prob_{SLUG[nombre]}"] = probas[(nombre, "pesos")]
+    pred_out[f"pred_{SLUG[nombre]}"] = (probas[(nombre, "pesos")] >= umbrales[nombre]).astype(int)
+pred_out.to_csv(RES / "recargo_predicciones_test.csv", index=False)
+M["datasets"] = {"surge": list(surge_out.shape), "price": list(price_out.shape)}
+
+# Train de has_surge balanceado con las dos técnicas que modifican filas (submuestreo y SMOTE).
+# Es ilustrativo: el modelo final usa pesos de clase, que no cambian el dataset. El test nunca se
+# balancea: se exporta aparte con la proporción real de recargos.
+train_real = surge_out[surge_out["particion"] == "train"].drop(columns="particion").reset_index(drop=True)
+test_real = surge_out[surge_out["particion"] == "test"].drop(columns="particion").reset_index(drop=True)
+rus = RandomUnderSampler(random_state=SEED)
+rus.fit_resample(train_real[FEATS_A], train_real["has_surge"])
+train_rus = train_real.iloc[np.sort(rus.sample_indices_)].reset_index(drop=True)
+# SMOTE en el espacio escalado (igual que en el pipeline) y vuelta a las unidades originales.
+# imblearn agrega las filas sintéticas al final, después de las reales.
+esc = StandardScaler().fit(train_real[FEATS_A])
+Xs, ys = SMOTE(random_state=SEED).fit_resample(esc.transform(train_real[FEATS_A]), train_real["has_surge"])
+n_real = len(train_real)
+train_smote = pd.DataFrame(esc.inverse_transform(Xs), columns=FEATS_A)
+train_smote.iloc[:n_real] = train_real[FEATS_A].values
+train_smote["has_surge"] = np.asarray(ys)
+train_smote.insert(0, "sintetica", (np.arange(len(train_smote)) >= n_real).astype(int))
+train_smote.insert(0, "id", list(train_real["id"]) + [None] * (len(train_smote) - n_real))
+balanceados = {}
+for tabla_out, nombre in [(train_rus, "surge_train_submuestreo"), (train_smote, "surge_train_smote"),
+                          (test_real, "surge_test_sin_balancear")]:
+    tabla_out.to_csv(DSB / f"{nombre}.zip", index=False,
+                     compression={"method": "zip", "archive_name": f"{nombre}.csv"})
+    balanceados[nombre] = {"filas": int(len(tabla_out)), "columnas": int(tabla_out.shape[1]),
+                           "positivos": int(tabla_out["has_surge"].sum()),
+                           "tasa": float(tabla_out["has_surge"].mean())}
+    log(f"{nombre}: {len(tabla_out):,} filas · {pct(tabla_out['has_surge'].mean())} con recargo")
+M["datasets_balanceados"] = balanceados
 
 # ----------------------------------------------------------------------------------------------
-with open(RES / ("metricas_rapido.json" if RAPIDO else "metricas.json"), "w", encoding="utf-8") as f:
+with open(RES / "metricas.json", "w", encoding="utf-8") as f:
     json.dump(M, f, ensure_ascii=False, indent=2, default=lambda o: o.item() if hasattr(o, "item") else str(o))
 log("listo")

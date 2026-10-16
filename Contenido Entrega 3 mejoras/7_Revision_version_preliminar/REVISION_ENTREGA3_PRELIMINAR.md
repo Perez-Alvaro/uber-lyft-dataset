@@ -14,12 +14,13 @@ La carpeta preliminar **no se tocó**: queda como registro del punto de partida 
 | Partición train/test | Aleatoria | Por fecha: train hasta el 14/12, test del 15 al 18/12 |
 | Hiperparámetros | Fijos a mano, sin justificar | Búsqueda en grilla con validación agrupada por fecha, tabla de justificación |
 | Umbral de decisión | 0,5 fijo | Elegido por F1 sobre el train (sin mirar el test) |
-| Métricas de has_surge | Recall, precision, F1, ROC-AUC | + PR-AUC, F1 macro/weighted, curvas ROC y PR, líneas base |
+| Métricas de has_surge | Accuracy, recall, precision, F1, ROC-AUC (sin línea base) | + accuracy balanceada, PR-AUC, F1 macro/weighted, curvas ROC y PR, líneas base |
 | Modelos de price | Lineal sin regularizar y árbol, sin surge_multiplier | Ridge, árbol y random forest, cada uno con y sin surge_multiplier |
 | Interpretación | No había | Importancia por familias, odds ratio, reglas del árbol, deciles de riesgo, hipótesis H1–H6 |
 | Tercer análisis | Multiclase de Uber (circular) | K-Means de rutas (objetivo de la Entrega 1) |
-| Informe | `.md` con emojis y links locales de Windows | `Entrega3_Grupo11.docx` con el formato de la Entrega 2 |
-| Dataset de salida | No había | `datasets/dataset_modelado_price.zip` y `datasets/dataset_modelado_surge.zip` |
+| Informe | `.md` con emojis y links locales de Windows | `1_Informe/Entrega3_Grupo11.docx` con el formato de la Entrega 2 |
+| Presentación oral | Notebook sin ejecutar, con todo el código a la vista | `2_Presentacion_Colab/`: notebook-presentación ya ejecutado, código oculto, gráficos en orden y una demo en vivo |
+| Datasets de salida | No había | `4_Datasets/datasets modelado/` (price y surge) y `4_Datasets/datasets balanceados/` (submuestreo, SMOTE y test real) |
 
 ---
 
@@ -55,7 +56,7 @@ Predecía el servicio (`service_tier`) usando `price` y `price_per_mile`. El pre
 - El notebook no tiene ninguna celda ejecutada (sin salidas).
 - El script usa una muestra de 100 mil filas para la regresión y el notebook el dataset completo, así que dan resultados distintos.
 
-→ Un solo script (`modelado_entrega3.py`) genera todas las cifras en `resultados/metricas.json` y los CSV. El notebook se arma a partir del mismo código.
+→ Un solo script (`3_Codigo/modelado_entrega3.py`) genera todas las cifras en `6_Resultados/metricas.json` y los CSV. El Colab de presentación lee esos mismos resultados.
 
 ### Importantes (requisitos de la consigna que faltaban)
 
@@ -67,6 +68,8 @@ Predecía el servicio (`service_tier`) usando `price` y `price_per_mile`. El pre
 
 **7. Métricas incompletas.** Faltaba el PR-AUC que prometimos en la Entrega 2, no había curvas ROC graficadas, no se reportaban los promedios macro y weighted, y no había líneas base (por ejemplo, "siempre sin recargo", que tiene 91,7% de accuracy).
 → Están todas, más la curva Precisión-Recall y dos líneas base.
+
+**Sobre la accuracy (la profe la remarcó):** la versión preliminar la mostraba, pero sin compararla con nada. Ahora se informa en todas las tablas y se lee **siempre contra la línea base** (91,7% de decir siempre "no"), junto con la **accuracy balanceada** (promedio del acierto en cada clase; 50% = azar). El árbol final tiene 69,2% de accuracy y 61,5% de accuracy balanceada: acierta el 70,7% de los viajes sin recargo y el 52,2% de los viajes con recargo. Está explicado en las secciones 3.3, 5.1 y 5.4 del informe y en la sección 4 del Colab, con una demo en vivo.
 
 **8. Conclusión de balanceo sobredimensionada.** El informe llamaba a `class_weight` "método campeón" y "herramienta útil" mirando solo el recall (83%), con una precisión de 12% contra 8% de azar. No explicaba que el ROC-AUC casi no cambia al balancear: balancear corre las probabilidades respecto del umbral, no mejora el ranking. Tampoco explicaba por qué SMOTE rinde mal.
 → El informe compara las técnicas con métricas que dependen y que no dependen del umbral, y explica el problema de SMOTE con variables dummy: interpola valores imposibles como "0,4 de Back Bay" y los árboles los memorizan.
@@ -107,18 +110,6 @@ El recall baja porque antes el modelo marcaba "con recargo" a **más de la mitad
 
 ---
 
-## Qué hay en esta carpeta
+## Qué hay en la carpeta nueva
 
-| Archivo o carpeta | Contenido |
-|---|---|
-| `Entrega3_Grupo11.docx` | Informe para entregar (formato de la Entrega 2) |
-| `REVISION_ENTREGA3_PRELIMINAR.md` | Este documento |
-| `modelado_entrega3.py` | Script reproducible: modelos, balanceo, umbral, interpretación, K-Means y exportación de datasets. Corre en ~6 min; `--rapido` lo prueba en 1 min con el 15% de los datos |
-| `TPI_Ciencia_de_Datos_Sprint3_Modelado.ipynb` | El mismo código como notebook (en Colab, subir `dataset_codificado.zip` a la sesión) |
-| `datasets/dataset_modelado_price.zip` | 636.568 × 75 · Uber + Lyft, con `particion` (train/test), `log_surge` y `log_price` |
-| `datasets/dataset_modelado_surge.zip` | 255.953 × 64 · Lyft sin Shared, con `particion`, sin `price` ni `surge_multiplier` |
-| `graficos/` | Las 10 figuras del informe |
-| `resultados/` | `metricas.json`, búsquedas de hiperparámetros, comparación de balanceo, reporte de clasificación, importancias, odds ratio, deciles, predicciones del test y clusters |
-| `requirements.txt` | Dependencias (incluye `imbalanced-learn`) |
-
-Para regenerar todo: `pip install -r requirements.txt` y `python modelado_entrega3.py` desde esta carpeta (lee `../Contenido Entrega 2/Dataset Codificado/dataset_codificado.zip`).
+La estructura completa y qué abrir para cada cosa están en [`../LEEME.md`](../LEEME.md).
