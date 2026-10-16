@@ -1,0 +1,1105 @@
+{
+  "dataset": {
+    "filas": 636568,
+    "columnas": 71
+  },
+  "A_datos": {
+    "filas": 255953,
+    "predictoras": 59,
+    "positivos": 20975,
+    "tasa": 0.08194863900794286,
+    "train": 196558,
+    "test": 59395,
+    "tasa_train": 0.08164002482727745,
+    "tasa_test": 0.08296994696523276,
+    "fechas_train": 14,
+    "fechas_test": 4
+  },
+  "A_lineas_base": [
+    {
+      "modelo": "Siempre 'sin recargo'",
+      "umbral": 0.5,
+      "accuracy": 0.9170300530347673,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "f1_macro": 0.47835976884298537,
+      "f1_weighted": 0.8773405683835637,
+      "roc_auc": 0.5,
+      "pr_auc": 0.08296994696523276,
+      "tn": 54467,
+      "fp": 0,
+      "fn": 4928,
+      "tp": 0
+    },
+    {
+      "modelo": "Azar con la tasa real",
+      "umbral": 0.5,
+      "accuracy": 0.8497011532957319,
+      "precision": 0.08438993972147163,
+      "recall": 0.08238636363636363,
+      "f1": 0.08337611664441935,
+      "f1_macro": 0.5007576679544001,
+      "f1_weighted": 0.8488789689114695,
+      "roc_auc": 0.5007558527932676,
+      "pr_auc": 0.08308693500480925,
+      "tn": 50062,
+      "fp": 4405,
+      "fn": 4522,
+      "tp": 406
+    }
+  ],
+  "A_tuning": {
+    "Regresión logística": {
+      "params": {
+        "C": 0.001
+      },
+      "combinaciones": 7,
+      "pr_auc_cv": 0.1199640647520109,
+      "pr_auc_cv_std": 0.005753082809819064,
+      "roc_auc_cv": 0.6493989189082284,
+      "pr_auc_train": 0.12636353039270132
+    },
+    "Árbol de decisión": {
+      "params": {
+        "criterion": "gini",
+        "max_depth": 20,
+        "min_samples_leaf": 500
+      },
+      "combinaciones": 60,
+      "pr_auc_cv": 0.14151697316665585,
+      "pr_auc_cv_std": 0.0029254599784976467,
+      "roc_auc_cv": 0.6644506605064036,
+      "pr_auc_train": 0.17870623552926426
+    },
+    "Random forest": {
+      "params": {
+        "max_depth": 16,
+        "min_samples_leaf": 50
+      },
+      "combinaciones": 9,
+      "pr_auc_cv": 0.13146821020040472,
+      "pr_auc_cv_std": 0.0057368871959765895,
+      "roc_auc_cv": 0.6650822552639297,
+      "pr_auc_train": 0.29066138106182016
+    }
+  },
+  "A_distribucion": [
+    {
+      "tecnica": "Sin balanceo",
+      "clase_0": 180511,
+      "clase_1": 16047
+    },
+    {
+      "tecnica": "Submuestreo (RUS 1:1)",
+      "clase_0": 16047,
+      "clase_1": 16047
+    },
+    {
+      "tecnica": "Sobremuestreo (SMOTE 1:1)",
+      "clase_0": 180511,
+      "clase_1": 180511
+    },
+    {
+      "tecnica": "Pesos de clase (balanced)",
+      "clase_0": 180511,
+      "clase_1": 16047
+    }
+  ],
+  "A_pesos": {
+    "peso_0": 0.5444488147536716,
+    "peso_1": 6.124446937122204
+  },
+  "A_balanceo": [
+    {
+      "modelo": "Regresión logística",
+      "tecnica": "Sin balanceo",
+      "umbral": 0.5,
+      "accuracy": 0.9170300530347673,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "f1_macro": 0.47835976884298537,
+      "f1_weighted": 0.8773405683835637,
+      "roc_auc": 0.6514723077735143,
+      "pr_auc": 0.12064905117706323,
+      "tn": 54467,
+      "fp": 0,
+      "fn": 4928,
+      "tp": 0
+    },
+    {
+      "modelo": "Regresión logística",
+      "tecnica": "Submuestreo (RUS 1:1)",
+      "umbral": 0.5,
+      "accuracy": 0.5241181917669837,
+      "precision": 0.11906238777708857,
+      "recall": 0.7400568181818182,
+      "f1": 0.20512387862425827,
+      "f1_macro": 0.43276342673868895,
+      "f1_weighted": 0.6226284923846319,
+      "roc_auc": 0.6505391053983837,
+      "pr_auc": 0.12133410546372726,
+      "tn": 27483,
+      "fp": 26984,
+      "fn": 1281,
+      "tp": 3647
+    },
+    {
+      "modelo": "Regresión logística",
+      "tecnica": "Sobremuestreo (SMOTE 1:1)",
+      "umbral": 0.5,
+      "accuracy": 0.529876252209782,
+      "precision": 0.11864406779661017,
+      "recall": 0.7258522727272727,
+      "f1": 0.2039513071243265,
+      "f1_macro": 0.4351974948532411,
+      "f1_weighted": 0.6280707147185951,
+      "roc_auc": 0.6519787579438665,
+      "pr_auc": 0.12229260287066153,
+      "tn": 27895,
+      "fp": 26572,
+      "fn": 1351,
+      "tp": 3577
+    },
+    {
+      "modelo": "Regresión logística",
+      "tecnica": "Pesos de clase (balanced)",
+      "umbral": 0.5,
+      "accuracy": 0.5214411987541039,
+      "precision": 0.11867047520124643,
+      "recall": 0.7418831168831169,
+      "f1": 0.20461159614954108,
+      "f1_macro": 0.4311882119259998,
+      "f1_weighted": 0.6201667281133892,
+      "roc_auc": 0.6519663666090918,
+      "pr_auc": 0.12209606847667787,
+      "tn": 27315,
+      "fp": 27152,
+      "fn": 1272,
+      "tp": 3656
+    },
+    {
+      "modelo": "Árbol de decisión",
+      "tecnica": "Sin balanceo",
+      "umbral": 0.5,
+      "accuracy": 0.9170300530347673,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "f1_macro": 0.47835976884298537,
+      "f1_weighted": 0.8773405683835637,
+      "roc_auc": 0.6687698771763149,
+      "pr_auc": 0.14089174527654194,
+      "tn": 54467,
+      "fp": 0,
+      "fn": 4928,
+      "tp": 0
+    },
+    {
+      "modelo": "Árbol de decisión",
+      "tecnica": "Submuestreo (RUS 1:1)",
+      "umbral": 0.5,
+      "accuracy": 0.5367791901675225,
+      "precision": 0.12124769411370116,
+      "recall": 0.7335633116883117,
+      "f1": 0.20809947327519213,
+      "f1_macro": 0.4403734602684217,
+      "f1_weighted": 0.6341039264971884,
+      "roc_auc": 0.6627515109381136,
+      "pr_auc": 0.12907514966505748,
+      "tn": 28267,
+      "fp": 26200,
+      "fn": 1313,
+      "tp": 3615
+    },
+    {
+      "modelo": "Árbol de decisión",
+      "tecnica": "Sobremuestreo (SMOTE 1:1)",
+      "umbral": 0.5,
+      "accuracy": 0.7908578163145046,
+      "precision": 0.12120905782450465,
+      "recall": 0.24330357142857142,
+      "f1": 0.16180836707152496,
+      "f1_macro": 0.5211657974628569,
+      "f1_weighted": 0.8208914939719264,
+      "roc_auc": 0.6112260962732349,
+      "pr_auc": 0.11018547530278117,
+      "tn": 45774,
+      "fp": 8693,
+      "fn": 3729,
+      "tp": 1199
+    },
+    {
+      "modelo": "Árbol de decisión",
+      "tecnica": "Pesos de clase (balanced)",
+      "umbral": 0.5,
+      "accuracy": 0.6012122232511155,
+      "precision": 0.12925922997865444,
+      "recall": 0.6635551948051948,
+      "f1": 0.21637001257195793,
+      "f1_macro": 0.47446250052743144,
+      "f1_weighted": 0.6897271484073239,
+      "roc_auc": 0.6712127546877544,
+      "pr_auc": 0.1416416848600274,
+      "tn": 32439,
+      "fp": 22028,
+      "fn": 1658,
+      "tp": 3270
+    },
+    {
+      "modelo": "Random forest",
+      "tecnica": "Sin balanceo",
+      "umbral": 0.5,
+      "accuracy": 0.9170300530347673,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "f1_macro": 0.47835976884298537,
+      "f1_weighted": 0.8773405683835637,
+      "roc_auc": 0.6728215251090914,
+      "pr_auc": 0.13645102272023218,
+      "tn": 54467,
+      "fp": 0,
+      "fn": 4928,
+      "tp": 0
+    },
+    {
+      "modelo": "Random forest",
+      "tecnica": "Submuestreo (RUS 1:1)",
+      "umbral": 0.5,
+      "accuracy": 0.516575469315599,
+      "precision": 0.11935473546074321,
+      "recall": 0.7566964285714286,
+      "f1": 0.20618727710043958,
+      "f1_macro": 0.42932610323751935,
+      "f1_weighted": 0.6154372962336435,
+      "roc_auc": 0.6615491472377293,
+      "pr_auc": 0.1271961927786126,
+      "tn": 26953,
+      "fp": 27514,
+      "fn": 1199,
+      "tp": 3729
+    },
+    {
+      "modelo": "Random forest",
+      "tecnica": "Sobremuestreo (SMOTE 1:1)",
+      "umbral": 0.5,
+      "accuracy": 0.8879703678760839,
+      "precision": 0.14220563847429518,
+      "recall": 0.06960227272727272,
+      "f1": 0.09346049046321526,
+      "f1_macro": 0.5168782936838284,
+      "f1_weighted": 0.8700341915497423,
+      "roc_auc": 0.6469178402644136,
+      "pr_auc": 0.12223286817378992,
+      "tn": 52398,
+      "fp": 2069,
+      "fn": 4585,
+      "tp": 343
+    },
+    {
+      "modelo": "Random forest",
+      "tecnica": "Pesos de clase (balanced)",
+      "umbral": 0.5,
+      "accuracy": 0.5671016078794512,
+      "precision": 0.12328717465380991,
+      "recall": 0.690137987012987,
+      "f1": 0.20920218982592115,
+      "f1_macro": 0.4555909414519749,
+      "f1_weighted": 0.6610939697675414,
+      "roc_auc": 0.6711353367873887,
+      "pr_auc": 0.13535119739401225,
+      "tn": 30282,
+      "fp": 24185,
+      "fn": 1527,
+      "tp": 3401
+    }
+  ],
+  "A_finales": {
+    "Regresión logística": {
+      "umbral_0.5": {
+        "umbral": 0.5,
+        "accuracy": 0.5214411987541039,
+        "precision": 0.11867047520124643,
+        "recall": 0.7418831168831169,
+        "f1": 0.20461159614954108,
+        "f1_macro": 0.4311882119259998,
+        "f1_weighted": 0.6201667281133892,
+        "roc_auc": 0.6519663666090918,
+        "pr_auc": 0.12209606847667787,
+        "tn": 27315,
+        "fp": 27152,
+        "fn": 1272,
+        "tp": 3656
+      },
+      "umbral_opt": {
+        "umbral": 0.537884785968501,
+        "accuracy": 0.5722872295647782,
+        "precision": 0.12123566407695154,
+        "recall": 0.6649756493506493,
+        "f1": 0.20508166969147004,
+        "f1_macro": 0.4562583583393779,
+        "f1_weighted": 0.6657548139152464,
+        "roc_auc": 0.6519663666090918,
+        "pr_auc": 0.12209606847667787,
+        "tn": 30714,
+        "fp": 23753,
+        "fn": 1651,
+        "tp": 3277
+      },
+      "f1_oof": 0.2039728774711107
+    },
+    "Árbol de decisión": {
+      "umbral_0.5": {
+        "umbral": 0.5,
+        "accuracy": 0.6012122232511155,
+        "precision": 0.12925922997865444,
+        "recall": 0.6635551948051948,
+        "f1": 0.21637001257195793,
+        "f1_macro": 0.47446250052743144,
+        "f1_weighted": 0.6897271484073239,
+        "roc_auc": 0.6712127546877544,
+        "pr_auc": 0.1416416848600274,
+        "tn": 32439,
+        "fp": 22028,
+        "fn": 1658,
+        "tp": 3270
+      },
+      "umbral_opt": {
+        "umbral": 0.5686981918639877,
+        "accuracy": 0.6920447849145551,
+        "precision": 0.13897444210298807,
+        "recall": 0.5219155844155844,
+        "f1": 0.2195007467463196,
+        "f1_macro": 0.513840352923262,
+        "f1_weighted": 0.7593372760716677,
+        "roc_auc": 0.6712127546877544,
+        "pr_auc": 0.1416416848600274,
+        "tn": 38532,
+        "fp": 15935,
+        "fn": 2356,
+        "tp": 2572
+      },
+      "f1_oof": 0.21406760168673747
+    },
+    "Random forest": {
+      "umbral_0.5": {
+        "umbral": 0.5,
+        "accuracy": 0.5671016078794512,
+        "precision": 0.12328717465380991,
+        "recall": 0.690137987012987,
+        "f1": 0.20920218982592115,
+        "f1_macro": 0.4555909414519749,
+        "f1_weighted": 0.6610939697675414,
+        "roc_auc": 0.6711353367873887,
+        "pr_auc": 0.13535119739401225,
+        "tn": 30282,
+        "fp": 24185,
+        "fn": 1527,
+        "tp": 3401
+      },
+      "umbral_opt": {
+        "umbral": 0.5350139166384779,
+        "accuracy": 0.6539102618065493,
+        "precision": 0.13050879515793457,
+        "recall": 0.560064935064935,
+        "f1": 0.2116889093419236,
+        "f1_macro": 0.494987410427374,
+        "f1_weighted": 0.7312753882920449,
+        "roc_auc": 0.6711353367873887,
+        "pr_auc": 0.13535119739401225,
+        "tn": 36079,
+        "fp": 18388,
+        "fn": 2168,
+        "tp": 2760
+      },
+      "f1_oof": 0.20803380721618706
+    }
+  },
+  "A_reporte": [
+    {
+      "modelo": "Regresión logística",
+      "clase": "0",
+      "precision": 0.948988104433802,
+      "recall": 0.5639010777167827,
+      "f1": 0.7074350469872858,
+      "soporte": 54467
+    },
+    {
+      "modelo": "Regresión logística",
+      "clase": "1",
+      "precision": 0.12123566407695154,
+      "recall": 0.6649756493506493,
+      "f1": 0.20508166969147004,
+      "soporte": 4928
+    },
+    {
+      "modelo": "Regresión logística",
+      "clase": "macro avg",
+      "precision": 0.5351118842553768,
+      "recall": 0.6144383635337161,
+      "f1": 0.4562583583393779,
+      "soporte": 59395
+    },
+    {
+      "modelo": "Regresión logística",
+      "clase": "weighted avg",
+      "precision": 0.8803095283570521,
+      "recall": 0.5722872295647782,
+      "f1": 0.6657548139152464,
+      "soporte": 59395
+    },
+    {
+      "modelo": "Árbol de decisión",
+      "clase": "0",
+      "precision": 0.9423791821561338,
+      "recall": 0.7074375309820625,
+      "f1": 0.8081799591002045,
+      "soporte": 54467
+    },
+    {
+      "modelo": "Árbol de decisión",
+      "clase": "1",
+      "precision": 0.13897444210298807,
+      "recall": 0.5219155844155844,
+      "f1": 0.2195007467463196,
+      "soporte": 4928
+    },
+    {
+      "modelo": "Árbol de decisión",
+      "clase": "macro avg",
+      "precision": 0.540676812129561,
+      "recall": 0.6146765576988235,
+      "f1": 0.513840352923262,
+      "soporte": 59395
+    },
+    {
+      "modelo": "Árbol de decisión",
+      "clase": "weighted avg",
+      "precision": 0.8757207334823076,
+      "recall": 0.6920447849145551,
+      "f1": 0.7593372760716677,
+      "soporte": 59395
+    },
+    {
+      "modelo": "Random forest",
+      "clase": "0",
+      "precision": 0.9433158156195257,
+      "recall": 0.662401086896653,
+      "f1": 0.7782859115128243,
+      "soporte": 54467
+    },
+    {
+      "modelo": "Random forest",
+      "clase": "1",
+      "precision": 0.13050879515793457,
+      "recall": 0.560064935064935,
+      "f1": 0.2116889093419236,
+      "soporte": 4928
+    },
+    {
+      "modelo": "Random forest",
+      "clase": "macro avg",
+      "precision": 0.5369123053887301,
+      "recall": 0.611233010980794,
+      "f1": 0.494987410427374,
+      "soporte": 59395
+    },
+    {
+      "modelo": "Random forest",
+      "clase": "weighted avg",
+      "precision": 0.8758772602388586,
+      "recall": 0.6539102618065493,
+      "f1": 0.7312753882920449,
+      "soporte": 59395
+    }
+  ],
+  "A_importancia": {
+    "base_pr_auc": 0.13535119739401225,
+    "grupos": [
+      {
+        "grupo": "Zona de origen",
+        "caida": 0.03424824205996117,
+        "desvio": 0.0019056522298134737
+      },
+      {
+        "grupo": "Distancia",
+        "caida": 0.018346810503669236,
+        "desvio": 0.0005873858367545781
+      },
+      {
+        "grupo": "Zona de destino",
+        "caida": 0.007870166240563628,
+        "desvio": 0.0005877521832954565
+      },
+      {
+        "grupo": "Clima",
+        "caida": 0.00416261689351452,
+        "desvio": 0.0006486231078791273
+      },
+      {
+        "grupo": "Hora y día",
+        "caida": 0.0005790909544129327,
+        "desvio": 0.00039819831977182057
+      },
+      {
+        "grupo": "Producto",
+        "caida": 1.5427107535492812e-05,
+        "desvio": 2.9227410700565495e-05
+      }
+    ]
+  },
+  "A_odds": [
+    {
+      "variable": "source_North_End",
+      "coef_estandarizado": -0.3462923536337158,
+      "odds_ratio": 0.28640074261597565,
+      "tipo": "0 → 1"
+    },
+    {
+      "variable": "source_Haymarket_Square",
+      "coef_estandarizado": -0.34456102992003845,
+      "odds_ratio": 0.2859538863730746,
+      "tipo": "0 → 1"
+    },
+    {
+      "variable": "source_Northeastern_University",
+      "coef_estandarizado": 0.20047566605870928,
+      "odds_ratio": 2.066734446200202,
+      "tipo": "0 → 1"
+    },
+    {
+      "variable": "source_Fenway",
+      "coef_estandarizado": 0.19534159665983028,
+      "odds_ratio": 2.03062629244909,
+      "tipo": "0 → 1"
+    },
+    {
+      "variable": "source_Back_Bay",
+      "coef_estandarizado": 0.19043345892685995,
+      "odds_ratio": 1.9994884541842493,
+      "tipo": "0 → 1"
+    },
+    {
+      "variable": "source_Boston_University",
+      "coef_estandarizado": 0.1763260483497168,
+      "odds_ratio": 1.8932361921668561,
+      "tipo": "0 → 1"
+    },
+    {
+      "variable": "source_North_Station",
+      "coef_estandarizado": -0.15710682931408507,
+      "odds_ratio": 0.5660822255152983,
+      "tipo": "0 → 1"
+    },
+    {
+      "variable": "source_West_End",
+      "coef_estandarizado": -0.14630812494777137,
+      "odds_ratio": 0.5878946526719351,
+      "tipo": "0 → 1"
+    },
+    {
+      "variable": "source_Theatre_District",
+      "coef_estandarizado": 0.13087797575919835,
+      "odds_ratio": 1.606310770838267,
+      "tipo": "0 → 1"
+    },
+    {
+      "variable": "short_summary_Rain",
+      "coef_estandarizado": -0.08757815714754433,
+      "odds_ratio": 0.6284082968948236,
+      "tipo": "0 → 1"
+    },
+    {
+      "variable": "precipIntensity",
+      "coef_estandarizado": 0.08420338396517989,
+      "odds_ratio": 1.0878501225823232,
+      "tipo": "+1 desvío"
+    },
+    {
+      "variable": "source_Beacon_Hill",
+      "coef_estandarizado": 0.07727052397540278,
+      "odds_ratio": 1.3225559949937902,
+      "tipo": "0 → 1"
+    },
+    {
+      "variable": "straight_line_miles",
+      "coef_estandarizado": -0.06649204926004824,
+      "odds_ratio": 0.935670355098431,
+      "tipo": "+1 desvío"
+    },
+    {
+      "variable": "short_summary_Light_Rain",
+      "coef_estandarizado": -0.06367927594985956,
+      "odds_ratio": 0.7963345392114358,
+      "tipo": "0 → 1"
+    },
+    {
+      "variable": "short_summary_Clear",
+      "coef_estandarizado": 0.06088031658643962,
+      "odds_ratio": 1.1958393453021758,
+      "tipo": "0 → 1"
+    }
+  ],
+  "A_deciles": [
+    {
+      "decil": 1,
+      "tasa": 0.15521885521885523,
+      "positivos": 922,
+      "captura_acum": 0.18709415584415584,
+      "lift": 1.8707840717783901
+    },
+    {
+      "decil": 2,
+      "tasa": 0.13099848459336588,
+      "positivos": 778,
+      "captura_acum": 0.3449675324675325,
+      "lift": 1.578866678657258
+    },
+    {
+      "decil": 3,
+      "tasa": 0.11582491582491583,
+      "positivos": 688,
+      "captura_acum": 0.48457792207792205,
+      "lift": 1.3959863789409246
+    },
+    {
+      "decil": 4,
+      "tasa": 0.11180333389459506,
+      "positivos": 664,
+      "captura_acum": 0.6193181818181818,
+      "lift": 1.34751603422676
+    },
+    {
+      "decil": 5,
+      "tasa": 0.09242424242424242,
+      "positivos": 549,
+      "captura_acum": 0.7307224025974026,
+      "lift": 1.1139484331955924
+    },
+    {
+      "decil": 6,
+      "tasa": 0.08839872032328674,
+      "positivos": 525,
+      "captura_acum": 0.8372564935064936,
+      "lift": 1.0654305993509774
+    },
+    {
+      "decil": 7,
+      "tasa": 0.05539653140259303,
+      "positivos": 329,
+      "captura_acum": 0.9040178571428571,
+      "lift": 0.6676698422599459
+    },
+    {
+      "decil": 8,
+      "tasa": 0.040067340067340064,
+      "positivos": 238,
+      "captura_acum": 0.9523133116883117,
+      "lift": 0.48291389271502905
+    },
+    {
+      "decil": 9,
+      "tasa": 0.02929786159286075,
+      "positivos": 174,
+      "captura_acum": 0.9876217532467533,
+      "lift": 0.3531141414991811
+    },
+    {
+      "decil": 10,
+      "tasa": 0.01026936026936027,
+      "positivos": 61,
+      "captura_acum": 1.0,
+      "lift": 0.1237720481328436
+    }
+  ],
+  "A_particion": [
+    {
+      "modelo": "Árbol de decisión",
+      "roc_auc_aleatoria": 0.7064427022661065,
+      "pr_auc_aleatoria": 0.16318131582565853,
+      "roc_auc_temporal": 0.6712127546877544,
+      "pr_auc_temporal": 0.1416416848600274
+    },
+    {
+      "modelo": "Random forest",
+      "roc_auc_aleatoria": 0.7404853093296027,
+      "pr_auc_aleatoria": 0.2018910974876321,
+      "roc_auc_temporal": 0.6711353367873887,
+      "pr_auc_temporal": 0.13535119739401225
+    }
+  ],
+  "B_datos": {
+    "filas": 636568,
+    "train": 488074,
+    "test": 148494,
+    "predictoras": 67
+  },
+  "B_tuning": {
+    "Ridge": {
+      "params": {
+        "alpha": 10
+      },
+      "rmse_log_cv": 0.13704611367891628,
+      "rmse_log_train": 0.13698009285177534,
+      "combinaciones": 6,
+      "filas_busqueda": 488074
+    },
+    "Árbol de decisión": {
+      "params": {
+        "max_depth": 18,
+        "min_samples_leaf": 20
+      },
+      "rmse_log_cv": 0.12964909604577818,
+      "rmse_log_train": 0.1170805302108437,
+      "combinaciones": 15,
+      "filas_busqueda": 150000
+    },
+    "Random forest": {
+      "params": {
+        "max_depth": 24,
+        "min_samples_leaf": 5
+      },
+      "rmse_log_cv": 0.12425673168467548,
+      "rmse_log_train": 0.09765976776236694,
+      "combinaciones": 9,
+      "filas_busqueda": 150000
+    }
+  },
+  "B_regresion": [
+    {
+      "modelo": "Línea base: mediana por producto",
+      "variante": "-",
+      "mae": 3.0370274219833795,
+      "rmse": 4.594121744235703,
+      "r2": 0.7582638204505873,
+      "r2_log": 0.7942258941809544,
+      "mape": 0.19796434359231424
+    },
+    {
+      "modelo": "Ridge",
+      "variante": "sin surge",
+      "mae": 1.6172145535621598,
+      "rmse": 2.803814024392379,
+      "r2": 0.9099600879880908,
+      "r2_log": 0.9282772411073826,
+      "mape": 0.1041169152020431
+    },
+    {
+      "modelo": "Ridge",
+      "variante": "con surge",
+      "mae": 1.3895775859654966,
+      "rmse": 2.0616901596156487,
+      "r2": 0.951316314226894,
+      "r2_log": 0.9416434264635439,
+      "mape": 0.09577250591425825
+    },
+    {
+      "modelo": "Árbol de decisión",
+      "variante": "sin surge",
+      "mae": 1.3849336354931097,
+      "rmse": 2.583383840758755,
+      "r2": 0.9235610818275043,
+      "r2_log": 0.9362771023436075,
+      "mape": 0.09094807386764049
+    },
+    {
+      "modelo": "Árbol de decisión",
+      "variante": "con surge",
+      "mae": 1.0896172974828435,
+      "rmse": 1.7326808712636916,
+      "r2": 0.9656146209517646,
+      "r2_log": 0.9499009706655273,
+      "mape": 0.07958667637763964
+    },
+    {
+      "modelo": "Random forest",
+      "variante": "sin surge",
+      "mae": 1.3337110165835109,
+      "rmse": 2.499580856023526,
+      "r2": 0.9284398842934503,
+      "r2_log": 0.940765506775664,
+      "mape": 0.08795615567719416
+    },
+    {
+      "modelo": "Random forest",
+      "variante": "con surge",
+      "mae": 1.0519538499958834,
+      "rmse": 1.671558128045437,
+      "r2": 0.9679978157078006,
+      "r2_log": 0.9536566454836087,
+      "mape": 0.07697925473845676
+    }
+  ],
+  "B_mejor": {
+    "modelo": "Random forest",
+    "variante": "con surge"
+  },
+  "B_por_producto": [
+    {
+      "producto": "Shared",
+      "mae": 1.1484264268106605,
+      "precio_medio": 6.0130282278269584,
+      "mae_rel": 0.19098969492542847
+    },
+    {
+      "producto": "UberPool",
+      "mae": 0.929256678641726,
+      "precio_medio": 8.772288781702194,
+      "mae_rel": 0.10593092655362983
+    },
+    {
+      "producto": "Lyft",
+      "mae": 0.5237692106317419,
+      "precio_medio": 9.604499703966844,
+      "mae_rel": 0.05453373176901812
+    },
+    {
+      "producto": "WAV",
+      "mae": 0.9347685126353003,
+      "precio_medio": 9.759608638029157,
+      "mae_rel": 0.09577930297254893
+    },
+    {
+      "producto": "UberX",
+      "mae": 0.9437325924232668,
+      "precio_medio": 9.788625701761132,
+      "mae_rel": 0.09641114301198318
+    },
+    {
+      "producto": "Lyft XL",
+      "mae": 0.8668742919795261,
+      "precio_medio": 15.286508463325589,
+      "mae_rel": 0.056708455960317906
+    },
+    {
+      "producto": "UberXL",
+      "mae": 1.5240441672663896,
+      "precio_medio": 15.735753927929336,
+      "mae_rel": 0.0968523131618987
+    },
+    {
+      "producto": "Lux",
+      "mae": 0.8762402597707692,
+      "precio_medio": 17.813159237836,
+      "mae_rel": 0.04919061509929093
+    },
+    {
+      "producto": "Black",
+      "mae": 1.1997127161532752,
+      "precio_medio": 20.591592296852983,
+      "mae_rel": 0.05826226057984975
+    },
+    {
+      "producto": "Lux Black",
+      "mae": 0.9663898500934711,
+      "precio_medio": 23.07424204249601,
+      "mae_rel": 0.041881759249715045
+    },
+    {
+      "producto": "Black SUV",
+      "mae": 1.3428120510167547,
+      "precio_medio": 30.39700170887059,
+      "mae_rel": 0.044175806017897126
+    },
+    {
+      "producto": "Lux Black XL",
+      "mae": 1.3235822394036743,
+      "precio_medio": 32.32722020747238,
+      "mae_rel": 0.04094327414819696
+    }
+  ],
+  "B_importancia": {
+    "base_r2_log": 0.9539562852744824,
+    "grupos": [
+      {
+        "grupo": "Producto",
+        "caida": 1.6213888786057051,
+        "desvio": 0.004908764334957867
+      },
+      {
+        "grupo": "Distancia",
+        "caida": 0.26216603674306604,
+        "desvio": 0.0010692338026514062
+      },
+      {
+        "grupo": "Recargo (surge)",
+        "caida": 0.018549923875025003,
+        "desvio": 0.00022637149596950798
+      },
+      {
+        "grupo": "Zona de destino",
+        "caida": 0.004229901242668384,
+        "desvio": 7.102925415488213e-05
+      },
+      {
+        "grupo": "Zona de origen",
+        "caida": 0.002855527892887418,
+        "desvio": 6.722770452797811e-05
+      },
+      {
+        "grupo": "Clima",
+        "caida": 4.8887852759212556e-05,
+        "desvio": 7.93978534254408e-05
+      },
+      {
+        "grupo": "Hora y día",
+        "caida": -1.2145233308946679e-05,
+        "desvio": 4.361523897504704e-05
+      }
+    ]
+  },
+  "B_h2": [
+    {
+      "nivel": "Compartido",
+      "uber": "UberPool",
+      "lyft": "Shared",
+      "dif_lyft_vs_uber": -0.30328331730055275
+    },
+    {
+      "nivel": "Estándar",
+      "uber": "UberX",
+      "lyft": "Lyft",
+      "dif_lyft_vs_uber": -0.04696204510542971
+    },
+    {
+      "nivel": "XL",
+      "uber": "UberXL",
+      "lyft": "Lyft XL",
+      "dif_lyft_vs_uber": -0.06331251958043514
+    },
+    {
+      "nivel": "Black",
+      "uber": "Black",
+      "lyft": "Lux Black",
+      "dif_lyft_vs_uber": 0.07665655619279282
+    },
+    {
+      "nivel": "Black XL",
+      "uber": "Black SUV",
+      "lyft": "Lux Black XL",
+      "dif_lyft_vs_uber": 0.04509496503084009
+    }
+  ],
+  "C": {
+    "rutas": 72,
+    "k": 7,
+    "inercia": [
+      117.72723862321368,
+      79.93057893149475,
+      55.27947435420803,
+      41.65302119716167,
+      30.32048012307683,
+      25.988809930870076,
+      21.91546325449783
+    ],
+    "silueta": [
+      0.43750838736718095,
+      0.4265156895350403,
+      0.412090011329546,
+      0.441408389889837,
+      0.44866478340107524,
+      0.4565473165751405,
+      0.44708007987156634
+    ],
+    "perfil": [
+      {
+        "cluster": 4,
+        "rutas": 7,
+        "distancia": 0.589703374194465,
+        "precio_milla": 13.020729736733799,
+        "tasa_recargo": 0.057993257314548595
+      },
+      {
+        "cluster": 1,
+        "rutas": 9,
+        "distancia": 1.2290987122555683,
+        "precio_milla": 6.657381277736747,
+        "tasa_recargo": 0.020551133982404157
+      },
+      {
+        "cluster": 6,
+        "rutas": 7,
+        "distancia": 1.4406368616723533,
+        "precio_milla": 5.903431056683851,
+        "tasa_recargo": 0.06933899383086874
+      },
+      {
+        "cluster": 2,
+        "rutas": 11,
+        "distancia": 1.6081533180977738,
+        "precio_milla": 5.279884554182765,
+        "tasa_recargo": 0.125385137272077
+      },
+      {
+        "cluster": 3,
+        "rutas": 10,
+        "distancia": 2.7188929204885772,
+        "precio_milla": 3.8241524168878356,
+        "tasa_recargo": 0.036922292926140285
+      },
+      {
+        "cluster": 5,
+        "rutas": 22,
+        "distancia": 2.746497984352231,
+        "precio_milla": 3.7808184834776615,
+        "tasa_recargo": 0.11309631135415778
+      },
+      {
+        "cluster": 0,
+        "rutas": 6,
+        "distancia": 4.491808566303117,
+        "precio_milla": 2.994514202267099,
+        "tasa_recargo": 0.09799841392265284
+      }
+    ],
+    "ejemplos": {
+      "0": [
+        "Fenway → Financial District",
+        "Northeastern University → Financial District",
+        "Boston University → Financial District"
+      ],
+      "1": [
+        "North Station → North End",
+        "Haymarket Square → Financial District",
+        "North End → Financial District"
+      ],
+      "2": [
+        "Back Bay → Boston University",
+        "Back Bay → Fenway",
+        "Fenway → Back Bay"
+      ],
+      "3": [
+        "West End → Northeastern University",
+        "North Station → Northeastern University",
+        "West End → Boston University"
+      ],
+      "4": [
+        "Theatre District → South Station",
+        "South Station → Financial District",
+        "Financial District → South Station"
+      ],
+      "5": [
+        "Northeastern University → North Station",
+        "Boston University → Theatre District",
+        "Back Bay → North End"
+      ],
+      "6": [
+        "South Station → Theatre District",
+        "Beacon Hill → Haymarket Square",
+        "South Station → West End"
+      ]
+    }
+  },
+  "datasets": {
+    "surge": [
+      255953,
+      64
+    ],
+    "price": [
+      636568,
+      75
+    ]
+  }
+}
