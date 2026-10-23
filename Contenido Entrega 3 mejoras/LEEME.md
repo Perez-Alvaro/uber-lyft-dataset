@@ -16,6 +16,7 @@ Grupo 11 · Ciencia de Datos 5K1 · UTN FRC · Uber y Lyft en Boston
 | Los datasets balanceados | [`4_Datasets/datasets balanceados/`](4_Datasets/datasets%20balanceados/) (con su propio LEEME) |
 | Un gráfico | [`5_Graficos/`](5_Graficos/): `figNN` = número de figura del informe |
 | Un número exacto | [`6_Resultados/metricas.json`](6_Resultados/) y las tablas CSV |
+| Un resumen breve de toda la entrega (para la docente) | [`DEFENSA_PROFE.md`](DEFENSA_PROFE.md) |
 | Entender en detalle cómo hicimos cada modelo | [`Modelos/README.md`](Modelos/README.md) |
 | Entender cómo se predice el surge (explicación simple) | [`COMO_SE_PREDICE_EL_SURGE.md`](COMO_SE_PREDICE_EL_SURGE.md) |
 | Entender el K-Means de productos | [`EXPLICACION_KMEANS_PRODUCTOS.md`](EXPLICACION_KMEANS_PRODUCTOS.md) |
@@ -25,6 +26,7 @@ Grupo 11 · Ciencia de Datos 5K1 · UTN FRC · Uber y Lyft en Boston
 ```
 Contenido Entrega 3 mejoras/
 ├── LEEME.md                              ← este archivo
+├── DEFENSA_PROFE.md                      resumen breve de toda la entrega, para la docente
 ├── COMO_SE_PREDICE_EL_SURGE.md          explicación simple del modelo de recargo
 ├── EXPLICACION_KMEANS_PRODUCTOS.md       por qué usamos K-Means en los productos y qué nos dice
 ├── Modelos/

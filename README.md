@@ -111,6 +111,7 @@ El proyecto se organiza bajo el marco ágil **Scrum**, dividido en cuatro entreg
 │
 ├── Contenido Entrega 3 mejoras/             # VERSIÓN FINAL de la Entrega 3
 │   ├── LEEME.md                             # Guía de la carpeta y resultados principales
+│   ├── DEFENSA_PROFE.md                     # Resumen breve de toda la entrega
 │   ├── COMO_SE_PREDICE_EL_SURGE.md          # Explicación simple del modelo de recargo
 │   ├── EXPLICACION_KMEANS_PRODUCTOS.md      # K-Means de productos: familias de tarifa
 │   ├── Modelos/README.md                    # Cómo hicimos cada modelo, paso a paso
