@@ -37,6 +37,16 @@ Grupo 11 · Ciencia de Datos 5K1 · UTN FRC · Uber y Lyft en Boston
 
 La accuracy del recargo se lee contra la línea base. Decir siempre "sin recargo" acierta el 91,7%, pero no detecta ningún recargo. El modelo baja la accuracy porque sí avisa: detecta 6 de cada 10 recargos, y de cada 100 avisos 13 son reales (el azar acierta 8).
 
+### Por qué el recargo quedó en 63% de accuracy
+
+1. **Las clases están muy desbalanceadas.** Solo el 8,2% de las cotizaciones tiene recargo. Un modelo que no aprende nada y dice siempre "no" ya acierta el 91,7%, así que la accuracy alta en este problema no indica un buen modelo.
+2. **Priorizamos detectar recargos.** Con pesos de clase y un umbral elegido para maximizar el F1, el modelo avisa más, y cada aviso equivocado (falsa alarma) baja la accuracy. Lo elegimos así porque un recargo no avisado le cuesta al pasajero un 46% más, mientras que una falsa alarma solo le hace perder unos minutos comparando con Uber.
+3. **Subir la accuracy es fácil, pero empeora el modelo.** Con un umbral más alto el mismo modelo llega a 89% de accuracy, pero detecta solo 1 de cada 10 recargos. Desde 0,80 deja de avisar y vuelve al 91,7% de "siempre no".
+4. **Falta la información que realmente define el recargo.** El recargo depende de cuántos pedidos y conductores hay en cada minuto, y eso no está en el dataset. Con lugar, hora, distancia y clima, dos cotizaciones casi idénticas pueden tener o no recargo. Por eso los cuatro algoritmos llegan al mismo techo (ROC-AUC entre 0,65 y 0,68): el límite está en los datos, no en el modelo.
+5. **La evaluación es honesta.** Probamos con días que el modelo nunca vio. Con una partición al azar los resultados parecían hasta un 87% mejores, pero esa mejora era falsa.
+
+En resumen: el 63% de accuracy es el costo de detectar el 61% de los recargos. La métrica que muestra la mejora real es la accuracy balanceada: 62,1%, contra 50% del azar.
+
 **Complementario (no supervisado).** Con K-Means agrupamos los 12 productos según su tarifa base y su precio por milla. El codo y la silueta coinciden en k = 3 (silueta 0,68).
 
 ## Qué descubrimos
