@@ -9,6 +9,10 @@ Salidas (dentro de "Contenido Entrega 3 mejoras"):
 Parte A · has_surge  -> clasificación binaria (Lyft sin Shared). Regresión logística, árbol de decisión,
                         random forest y gradient boosting; 4 técnicas de balanceo (cada una con su propia
                         búsqueda de hiperparámetros), elección del modelo por validación y ajuste del umbral.
+                        Se compara contra líneas base triviales y contra la tasa histórica de la zona
+                        de origen, y se verifica si balancear hace falta cuando el umbral ya se ajusta.
+                        El umbral de decisión se elige con una matriz de beneficio (costo de una falsa
+                        alarma frente al recargo evitado), con un análisis de sensibilidad del costo.
 Parte B · price      -> regresión sobre log(price) (Uber + Lyft). Ridge, árbol y random forest, cada uno
                         con y sin surge_multiplier (cada variante con su propia búsqueda).
 Parte C · productos  -> familias tarifarias de los 12 productos con K-Means (tarifa base y precio por
@@ -25,7 +29,7 @@ Modelos lineales: cada grupo one-hot pierde una columna de referencia (equivale 
 referencia elegida para que se pueda interpretar): zona South Station (su tasa de recargo, 8,0%, es la
 del promedio), producto Lyft (has_surge) o UberX (price), franja Mañana y clima Clear.
 
-Uso: python modelado_entrega3.py            (completo, ~25 min con 10 núcleos)
+Uso: python modelado_entrega3.py            (completo, ~15 min con 10 núcleos)
      python modelado_entrega3.py --rapido   (muestra del 15% y grillas chicas, ~2 min; escribe en una
                                              carpeta temporal para no pisar los resultados oficiales)
 Memoria: las búsquedas de random forest y gradient boosting corren con pocos procesos en paralelo
@@ -61,7 +65,7 @@ from sklearn.metrics import (accuracy_score, average_precision_score, balanced_a
                              confusion_matrix, mean_absolute_error, mean_squared_error,
                              precision_recall_curve, r2_score, roc_auc_score, roc_curve,
                              silhouette_score)
-from sklearn.model_selection import GridSearchCV, train_test_split
+from sklearn.model_selection import GridSearchCV, StratifiedKFold, cross_validate, train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import FunctionTransformer, StandardScaler, TargetEncoder
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor, plot_tree
@@ -70,7 +74,7 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 warnings.filterwarnings("ignore", category=UserWarning)
 
 RAPIDO = "--rapido" in sys.argv
-N_JOBS_PESADO = 2 if RAPIDO else 4      # procesos en paralelo para random forest y gradient boosting
+N_JOBS_PESADO = 2 if RAPIDO else 8      # procesos en paralelo para random forest y gradient boosting
 SLUG = {"Regresión logística": "logistica", "Árbol de decisión": "arbol", "Random forest": "random_forest",
         "Gradient boosting": "gradient_boosting", "Ridge": "ridge"}
 AQUI = Path(__file__).resolve().parent          # 3_Codigo
@@ -293,6 +297,22 @@ M["A_datos"] = {
     "tasa_por_origen": lyft.groupby("origen")["has_surge"].mean().sort_values().to_dict(),
 }
 log(f"Lyft sin Shared: {len(lyft):,} filas · {len(FEATS_A)} predictoras · train {len(Xtr):,} · test {len(Xte):,}")
+
+# Matriz de beneficio (USD por cotización, comparado con no tener modelo). Supuestos del equipo:
+#   VP: el pasajero avisado evita el recargo (comparando con Uber o esperando unos minutos), pero pierde el
+#       tiempo de comparar: recargo medio - costo.
+#   FP: compara o espera sin necesidad: -costo.
+#   FN y VN: nada cambia respecto de no tener el modelo: 0.
+# El recargo medio se mide en USD con las cotizaciones con recargo del entrenamiento. El costo de una falsa
+# alarma es un supuesto (unos 5 minutos de tiempo); por eso se informa también la sensibilidad a ese valor.
+con_recargo_tr = lyft.loc[~test_a & (lyft["has_surge"] == 1)]
+RECARGO_MEDIO = float((con_recargo_tr["price"] - con_recargo_tr["price"] / con_recargo_tr["surge_multiplier"]).mean())
+COSTO_FALSA_ALARMA = 1.0
+COSTOS_SENSIBILIDAD = [0.5, 1.0, 1.5, 2.0, 3.0]
+M["A_matriz_beneficio"] = {"recargo_medio": RECARGO_MEDIO, "costo_falsa_alarma": COSTO_FALSA_ALARMA,
+                           "vp": RECARGO_MEDIO - COSTO_FALSA_ALARMA, "fp": -COSTO_FALSA_ALARMA, "fn": 0.0, "vn": 0.0,
+                           "precision_minima": COSTO_FALSA_ALARMA / RECARGO_MEDIO}
+log(f"matriz de beneficio: recargo medio USD {RECARGO_MEDIO:.2f} · costo falsa alarma USD {COSTO_FALSA_ALARMA:.2f}")
 log(f"bloques de validación: {[(b['fechas'][0], b['fechas'][-1], b['filas']) for b in M['A_datos']['bloques_cv']]}")
 
 
@@ -332,7 +352,33 @@ def metricas_clf(y, proba, umbral=0.5):
             "precision": rep["1"]["precision"], "recall": rep["1"]["recall"], "f1": rep["1"]["f1-score"],
             "f1_macro": rep["macro avg"]["f1-score"], "f1_weighted": rep["weighted avg"]["f1-score"],
             "roc_auc": roc_auc_score(y, proba), "pr_auc": average_precision_score(y, proba),
+            "alertas": float(pred.mean()),  # proporción de cotizaciones marcadas "con recargo"
+            "beneficio_1000": beneficio(y, proba, umbral),
             "tn": int(tn), "fp": int(fp), "fn": int(fn), "tp": int(tp)}
+
+
+def beneficio(y, proba, umbral, costo=COSTO_FALSA_ALARMA):
+    """Beneficio en USD cada 1.000 cotizaciones según la matriz de beneficio (VN y FN valen 0)."""
+    aviso = np.asarray(proba) >= umbral
+    y = np.asarray(y)
+    vp, fp = int((aviso & (y == 1)).sum()), int((aviso & (y == 0)).sum())
+    return float((vp * (RECARGO_MEDIO - costo) - fp * costo) / len(y) * 1000)
+
+
+def umbral_beneficio(y, proba, costo=COSTO_FALSA_ALARMA):
+    """Umbral que maximiza el beneficio. Incluye 'no avisar nunca' (umbral 1), que vale 0."""
+    candidatos = np.append(np.unique(np.quantile(proba, np.linspace(0, 1, 801))), 1.0)
+    valores = [beneficio(y, proba, t, costo) for t in candidatos]
+    k = int(np.argmax(valores))
+    return float(candidatos[k]), float(valores[k])
+
+
+def umbral_f1(y, proba):
+    """Umbral que maximiza el F1 de la clase 'con recargo'. Devuelve (umbral, F1)."""
+    prec, rec, thr = precision_recall_curve(y, proba)
+    f1 = 2 * prec * rec / np.clip(prec + rec, 1e-12, None)
+    k = int(np.nanargmax(f1[:-1]))
+    return float(thr[k]), float(f1[k])
 
 
 def validacion_temporal(pipe, X, y, g):
@@ -348,34 +394,46 @@ def validacion_temporal(pipe, X, y, g):
 
 # --- A.0 Líneas base ---------------------------------------------------------------------------
 base = []
-for nombre, estrategia in [("Siempre 'sin recargo'", "most_frequent"), ("Azar con la tasa real", "stratified")]:
-    dummy = DummyClassifier(strategy=estrategia, random_state=SEED).fit(Xtr, ytr)
+for nombre, estrategia in [("Siempre 'sin recargo'", "most_frequent"), ("Siempre 'con recargo'", "constant"),
+                           ("Azar con la tasa real", "stratified")]:
+    dummy = DummyClassifier(strategy=estrategia, constant=1, random_state=SEED).fit(Xtr, ytr)
     base.append({"modelo": nombre, **metricas_clf(yte, dummy.predict_proba(Xte)[:, 1])})
+# Línea base informada, sin modelo: la tasa de recargo de la zona de origen en el entrenamiento.
+# Es lo mínimo que tiene que superar un modelo para decir que aprende algo más que "dónde sube".
+# El umbral se elige con la matriz de beneficio sobre el entrenamiento, igual que en los modelos.
+tasa_origen = lyft.loc[~test_a].groupby("origen")["has_surge"].mean()
+s_tr = lyft.loc[~test_a, "origen"].map(tasa_origen).values
+s_te = lyft.loc[test_a, "origen"].map(tasa_origen).fillna(ytr.mean()).values
+umbral_origen, _ = umbral_beneficio(ytr, s_tr)
+base.append({"modelo": "Tasa histórica de la zona de origen", **metricas_clf(yte, s_te, umbral_origen)})
 M["A_lineas_base"] = base
 
 # --- A.1 Búsqueda de hiperparámetros: una por modelo y por técnica de balanceo ------------------
 TECNICAS = {"sin": "Sin balanceo", "rus": "Submuestreo (RUS 1:1)", "smote": "Sobremuestreo (SMOTE 1:1)",
             "pesos": "Pesos de clase (balanced)"}
 # (modelo, grilla, procesos en paralelo, configuración "más simple", configuración "más compleja")
+# Las grillas se extendieron hasta que el valor elegido quedara adentro y no en un extremo: si el mejor
+# valor es el borde de la grilla, el óptimo podría estar más allá y el parámetro no queda justificado.
 MODELOS_A = {
     "Regresión logística": (LogisticRegression(max_iter=3000, solver="lbfgs"),
-                            {"modelo__C": [0.0001, 0.0003, 0.001, 0.01, 0.1, 1, 10]}, -1,
-                            {"C": 0.0001}, {"C": 10}),
+                            {"modelo__C": [0.00001, 0.00003, 0.0001, 0.0003, 0.001, 0.01, 0.1, 1, 10]}, -1,
+                            {"C": 0.00001}, {"C": 10}),
     "Árbol de decisión": (DecisionTreeClassifier(random_state=SEED),
                           {"modelo__max_depth": [3, 5, 7, 9, 12, 15, 20, 25, 30, 40],
-                           "modelo__min_samples_leaf": [20, 100, 500],
+                           "modelo__min_samples_leaf": [20, 100, 500, 1000, 2000],
                            "modelo__criterion": ["gini", "entropy"]}, -1,
-                          {"max_depth": 3, "min_samples_leaf": 500, "criterion": "gini"},
+                          {"max_depth": 3, "min_samples_leaf": 2000, "criterion": "gini"},
                           {"max_depth": 40, "min_samples_leaf": 20, "criterion": "gini"}),
     "Random forest": (RandomForestClassifier(n_estimators=150, max_features="sqrt", random_state=SEED, n_jobs=1),
-                      {"modelo__max_depth": [10, 16, None], "modelo__min_samples_leaf": [10, 50, 200]},
-                      N_JOBS_PESADO, {"max_depth": 10, "min_samples_leaf": 200},
-                      {"max_depth": None, "min_samples_leaf": 10}),
+                      {"modelo__max_depth": [7, 10, 16, 24], "modelo__min_samples_leaf": [5, 10, 50]},
+                      N_JOBS_PESADO, {"max_depth": 7, "min_samples_leaf": 50},
+                      {"max_depth": 24, "min_samples_leaf": 5}),
     "Gradient boosting": (HistGradientBoostingClassifier(max_iter=200, min_samples_leaf=100, l2_regularization=1.0,
                                                          early_stopping=False, random_state=SEED),
-                          {"modelo__learning_rate": [0.05, 0.1], "modelo__max_leaf_nodes": [15, 63]},
-                          N_JOBS_PESADO, {"learning_rate": 0.05, "max_leaf_nodes": 15},
-                          {"learning_rate": 0.1, "max_leaf_nodes": 63}),
+                          {"modelo__learning_rate": [0.02, 0.05, 0.1],
+                           "modelo__max_leaf_nodes": [7, 15, 31]},
+                          N_JOBS_PESADO, {"learning_rate": 0.02, "max_leaf_nodes": 7},
+                          {"learning_rate": 0.1, "max_leaf_nodes": 31}),
 }
 if RAPIDO:
     MODELOS_A["Árbol de decisión"][1].update({"modelo__max_depth": [3, 9, 20, 40], "modelo__criterion": ["gini"]})
@@ -527,29 +585,110 @@ fig.tight_layout()
 guardar(fig, "fig04_recargo_balanceo.png")
 
 # --- A.3 Elección del modelo (por validación) y umbral de decisión ------------------------------
-# Umbral de cada modelo (con la técnica elegida) a partir de sus predicciones de validación.
-finales_a, umbrales, aporte_ruta = {}, {}, []
+# Umbral de cada modelo (con la técnica elegida) a partir de sus predicciones de validación: el que
+# maximiza el beneficio de la matriz de beneficio. El umbral de máximo F1 se guarda para comparar.
+finales_a, umbrales, aporte_ruta, val_preds = {}, {}, [], {}
 for nombre in MODELOS_A:
     pipe = pipe_clf(modelo_final(nombre, TEC_FINAL), TEC_FINAL)
     idx_val, p_val, ap_con = validacion_temporal(pipe, Xtr, ytr, gtr)
-    y_val = ytr.iloc[idx_val]
-    prec, rec, thr = precision_recall_curve(y_val, p_val)
-    f1 = 2 * prec * rec / np.clip(prec + rec, 1e-12, None)
-    k = int(np.nanargmax(f1[:-1]))
-    umbrales[nombre] = float(thr[k])
+    val_preds[nombre] = (ytr.iloc[idx_val].values, p_val)
+    umbral_f1_val, f1_val = umbral_f1(ytr.iloc[idx_val], p_val)
+    umbrales[nombre], benef_val = umbral_beneficio(ytr.iloc[idx_val].values, p_val)
     p = probas[(nombre, TEC_FINAL)]
-    finales_a[nombre] = {"umbral_0.5": metricas_clf(yte, p, 0.5), "umbral_opt": metricas_clf(yte, p, thr[k]),
-                         "f1_validacion": float(f1[k]), "pr_auc_validacion": tuning_a[nombre][TEC_FINAL]["pr_auc_cv"]}
+    finales_a[nombre] = {"umbral_0.5": metricas_clf(yte, p, 0.5), "umbral_f1": metricas_clf(yte, p, umbral_f1_val),
+                         "umbral_opt": metricas_clf(yte, p, umbrales[nombre]), "f1_validacion": f1_val,
+                         "beneficio_validacion": benef_val,
+                         "pr_auc_validacion": tuning_a[nombre][TEC_FINAL]["pr_auc_cv"]}
     # Aporte de la tasa histórica de la ruta: mismo modelo sin esa variable
     _, _, ap_sin = validacion_temporal(pipe_clf(modelo_final(nombre, TEC_FINAL), TEC_FINAL, con_ruta=False), Xtr, ytr, gtr)
     p_sin = pipe_clf(modelo_final(nombre, TEC_FINAL), TEC_FINAL, con_ruta=False).fit(Xtr, ytr).predict_proba(Xte)[:, 1]
     aporte_ruta.append({"modelo": nombre, "pr_auc_val_con": ap_con, "pr_auc_val_sin": ap_sin,
                         "pr_auc_test_con": average_precision_score(yte, p),
                         "pr_auc_test_sin": average_precision_score(yte, p_sin)})
-    log(f"{nombre}: umbral {thr[k]:.3f} -> F1 test {finales_a[nombre]['umbral_opt']['f1']:.3f} · "
+    log(f"{nombre}: umbral {umbrales[nombre]:.3f} -> F1 test {finales_a[nombre]['umbral_opt']['f1']:.3f} · "
         f"ruta: PR-AUC val {ap_sin:.3f} -> {ap_con:.3f}")
 M["A_finales"] = finales_a
 M["A_aporte_ruta"] = aporte_ruta
+
+# ¿Hace falta balancear si el umbral ya se ajusta? El mismo algoritmo sin balanceo (con sus propios
+# hiperparámetros) y con el umbral elegido por la misma validación temporal, contra la técnica elegida.
+sin_balanceo_umbral = []
+for nombre in MODELOS_A:
+    idx_val, p_val, _ = validacion_temporal(pipe_clf(modelo_final(nombre, "sin"), "sin"), Xtr, ytr, gtr)
+    umbral_sin, _ = umbral_beneficio(ytr.iloc[idx_val].values, p_val)
+    sin_balanceo_umbral.append({"modelo": nombre,
+                                "sin_balanceo": metricas_clf(yte, probas[(nombre, "sin")], umbral_sin),
+                                "tecnica_elegida": finales_a[nombre]["umbral_opt"]})
+    log(f"{nombre} sin balanceo + umbral {umbral_sin:.3f}: beneficio test "
+        f"{sin_balanceo_umbral[-1]['sin_balanceo']['beneficio_1000']:.0f} USD/1000")
+M["A_sin_balanceo_umbral"] = sin_balanceo_umbral
+
+# Sensibilidad al costo de una falsa alarma (modelo elegido): el umbral se vuelve a elegir en validación
+# para cada costo y se mide en la prueba. Una alerta conviene si la probabilidad de recargo supera
+# costo / recargo medio, así que cuanto más cuesta una falsa alarma, más selectivo tiene que ser el modelo.
+y_val_el, p_val_el = val_preds[ELEGIDO]
+sensibilidad = []
+for costo in COSTOS_SENSIBILIDAD:
+    t, b_val = umbral_beneficio(y_val_el, p_val_el, costo)
+    r = metricas_clf(yte, probas[(ELEGIDO, TEC_FINAL)], t)
+    sensibilidad.append({"costo": costo, "umbral": t, "beneficio_validacion": b_val,
+                         "beneficio_1000": beneficio(yte, probas[(ELEGIDO, TEC_FINAL)], t, costo),
+                         "precision_minima": costo / RECARGO_MEDIO, **{k: r[k] for k in
+                         ("alertas", "accuracy", "accuracy_balanceada", "precision", "recall", "tp", "fp")}})
+M["A_sensibilidad_costo"] = sensibilidad
+log(f"sensibilidad: {[(s['costo'], round(s['umbral'], 3), round(s['beneficio_1000'])) for s in sensibilidad]}")
+
+# Puntos de operación: hasta dónde se pueden bajar los falsos negativos y a cuántos falsos positivos cuesta.
+# Para cada % de recargos que se quiere detectar, el umbral se fija en validación y se mide en la prueba.
+p_el_test = probas[(ELEGIDO, TEC_FINAL)]
+puntos = []
+for objetivo in [0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1]:
+    t = float(np.quantile(p_val_el[y_val_el == 1], 1 - objetivo))
+    r = metricas_clf(yte, p_el_test, t)
+    puntos.append({"recall_objetivo": objetivo, "umbral": t, **{k: r[k] for k in
+                   ("recall", "precision", "alertas", "accuracy", "accuracy_balanceada", "tp", "fp", "fn", "tn",
+                    "beneficio_1000")}})
+M["A_puntos_operacion"] = puntos
+# Techo del dominio: la mejor precisión que logra el modelo detectando al menos el 5% de los recargos
+pr_te, rc_te, _ = precision_recall_curve(yte, p_el_test)
+M["A_precision_maxima"] = {"precision": float(pr_te[rc_te >= 0.05].max()), "recall_minimo": 0.05}
+
+
+def bootstrap_ic(grupos, calcular, n=1000):
+    """IC 95% por bootstrap de bloques: se remuestrean horas completas, porque las cotizaciones de una misma
+    hora comparten el recargo y no son independientes (remuestrear filas sueltas daría intervalos optimistas)."""
+    rng = np.random.default_rng(SEED)
+    _, inversa = np.unique(np.asarray(grupos), return_inverse=True)
+    por_bloque = [np.flatnonzero(inversa == k) for k in range(inversa.max() + 1)]
+    valores = np.array([calcular(np.concatenate([por_bloque[k] for k in rng.integers(0, len(por_bloque), len(por_bloque))]))
+                        for _ in range(n)])
+    return np.percentile(valores, 2.5, axis=0), np.percentile(valores, 97.5, axis=0), len(por_bloque)
+
+
+# Niveles de certeza del modelo elegido en la prueba (con su umbral) y de su ventaja sobre la zona de origen
+horas_te = lyft.loc[test_a, "datetime_local"].str[:13].values
+y_np, aviso_el, umbral_el = yte.values, p_el_test >= umbrales[ELEGIDO], umbrales[ELEGIDO]
+NOMBRES_IC_A = ["accuracy", "accuracy_balanceada", "precision", "recall", "f1", "roc_auc", "pr_auc", "beneficio_1000",
+                "pr_auc_zona_origen", "ventaja_pr_auc_sobre_zona"]
+
+
+def metricas_ic_a(idx):
+    y_b, p_b, a_b = y_np[idx], p_el_test[idx], aviso_el[idx]
+    tp, fp = (a_b & (y_b == 1)).sum(), (a_b & (y_b == 0)).sum()
+    fn, tn = ((~a_b) & (y_b == 1)).sum(), ((~a_b) & (y_b == 0)).sum()
+    prec, rec = tp / max(tp + fp, 1), tp / max(tp + fn, 1)
+    ap, ap_zona = average_precision_score(y_b, p_b), average_precision_score(y_b, s_te[idx])
+    return [(tp + tn) / len(idx), (rec + tn / max(tn + fp, 1)) / 2, prec, rec, 2 * prec * rec / max(prec + rec, 1e-12),
+            roc_auc_score(y_b, p_b), ap, beneficio(y_b, p_b, umbral_el), ap_zona, ap - ap_zona]
+
+
+bajo, alto, n_bloques = bootstrap_ic(horas_te, metricas_ic_a)
+punto = metricas_ic_a(np.arange(len(y_np)))
+M["A_ic95"] = {"modelo": ELEGIDO, "bloques": n_bloques, "replicas": 1000,
+               "metricas": {k: {"valor": float(v), "bajo": float(b), "alto": float(a)}
+                            for k, v, b, a in zip(NOMBRES_IC_A, punto, bajo, alto)}}
+log(f"IC 95% ({n_bloques} horas): " + ", ".join(f"{k} {v:.3f} [{b:.3f}; {a:.3f}]"
+                                               for k, v, b, a in zip(NOMBRES_IC_A, punto, bajo, alto)))
 M["A_seleccion"] = [{"modelo": m, "params": texto_params(mejores_a[m][TEC_FINAL]),
                      "pr_auc_val": tuning_a[m][TEC_FINAL]["pr_auc_cv"], "pr_auc_val_std": tuning_a[m][TEC_FINAL]["pr_auc_cv_std"],
                      "roc_auc_val": tuning_a[m][TEC_FINAL]["roc_auc_cv"], "pr_auc_train": tuning_a[m][TEC_FINAL]["pr_auc_train"],
@@ -590,9 +729,67 @@ for ax, nombre in zip(axes, MODELOS_A):
     for s in ax.spines.values():
         s.set_visible(False)
 titular(fig, "Matrices de confusión en el período de prueba (15 al 18/12)",
-        "Modelos finales: hiperparámetros por validación temporal, pesos de clase y umbral elegido sobre el entrenamiento")
+        "Modelos finales: hiperparámetros por validación temporal, pesos de clase y umbral elegido con la matriz de beneficio en esa validación")
 fig.tight_layout()
 guardar(fig, "fig05_recargo_matrices_confusion.png")
+
+# Matriz de beneficio: valor de cada casilla, beneficio según el umbral y sensibilidad al costo
+p_el = probas[(ELEGIDO, TEC_FINAL)]
+coma = lambda v, d=2: f"{v:.{d}f}".replace(".", ",")
+fig, axes = plt.subplots(1, 3, figsize=(17, 4.6), gridspec_kw={"width_ratios": [0.8, 1.35, 1]})
+ax = axes[0]
+valores = np.array([[0.0, -COSTO_FALSA_ALARMA], [0.0, RECARGO_MEDIO - COSTO_FALSA_ALARMA]])
+ax.imshow(np.sign(valores), cmap=LinearSegmentedColormap.from_list("b", ["#F4C7A8", "#FFFFFF", "#A9CDE6"]),
+          vmin=-1, vmax=1)
+textos = [["VN · no avisa, no hay recargo\nUSD 0", f"FP · falsa alarma\n-USD {coma(COSTO_FALSA_ALARMA)}"],
+          ["FN · recargo no avisado\nUSD 0 (igual que sin modelo)",
+           f"VP · recargo evitado\n+USD {coma(RECARGO_MEDIO - COSTO_FALSA_ALARMA)}"]]
+for i in range(2):
+    for j in range(2):
+        ax.text(j, i, textos[i][j], ha="center", va="center", fontsize=9.5)
+ax.set_xticks([0, 1], ["Predice sin recargo", "Predice con recargo"])
+ax.set_yticks([0, 1], ["Sin recargo", "Con recargo"])
+ax.set_ylabel("Real")
+ax.set_title("Matriz de beneficio (USD por cotización)", loc="left", fontsize=11)
+for s in ax.spines.values():
+    s.set_visible(False)
+ax = axes[1]
+grilla_t = np.linspace(np.quantile(p_el, 0.02), min(1.0, np.quantile(p_el, 0.9995)), 300)
+ax.plot(grilla_t, [beneficio(yte, p_el, t) for t in grilla_t], color=VIOLETA, lw=2, label="Prueba")
+ax.plot(grilla_t, [beneficio(y_val_el, p_val_el, t) for t in grilla_t], color=GRIS, lw=1.4, ls="--",
+        label="Validación (elige el umbral)")
+ax.axhline(0, color="#404040", lw=0.8)
+ax.axvline(umbrales[ELEGIDO], color=VIOLETA, ls=":", lw=1.2)
+r_opt = finales_a[ELEGIDO]["umbral_opt"]
+ax.annotate(f"umbral elegido {coma(umbrales[ELEGIDO])}\nUSD {r_opt['beneficio_1000']:.0f} cada 1.000 cotizaciones",
+            (umbrales[ELEGIDO], r_opt["beneficio_1000"]), xytext=(10, 12), textcoords="offset points", fontsize=9)
+r_f1 = finales_a[ELEGIDO]["umbral_f1"]
+ax.scatter([r_f1["umbral"]], [r_f1["beneficio_1000"]], color=NARANJA, zorder=3,
+           label=f"Umbral de máximo F1 ({coma(r_f1['umbral'])})")
+ax.set_xlabel("Umbral de decisión (puntaje mínimo para avisar)")
+ax.set_ylabel("Beneficio (USD cada 1.000 cotizaciones)")
+ax.set_title(f"{ELEGIDO}: beneficio según el umbral", loc="left", fontsize=11)
+ax.legend(frameon=False, fontsize=8.5, loc="lower left")
+estilo(ax, "both")
+ax = axes[2]
+sens = pd.DataFrame(sensibilidad)
+barras = ax.bar([f"USD {coma(c)}" for c in sens["costo"]], sens["beneficio_1000"],
+                color=[VIOLETA if c == COSTO_FALSA_ALARMA else "#C9B8D6" for c in sens["costo"]], width=0.6)
+for b, (_, s) in zip(barras, sens.iterrows()):
+    texto = "no conviene\navisar" if s["alertas"] == 0 else f"umbral {coma(s['umbral'])}\navisa {pct(s['alertas'])}"
+    ax.text(b.get_x() + b.get_width() / 2, max(b.get_height(), 0) + 4, texto, ha="center", va="bottom", fontsize=8)
+ax.axhline(0, color="#404040", lw=0.8)
+ax.set_ylim(min(0, sens["beneficio_1000"].min()) - 10, sens["beneficio_1000"].max() * 1.45 + 10)
+ax.set_xlabel("Costo supuesto de una falsa alarma")
+ax.set_ylabel("Beneficio en la prueba (USD / 1.000)")
+ax.set_title("Sensibilidad al costo de una falsa alarma", loc="left", fontsize=11)
+estilo(ax, "y")
+titular(fig, "La matriz de beneficio elige el umbral: avisar solo cuando el recargo esperado compensa la falsa alarma",
+        f"Recargo medio evitado USD {coma(RECARGO_MEDIO)} (entrenamiento) · costo supuesto de una falsa alarma USD "
+        f"{coma(COSTO_FALSA_ALARMA)} · conviene avisar si la probabilidad de recargo supera "
+        f"{pct(COSTO_FALSA_ALARMA / RECARGO_MEDIO)}")
+fig.tight_layout()
+guardar(fig, "fig06_recargo_matriz_beneficio.png")
 
 # Curvas ROC y Precisión-Recall
 fig, axes = plt.subplots(1, 2, figsize=(12.5, 4.8))
@@ -618,7 +815,7 @@ for ax in axes:
 titular(fig, "Los modelos ordenan el riesgo mejor que el azar, pero con poco margen",
         "Período de prueba · con 8% de positivos, la curva Precisión-Recall es más exigente que la ROC")
 fig.tight_layout()
-guardar(fig, "fig06_recargo_curvas_roc_pr.png")
+guardar(fig, "fig07_recargo_curvas_roc_pr.png")
 
 # --- A.4 Interpretación (con los modelos ya entrenados; la prueba no se usa para ajustar nada) ---
 # (a) Importancia por familias de variables del modelo elegido (caída de PR-AUC al permutar)
@@ -628,11 +825,13 @@ base_ap, imp_a = importancia_por_grupo(lambda X: pipe_elegido.predict_proba(X)[:
 imp_a.to_csv(RES / "recargo_importancia_grupos.csv", index=False)
 M["A_importancia"] = {"modelo": ELEGIDO, "base_pr_auc": float(base_ap), "grupos": imp_a.to_dict("records")}
 
-# (b) Coeficientes de la regresión logística (odds ratio contra la categoría de referencia)
-lr_pipe = pipes_finales["Regresión logística"]
+# (b) Coeficientes de la regresión logística (odds ratio contra la categoría de referencia).
+# La logística elegida por validación usa una C muy chica (regularización fuerte), que encoge los
+# coeficientes hacia 0 y los odds ratio hacia 1. Para interpretar se ajusta la misma logística con
+# regularización débil (C = 1); los odds ratio de la elegida se guardan para comparar.
+C_INTERPRETAR = 1.0
+lr_pipe = pipe_clf(LogisticRegression(C=C_INTERPRETAR, max_iter=3000, solver="lbfgs"), TEC_FINAL).fit(Xtr, ytr)
 nombres_lr = list(lr_pipe.named_steps["prep"].get_feature_names_out())
-coef = pd.Series(lr_pipe.named_steps["modelo"].coef_[0], index=nombres_lr)
-desv = pd.Series(lr_pipe.named_steps["escala"].scale_, index=nombres_lr)
 binaria = lr_pipe.named_steps["prep"].transform(Xtr).isin([0, 1]).all()
 
 
@@ -646,13 +845,23 @@ def comparacion_lr(c):
     return "sí vs no"
 
 
-# Dummies: OR de pasar de la referencia (o de "no") a esa categoría. Continuas: OR por un desvío.
-odds = pd.DataFrame({"coef_estandarizado": coef,
-                     "odds_ratio": np.where(binaria, np.exp(coef / desv), np.exp(coef)),
-                     "tipo": [comparacion_lr(c) for c in nombres_lr]})
-odds = odds.reindex(odds["coef_estandarizado"].abs().sort_values(ascending=False).index)
-odds.to_csv(RES / "recargo_odds_ratio_logistica.csv")
+def tabla_odds(pipe):
+    """Dummies: OR de pasar de la referencia (o de "no") a esa categoría. Continuas: OR por un desvío."""
+    coef = pd.Series(pipe.named_steps["modelo"].coef_[0], index=nombres_lr)
+    desv = pd.Series(pipe.named_steps["escala"].scale_, index=nombres_lr)
+    tabla = pd.DataFrame({"coef_estandarizado": coef,
+                          "odds_ratio": np.where(binaria, np.exp(coef / desv), np.exp(coef)),
+                          "tipo": [comparacion_lr(c) for c in nombres_lr]})
+    return tabla.reindex(tabla["coef_estandarizado"].abs().sort_values(ascending=False).index)
+
+
+odds = tabla_odds(lr_pipe)
+odds_elegida = tabla_odds(pipes_finales["Regresión logística"])
+odds.assign(odds_ratio_logistica_elegida=odds_elegida["odds_ratio"]).to_csv(RES / "recargo_odds_ratio_logistica.csv")
 M["A_odds"] = odds.reset_index(names="variable").to_dict("records")
+M["A_odds_elegida"] = odds_elegida.reset_index(names="variable").to_dict("records")
+M["A_odds_info"] = {"C_interpretar": C_INTERPRETAR, "C_elegida": mejores_a["Regresión logística"][TEC_FINAL]["C"],
+                    "pr_auc_test_interpretar": average_precision_score(yte, lr_pipe.predict_proba(Xte)[:, 1])}
 
 fig, axes = plt.subplots(1, 2, figsize=(13.5, 5.2), gridspec_kw={"width_ratios": [1, 1.25]})
 ax = axes[0]
@@ -677,14 +886,14 @@ ax.xaxis.set_major_locator(matplotlib.ticker.FixedLocator([0.2, 0.3, 0.5, 0.75, 
 ax.xaxis.set_minor_locator(matplotlib.ticker.NullLocator())
 ax.xaxis.set_major_formatter(lambda v, _: f"{v:g}".replace(".", ","))
 ax.set_xlabel("Odds ratio (escala log) · >1 aumenta la chance de recargo")
-ax.set_title("Regresión logística: las 14 variables de mayor peso", loc="left", fontsize=11)
+ax.set_title(f"Regresión logística (C = {C_INTERPRETAR:g}): las 14 variables de mayor peso", loc="left", fontsize=11)
 ax.tick_params(axis="y", labelsize=9)
 estilo(ax, "x")
 titular(fig, "El recargo depende sobre todo del lugar (ruta y zona de origen); la hora y el clima casi no aportan",
         "Importancia por permutación en el período de prueba (3 repeticiones; el modelo ya está entrenado) · "
-        "odds ratio contra South Station, la zona con la tasa promedio")
+        "odds ratio contra South Station (zona con la tasa promedio), con regularización débil para no encogerlos")
 fig.tight_layout()
-guardar(fig, "fig07_recargo_importancia_odds_ratio.png")
+guardar(fig, "fig08_recargo_importancia_odds_ratio.png")
 
 # (c) Árbol: primeros niveles de decisión. Los árboles no dependen de la escala: se dibuja sobre los
 # datos sin estandarizar para que los umbrales se lean en unidades reales.
@@ -700,7 +909,7 @@ plot_tree(dt_legible, max_depth=2, feature_names=[f.replace("_", " ") for f in p
 titular(fig, "Las primeras reglas del árbol de decisión",
         "Tres primeros niveles · ruta = tasa histórica de recargo de la ruta en el entrenamiento · en las dummies, "
         "'≤ 0.5' significa 'no' · value = proporción [sin, con] recargo ponderada por los pesos de clase")
-guardar(fig, "fig08_recargo_arbol_reglas.png")
+guardar(fig, "fig09_recargo_arbol_reglas.png")
 
 # (d) Utilidad práctica: captura de recargos por decil de riesgo (modelo elegido)
 dec = pd.DataFrame({"y": yte.values, "p": probas[(ELEGIDO, TEC_FINAL)]})
@@ -724,7 +933,7 @@ ax.yaxis.set_major_formatter(lambda v, _: f"{v:.0%}")
 estilo(ax, "y")
 titular(fig, f"El 20% de mayor riesgo concentra el {pct(tabla_dec['captura_acum'].iloc[1])} de los recargos",
         f"{ELEGIDO} con pesos de clase · período de prueba · tasa real de recargo en cada decil de probabilidad predicha")
-guardar(fig, "fig09_recargo_deciles_riesgo.png")
+guardar(fig, "fig10_recargo_deciles_riesgo.png")
 
 # (e) Por qué validar por fecha: la misma receta con partición aleatoria da métricas infladas
 X_all, y_all = lyft[FEATS_A], lyft["has_surge"]
@@ -739,6 +948,27 @@ for nombre in ["Árbol de decisión", "Random forest", "Gradient boosting"]:
                         "pr_auc_temporal": average_precision_score(yte, probas[(nombre, TEC_FINAL)])})
 M["A_particion"] = comparacion
 log(f"partición aleatoria vs temporal: {comparacion}")
+
+# (f) Validación cruzada mezclada (StratifiedKFold, 5 folds, con mezcla) como complemento de la temporal.
+# En cada fold el balanceo se aplica solo a los 4 folds de entrenamiento (pipeline de imblearn) y el fold
+# de validación conserva la proporción real de recargos. Se compara con la validación cruzada temporal en
+# orden, que es la que se usa para elegir: la mezcla deja cotizaciones del mismo minuto y ruta a ambos lados.
+skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=SEED)
+cv_mezclada = []
+for nombre in MODELOS_A:
+    res = cross_validate(pipe_clf(modelo_final(nombre, TEC_FINAL), TEC_FINAL), Xtr, ytr, cv=skf,
+                         scoring={"pr_auc": "average_precision", "roc_auc": "roc_auc"},
+                         n_jobs=1 if nombre == "Random forest" else 5)
+    cv_mezclada.append({"modelo": nombre,
+                        "pr_auc_mezclada": float(res["test_pr_auc"].mean()),
+                        "pr_auc_mezclada_std": float(res["test_pr_auc"].std()),
+                        "roc_auc_mezclada": float(res["test_roc_auc"].mean()),
+                        "pr_auc_temporal": tuning_a[nombre][TEC_FINAL]["pr_auc_cv"],
+                        "pr_auc_temporal_std": tuning_a[nombre][TEC_FINAL]["pr_auc_cv_std"],
+                        "roc_auc_temporal": tuning_a[nombre][TEC_FINAL]["roc_auc_cv"]})
+    log(f"{nombre}: CV mezclada PR-AUC {cv_mezclada[-1]['pr_auc_mezclada']:.3f} · "
+        f"CV temporal {cv_mezclada[-1]['pr_auc_temporal']:.3f}")
+M["A_cv_mezclada"] = cv_mezclada
 
 # ==============================================================================================
 # PARTE B · price (regresión sobre log(price))
@@ -761,16 +991,18 @@ idx_tr = np.flatnonzero(tr_b.values)
 sub = np.sort(rng.choice(idx_tr, size=min(150_000, len(idx_tr)), replace=False))
 
 # (modelo, grilla, usar submuestra, procesos, configuración "más simple", "más compleja")
+# Grillas extendidas para que el valor elegido quede adentro y no en un extremo (ver parte A).
 MODELOS_B = {
     "Ridge": (Pipeline([("referencia", FunctionTransformer(quitar_columnas, kw_args={"cols": REF_B})),
                         ("escala", StandardScaler()), ("modelo", Ridge())]),
-              {"modelo__alpha": [0.01, 0.1, 1, 10, 100, 1000]}, False, -1, {"alpha": 1000}, {"alpha": 0.01}),
+              {"modelo__alpha": [0.01, 0.1, 1, 10, 100, 1000, 10_000, 100_000]}, False, -1,
+              {"alpha": 100_000}, {"alpha": 0.01}),
     "Árbol de decisión": (DecisionTreeRegressor(random_state=SEED),
-                          {"max_depth": [6, 10, 14, 18, 24], "min_samples_leaf": [5, 20, 100]}, True, -1,
-                          {"max_depth": 6, "min_samples_leaf": 100}, {"max_depth": 24, "min_samples_leaf": 5}),
+                          {"max_depth": [6, 10, 14, 18, 24, 30], "min_samples_leaf": [5, 20, 100, 300]}, True, -1,
+                          {"max_depth": 6, "min_samples_leaf": 300}, {"max_depth": 30, "min_samples_leaf": 5}),
     "Random forest": (RandomForestRegressor(n_estimators=60, max_features=0.5, random_state=SEED, n_jobs=1),
-                      {"max_depth": [16, 24], "min_samples_leaf": [5, 20]}, True, N_JOBS_PESADO,
-                      {"max_depth": 16, "min_samples_leaf": 20}, {"max_depth": 24, "min_samples_leaf": 5}),
+                      {"max_depth": [12, 16, 24, 32], "min_samples_leaf": [2, 5, 20, 50]}, True, N_JOBS_PESADO,
+                      {"max_depth": 12, "min_samples_leaf": 50}, {"max_depth": 32, "min_samples_leaf": 2}),
 }
 mejores_b, tuning_b, pruebas_b = {}, {}, {}
 for nombre, (modelo, grilla, en_submuestra, n_jobs, simple, compleja) in MODELOS_B.items():
@@ -845,6 +1077,25 @@ por_prod["mae_rel"] = por_prod["mae"] / por_prod["precio_medio"]
 por_prod.to_csv(RES / "precio_error_por_producto.csv")
 M["B_mejor"] = {"modelo": clave_b[0], "variante": clave_b[1]}
 M["B_por_producto"] = por_prod.reset_index().to_dict("records")
+
+# Niveles de certeza del modelo de precio elegido y del mismo algoritmo sin surge (bootstrap por horas)
+horas_b = df.loc[te_b, "datetime_local"].str[:13].values
+otra_variante = (clave_b[0], "sin surge" if clave_b[1] == "con surge" else "con surge")
+NOMBRES_IC_B = ["mae", "r2", "dentro_10pct"]
+ic_b = {}
+for clave in (clave_b, otra_variante):
+    pred = pred_b[clave]
+
+    def metricas_ic_b(idx, pred=pred):
+        real, est = precio_te[idx], pred[idx]
+        return [np.mean(np.abs(real - est)), r2_score(real, est), np.mean(np.abs(est - real) / real <= 0.10)]
+
+    bajo, alto, n_bloques = bootstrap_ic(horas_b, metricas_ic_b)
+    punto = metricas_ic_b(np.arange(len(precio_te)))
+    ic_b[f"{clave[0]} ({clave[1]})"] = {k: {"valor": float(v), "bajo": float(b), "alto": float(a)}
+                                       for k, v, b, a in zip(NOMBRES_IC_B, punto, bajo, alto)}
+M["B_ic95"] = {"bloques": n_bloques, "replicas": 1000, "modelos": ic_b}
+log(f"IC 95% precio: {ic_b}")
 
 fig, axes = plt.subplots(1, 2, figsize=(13, 4.8), gridspec_kw={"width_ratios": [1, 1.2]})
 ax = axes[0]
@@ -1028,7 +1279,7 @@ titular(fig, f"Los 12 productos de Uber y Lyft forman {K_ELEGIDO} familias de ta
         "K-Means sobre tarifa base y precio por milla (estandarizados), estimados con viajes sin recargo del entrenamiento · "
         f"k = {K_ELEGIDO}: máximo coeficiente de silueta")
 fig.tight_layout()
-guardar(fig, "fig10_productos_kmeans.png")
+guardar(fig, "fig11_productos_kmeans.png")
 
 # ==============================================================================================
 # DATASETS DE MODELADO (salida de la Entrega 3)

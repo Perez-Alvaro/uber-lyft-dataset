@@ -1,6 +1,6 @@
 # K-Means de productos: por qué lo usamos y qué nos dice
 
-Explicación para el equipo del análisis complementario de la Entrega 3 (sección 6 del informe, sección 10 del Colab, figura 10).
+Explicación para el equipo del análisis complementario de la Entrega 3 (sección 6 del informe, sección 13 del Colab, figura 11).
 
 ## En una frase
 
@@ -122,8 +122,8 @@ Por eso la ruta más cara por milla es Financial District → South Station (USD
 | Qué | Dónde |
 |---|---|
 | Texto del informe | `1_Informe/Entrega3_Grupo11.docx`, sección 6 y tabla de hipótesis (sección 7) |
-| En la presentación | `2_Presentacion_Colab/`, sección 10 |
-| Gráfico (codo, silueta y productos) | `5_Graficos/fig10_productos_kmeans.png` |
+| En la presentación | `2_Presentacion_Colab/`, sección 13 |
+| Gráfico (codo, silueta y productos) | `5_Graficos/fig11_productos_kmeans.png` |
 | Los 12 productos con su familia | `6_Resultados/productos_tarifa_clusters.csv` |
 | Resumen de cada familia | `6_Resultados/productos_perfil_clusters.csv` |
 | Código | `3_Codigo/modelado_entrega3.py`, sección "PARTE C" |

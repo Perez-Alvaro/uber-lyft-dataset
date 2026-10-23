@@ -44,7 +44,7 @@ Estos archivos quedan para mostrar el efecto de cada técnica. Resultados del mo
 |---|---:|---:|---:|---:|---:|
 | Sin balanceo | 91,7% | 50,0% | 0,0% | 0,0% | 0,134 |
 | Submuestreo | 53,8% | 62,8% | 73,6% | 12,2% | 0,130 |
-| SMOTE | 85,4% | 52,9% | 14,0% | 13,5% | 0,117 |
+| SMOTE | 91,6% | 50,1% | 0,3% | 15,9% | 0,116 |
 | Pesos de clase (elegida) | 54,2% | 63,1% | 73,7% | 12,3% | 0,136 |
 
 Accuracy, recall y precisión: período de prueba con umbral 0,5. El PR-AUC de validación es el que se usó para comparar.

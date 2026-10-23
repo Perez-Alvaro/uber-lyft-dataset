@@ -13,7 +13,7 @@ La carpeta preliminar **no se tocó**: queda como registro del punto de partida 
 | Dataset de entrada | `dataset_nueva_columna.zip` (sin codificar) | `dataset_codificado.zip` (el último de la Entrega 2) |
 | Partición train/test | Aleatoria | Por fecha: train hasta el 14/12, test del 15 al 18/12 |
 | Hiperparámetros | Fijos a mano, sin justificar | Búsqueda en grilla con validación temporal en orden (5 bloques de fechas), tabla de justificación |
-| Umbral de decisión | 0,5 fijo | Elegido por F1 con las predicciones de validación dentro del train (sin mirar el test) |
+| Umbral de decisión | 0,5 fijo | Elegido con una matriz de beneficio sobre las predicciones de validación dentro del train (sin mirar el test) |
 | Métricas de has_surge | Accuracy, recall, precision, F1, ROC-AUC (sin línea base) | + accuracy balanceada, PR-AUC, F1 macro/weighted, curvas ROC y PR, líneas base |
 | Modelos de has_surge | Regresión logística y árbol | Regresión logística, árbol, random forest y gradient boosting (elegido por validación) |
 | Modelos de price | Lineal sin regularizar y árbol, sin surge_multiplier | Ridge, árbol y random forest, cada uno con y sin surge_multiplier |
@@ -45,7 +45,7 @@ Cargaba `dataset_nueva_columna.zip` y volvía a codificar con `get_dummies`, con
 
 **2. Partición aleatoria.**
 Todos los modelos usaban `train_test_split` al azar. Eso contradice lo que dijimos en la Entrega 2 (validar agrupando por fecha, porque en el 95,7% de los grupos ruta–minuto todos los productos comparten `has_surge`) e infla las métricas: cotizaciones del mismo minuto y ruta quedan en train y en test.
-Lo medimos: con partición aleatoria el PR-AUC del random forest sale **un 87% más alto** (0,264 frente a 0,141), y el random forest parece mucho mejor que gradient boosting cuando en realidad quedan parejos (0,141 y 0,140 por fecha).
+Lo medimos: con partición aleatoria el PR-AUC del random forest sale **más del doble** (0,309 frente a 0,142), y el random forest parece mucho mejor que gradient boosting cuando en realidad quedan parejos (0,141 y 0,140 por fecha).
 → Test = 4 fechas posteriores; los hiperparámetros se eligen con una validación temporal en orden dentro del train (5 bloques de fechas: cada fold valida con fechas posteriores a las de entrenamiento). La comparación aleatoria vs temporal está en la sección 5.7 del informe.
 
 **3. La clasificación multiclase de Uber era circular.**
@@ -65,12 +65,12 @@ Predecía el servicio (`service_tier`) usando `price` y `price_per_mile`. El pre
 → Búsqueda en grilla para todos los modelos (cada combinación de modelo y técnica de balanceo, y cada variante con/sin surge, tiene su propia búsqueda), tabla con el rol de cada parámetro y por qué se eligió, y curva de validación del árbol que muestra el sobreajuste.
 
 **6. Umbral fijo en 0,5.** Con datos desbalanceados el umbral define el compromiso entre recall y precisión, y la clase de matriz de confusión pide interpretarlo.
-→ Se elige con las predicciones de la validación temporal dentro del train (máximo F1) y se aplica tal cual al test.
+→ Se elige con las predicciones de la validación temporal dentro del train y se aplica tal cual al test. Primero se usó el máximo F1; en la versión actual se usa una matriz de beneficio (recargo evitado frente al costo de una falsa alarma), con análisis de sensibilidad.
 
 **7. Métricas incompletas.** Faltaba el PR-AUC que prometimos en la Entrega 2, no había curvas ROC graficadas, no se reportaban los promedios macro y weighted, y no había líneas base (por ejemplo, "siempre sin recargo", que tiene 91,7% de accuracy).
 → Están todas, más la curva Precisión-Recall y dos líneas base.
 
-**Sobre la accuracy (la profe la remarcó):** la versión preliminar la mostraba, pero sin compararla con nada. Ahora se informa en todas las tablas y se lee **siempre contra la línea base** (91,7% de decir siempre "no"), junto con la **accuracy balanceada** (promedio del acierto en cada clase; 50% = azar). El modelo final (gradient boosting) tiene 63,3% de accuracy y 62,1% de accuracy balanceada: acierta el 63,5% de los viajes sin recargo y el 60,7% de los viajes con recargo. Está explicado en las secciones 3.3, 5.1 y 5.4 del informe y en las secciones 6 (con una demo en vivo) y 8 del Colab.
+**Sobre la accuracy (la profe la remarcó):** la versión preliminar la mostraba, pero sin compararla con nada. Ahora se informa en todas las tablas y se lee **siempre contra la línea base** (91,7% de decir siempre "no"), junto con la **accuracy balanceada** (promedio del acierto en cada clase; 50% = azar). El modelo final (gradient boosting) tiene 68,6% de accuracy y 60,8% de accuracy balanceada: acierta el 70,1% de los viajes sin recargo y el 51,4% de los viajes con recargo. Está explicado en las secciones 3.3, 5.1 y 5.4 del informe y en las secciones 6 (con una demo en vivo) y 8 del Colab.
 
 **8. Conclusión de balanceo sobredimensionada.** El informe llamaba a `class_weight` "método campeón" y "herramienta útil" mirando solo el recall (83%), con una precisión de 12% contra 8% de azar. No explicaba que el ROC-AUC casi no cambia al balancear: balancear corre las probabilidades respecto del umbral, no mejora el ranking. Tampoco explicaba por qué SMOTE rinde mal.
 → El informe compara las técnicas con métricas que dependen y que no dependen del umbral, y explica el problema de SMOTE con variables dummy: interpola valores imposibles como "0,4 de Back Bay" y los árboles los memorizan.
@@ -99,12 +99,12 @@ No son comparables uno a uno, porque la versión preliminar usaba partición ale
 
 | Métrica | Preliminar (árbol) | Versión final (gradient boosting) | Por qué cambia |
 |---|---|---|---|
-| Recargo: recall | 83,4% | 60,7% | Umbral elegido en validación en vez de 0,5, y prueba en fechas nuevas |
-| Recargo: precisión | 12,0% | 13,1% | Menos alertas, pero más acertadas |
-| Recargo: F1 | 0,210 | 0,215 | Hiperparámetros elegidos por validación temporal |
+| Recargo: recall | 83,4% | 51,4% | Umbral elegido con la matriz de beneficio en validación en vez de 0,5, y prueba en fechas nuevas |
+| Recargo: precisión | 12,0% | 13,5% | Menos alertas, pero más acertadas |
+| Recargo: F1 | 0,210 | 0,214 | Hiperparámetros elegidos por validación temporal |
 | Recargo: ROC-AUC | 0,683 | 0,676 | La validación por fecha saca el optimismo de la partición aleatoria |
 | Recargo: PR-AUC | no se reportaba | 0,140 | Métrica principal comprometida en la Entrega 2 |
-| Recargo: accuracy balanceada | no se reportaba | 62,1% | Para leer la accuracy contra el azar (50%) |
+| Recargo: accuracy balanceada | no se reportaba | 60,8% | Para leer la accuracy contra el azar (50%) |
 | Precio: R² | 0,906 (árbol) | 0,967 (random forest con surge) | 12 productos (`name_*`), `surge_multiplier` y dataset completo |
 | Precio: MAE | USD 1,85 (sin verificar) | USD 1,08 | Ídem; sin `surge_multiplier` da USD 1,32 |
 
@@ -141,3 +141,5 @@ Además, a pedido de la profe:
 ## Qué hay en la carpeta nueva
 
 La estructura completa y qué abrir para cada cosa están en [`../LEEME.md`](../LEEME.md).
+
+Los cambios de la versión actual respecto de la anterior (matriz de beneficio, intervalos de confianza, validación cruzada mezclada, grillas extendidas, etc.) están en [`../CAMBIOS_RESPECTO_VERSION_ANTERIOR.md`](../CAMBIOS_RESPECTO_VERSION_ANTERIOR.md).

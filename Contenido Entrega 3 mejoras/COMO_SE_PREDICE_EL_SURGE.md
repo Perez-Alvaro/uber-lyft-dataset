@@ -39,7 +39,7 @@ El modelo ve lo mismo que se sabe **en el momento de cotizar**:
 - **Entrenamiento:** cotizaciones del 25/11 al 14/12/2018 (196.558).
 - **Prueba:** cotizaciones del 15 al 18/12 (59.395), días que el modelo **nunca vio**.
 
-No mezclamos al azar porque cotizaciones del mismo minuto y la misma ruta comparten el recargo. El modelo "reconocería" las de prueba y parecería mucho mejor de lo que es: con mezcla al azar, el random forest parecería un 87% mejor.
+No mezclamos al azar porque cotizaciones del mismo minuto y la misma ruta comparten el recargo. El modelo "reconocería" las de prueba y parecería mucho mejor de lo que es: con mezcla al azar, el random forest parecería más del doble de bueno.
 
 ### Paso 2 · Arreglar el desbalance
 
@@ -73,11 +73,18 @@ Cada árbol corrige solo un poquito (*learning rate* = 0,05) para no exagerar co
 Cuando llega una cotización, el modelo:
 
 1. **Calcula un puntaje de riesgo entre 0 y 1** sumando lo que dicen los 200 árboles.
-2. **Lo compara con un umbral de 0,55:**
-   - puntaje ≥ 0,55 → **"va a tener recargo"** (alerta);
-   - puntaje < 0,55 → **"no va a tener recargo"**.
+2. **Lo compara con un umbral de 0,57:**
+   - puntaje ≥ 0,57 → **"va a tener recargo"** (alerta);
+   - puntaje < 0,57 → **"no va a tener recargo"**.
 
-El umbral no es 0,5 a ciegas: lo elegimos con los días de entrenamiento como el que mejor equilibra recargos detectados y falsas alarmas (máximo F1).
+El umbral no es 0,5 a ciegas: lo elegimos con los días de entrenamiento usando una **matriz de beneficio**, que le pone un valor a cada acierto y a cada error:
+
+| | Predice sin recargo | Predice con recargo (aviso) |
+|---|---|---|
+| **Real: sin recargo** | USD 0 | **−USD 1,00**: falsa alarma, el pasajero compara o espera sin necesidad (supuesto del equipo) |
+| **Real: con recargo** | USD 0: paga el recargo, igual que sin modelo | **+USD 7,73**: evita el recargo medio (USD 8,73) y pierde el tiempo de comparar |
+
+Con esos valores, avisar conviene solo si la chance de recargo supera el **11,4%** (USD 1 ÷ USD 8,73). El umbral de 0,57 es el que más beneficio da en validación.
 
 > **Ojo:** el puntaje **no es la probabilidad real**. Con los pesos de clase el modelo "exagera" el riesgo a propósito. Un puntaje de 0,8 no quiere decir 80% de chance. Para saber la chance real hay que mirar los deciles (sección 6).
 
@@ -87,7 +94,7 @@ El umbral no es 0,5 a ciegas: lo elegimos con los días de entrenamiento como el
 |---|---:|---|---|
 | **Back Bay → Haymarket Square**, Lux Black XL, 2,95 millas, sábado 3 h | **0,79** | Recargo | Sí ✔ |
 | **North End → Beacon Hill**, Lux Black, 1,78 millas, domingo 4 h | **0,06** | Sin recargo | No ✔ |
-| **Theatre District → Haymarket Square**, Lyft, 1,75 millas, lunes 15 h | **0,52** | Sin recargo (justo debajo del umbral) | No ✔ |
+| **Theatre District → Haymarket Square**, Lyft, 1,75 millas, lunes 15 h | **0,52** | Sin recargo (debajo del umbral) | No ✔ |
 
 **El lugar de salida domina el puntaje.** El puntaje promedio por zona de origen en la prueba va de **0,16** (North End y Haymarket Square) a **0,61** (Back Bay), igual que las tasas reales de recargo de esas zonas (1,8% y 13,4%).
 
@@ -99,17 +106,18 @@ La matriz de confusión del modelo:
 
 | | Predijo **sin recargo** | Predijo **con recargo** |
 |---|---:|---:|
-| **Real: sin recargo** | **34.590** · acierto (VN) | **19.877** · falsa alarma (FP) |
-| **Real: con recargo** | **1.937** · no detectado (FN) | **2.991** · detectado (VP) |
+| **Real: sin recargo** | **38.202** · acierto (VN) | **16.265** · falsa alarma (FP) |
+| **Real: con recargo** | **2.394** · no detectado (FN) | **2.534** · detectado (VP) |
 
 En palabras:
 
-- **Detecta 6 de cada 10 recargos** (recall 60,7%).
-- **De cada 100 alertas, 13 son recargos reales** (precisión 13,1%). Si avisara al azar, acertaría 8.
-- **Accuracy 63,3%**, menor que el 91,7% de decir siempre "no", porque ahora el modelo **sí avisa** y a veces se equivoca.
-- **Accuracy balanceada 62,1%**, contra 50% del azar: acierta el 63,5% de los viajes sin recargo y el 60,7% de los con recargo.
+- **Detecta 5 de cada 10 recargos** (recall 51,4%), avisando en el 32% de las cotizaciones.
+- **De cada 100 alertas, 13 o 14 son recargos reales** (precisión 13,5%). Si avisara al azar, acertaría 8.
+- **Accuracy 68,6%**, menor que el 91,7% de decir siempre "no", porque ahora el modelo **sí avisa** y a veces se equivoca.
+- **Accuracy balanceada 60,8%**, contra 50% del azar: acierta el 70,1% de los viajes sin recargo y el 51,4% de los con recargo.
+- **Beneficio:** USD 56 cada 1.000 cotizaciones (IC 95%: 35 a 78).
 
-**¿Por qué tantas falsas alarmas?** Porque preferimos avisar de más: para el pasajero, un recargo que no le avisaron le cuesta 46% más, y una falsa alarma solo le hace perder unos minutos comparando con Uber.
+**¿Por qué tantas falsas alarmas?** Porque hay 11 cotizaciones sin recargo por cada una con recargo, y el modelo no tiene la información de oferta y demanda que define el recargo. La matriz de beneficio ya busca el equilibrio: con el umbral de máximo F1 (0,55) el modelo avisaba en el 38% de las cotizaciones y ganaba menos. Para detectar el 90% de los recargos habría que avisar en el 80% de las cotizaciones y el beneficio sería negativo. Por eso conviene enfocarse en la **precisión** y usar el modelo para avisos de bajo costo ("conviene comparar con Uber").
 
 ---
 
@@ -156,7 +164,7 @@ Los cuatro algoritmos llegan a un resultado muy parecido (ROC-AUC entre 0,65 y 0
 1. Predecimos si una cotización de Lyft tendrá recargo, sin mirar el precio.
 2. Entrenamos con días pasados y probamos con días nuevos.
 3. Usamos **pesos de clase** porque solo el 8% tiene recargo, y **gradient boosting**: 200 árboles que se corrigen entre sí.
-4. Detecta **6 de cada 10 recargos**, con 13 aciertos cada 100 alertas (el azar da 8).
+4. Detecta **5 de cada 10 recargos**, con 13 o 14 aciertos cada 100 alertas (el azar da 8). El umbral sale de la matriz de beneficio.
 5. El recargo depende del **lugar de salida**; lo demás es oferta y demanda en tiempo real, que no tenemos.
 
-**Más detalle:** informe (`1_Informe/`, sección 5), Colab (`2_Presentacion_Colab/`, secciones 6 a 9) y código (`3_Codigo/modelado_entrega3.py`, parte A).
+**Más detalle:** informe (`1_Informe/`, sección 5), Colab (`2_Presentacion_Colab/`, secciones 6 a 11) y código (`3_Codigo/modelado_entrega3.py`, parte A).

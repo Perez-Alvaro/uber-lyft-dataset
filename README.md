@@ -73,10 +73,12 @@ El proyecto se organiza bajo el marco ágil **Scrum**, dividido en cuatro entreg
    - Para predecir `price`: evaluar modelos con y sin `surge_multiplier` como predictora para cuantificar su aporte real marginal.
 2. **Estrategia de Partición y Validación:**
    - **Validación temporal por fecha (`datetime_local`):** No particionar de forma aleatoria simple. Como cotizaciones en la misma ruta y minuto comparten recargo por diseño del algoritmo dinámico, un split aleatorio infla artificialmente las métricas.
+   - **Validación cruzada:** temporal en orden (4 folds) para elegir hiperparámetros, balanceo, umbral y modelo; una validación cruzada mezclada (5 folds estratificados) queda como control. En las dos, el balanceo se aplica solo a los folds de entrenamiento y se valida con datos reales.
 3. **Métricas en Datos Desbalanceados (`has_surge`):**
    - La tasa de viajes con surge es del **8,19%**.
    - La *Accuracy* se informa siempre, pero **junto a la línea base** (una regla trivial que prediga siempre 0 obtiene ~91,7%) y a la **accuracy balanceada** (50% = azar).
-   - Se complementa con **PR-AUC (Precision-Recall AUC)**, **F1-Score**, **Recall**, **Precisión** y **Matriz de Confusión**.
+   - Se complementa con **PR-AUC (Precision-Recall AUC)**, **F1-Score**, **Recall**, **Precisión**, **Matriz de Confusión**, curva **ROC-AUC** e intervalos de confianza del 95%.
+   - El umbral de decisión se elige con una **matriz de beneficio** (recargo evitado frente al costo de una falsa alarma).
 4. **Tratamiento de Multicolinealidad y Escalamiento:**
    - En modelos lineales: aplicar `drop_first=True` en las variables dummy para evitar la trampa de multicolinealidad perfecta.
    - En PCA o modelos basados en distancias (KNN, SVM, K-Means): aplicar estandarización previa (`StandardScaler`).
@@ -112,6 +114,7 @@ El proyecto se organiza bajo el marco ágil **Scrum**, dividido en cuatro entreg
 ├── Contenido Entrega 3 mejoras/             # VERSIÓN FINAL de la Entrega 3
 │   ├── LEEME.md                             # Guía de la carpeta y resultados principales
 │   ├── DEFENSA_PROFE.md                     # Resumen breve de toda la entrega
+│   ├── CAMBIOS_RESPECTO_VERSION_ANTERIOR.md # Qué cambió respecto de la versión anterior
 │   ├── COMO_SE_PREDICE_EL_SURGE.md          # Explicación simple del modelo de recargo
 │   ├── EXPLICACION_KMEANS_PRODUCTOS.md      # K-Means de productos: familias de tarifa
 │   ├── Modelos/README.md                    # Cómo hicimos cada modelo, paso a paso
@@ -119,7 +122,7 @@ El proyecto se organiza bajo el marco ágil **Scrum**, dividido en cuatro entreg
 │   ├── 2_Presentacion_Colab/                # Notebook de la defensa oral (ya ejecutado) + PDF
 │   ├── 3_Codigo/                            # modelado_entrega3.py + requirements.txt
 │   ├── 4_Datasets/                          # datasets de modelado y datasets balanceados
-│   ├── 5_Graficos/                          # fig01 a fig10 (numeradas como en el informe)
+│   ├── 5_Graficos/                          # fig01 a fig11 (numeradas como en el informe)
 │   ├── 6_Resultados/                        # metricas.json y tablas CSV
 │   └── 7_Revision_version_preliminar/       # Qué se corrigió respecto del borrador
 │

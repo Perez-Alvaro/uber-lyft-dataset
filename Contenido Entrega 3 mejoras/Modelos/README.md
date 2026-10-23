@@ -11,7 +11,7 @@ Este documento explica paso a paso cómo armamos, probamos y elegimos los modelo
 | Objetivo | Tipo | Modelos probados | Ganador (elegido por validación) | Resultado en la prueba |
 |---|---|---|---|---|
 | **`price`**: cuánto cuesta el viaje | Regresión | Ridge, árbol de decisión y random forest, cada uno con y sin `surge_multiplier` | **Random forest con surge** | Error medio USD 1,08 · R² 0,967 · 75% de los viajes con error ≤ 10% |
-| **`has_surge`**: si la cotización tiene recargo | Clasificación binaria | Regresión logística, árbol de decisión, random forest y gradient boosting, cada uno con 4 técnicas de balanceo | **Gradient boosting con pesos de clase** | Detecta el 60,7% de los recargos · precisión 13,1% (azar 8,3%) · accuracy 63,3% · accuracy balanceada 62,1% |
+| **`has_surge`**: si la cotización tiene recargo | Clasificación binaria | Regresión logística, árbol de decisión, random forest y gradient boosting, cada uno con 4 técnicas de balanceo | **Gradient boosting con pesos de clase** (umbral de la matriz de beneficio) | Detecta el 51,4% de los recargos · precisión 13,5% (azar 8,3%) · accuracy 68,6% · accuracy balanceada 60,8% · USD 56 de beneficio cada 1.000 cotizaciones |
 | **Productos**: segmentos tarifarios | Clustering (no supervisado) | K-Means con k de 2 a 6 | **k = 3** (silueta 0,68) | 3 familias de tarifa: económico, intermedio y premium |
 
 ---
@@ -39,7 +39,7 @@ Para el servicio usamos las **12 columnas `name_*`** (un producto por columna). 
 
 En la Entrega 2 medimos que, en el 95,7% de los grupos (ruta, minuto), todos los productos tienen el mismo valor de `has_surge`. Si se separan las filas al azar, cotizaciones "gemelas" del mismo minuto y la misma ruta quedan una en entrenamiento y otra en prueba. El modelo las reconoce y parece mucho mejor de lo que es.
 
-Lo comprobamos: con partición al azar, el random forest de recargo parece **un 87% mejor** (PR-AUC 0,264 contra 0,141 por fecha).
+Lo comprobamos: con partición al azar, el random forest de recargo parece **más del doble de bueno** (PR-AUC 0,309 contra 0,142 por fecha).
 
 ### Dos niveles de separación
 
@@ -61,6 +61,17 @@ Lo comprobamos: con partición al azar, el random forest de recargo parece **un 
 | 5 | 03/12 al 14/12 | 53.932 | Valida el fold 4 (entrena con los bloques 1 a 4) |
 
 Así **nunca se valida con fechas anteriores a las de entrenamiento**. El puntaje de validación de cada configuración es el promedio de los 4 folds. En el código es la clase `FechasEnOrden`.
+
+**3. Validación cruzada mezclada (control).** Además corrimos una validación cruzada estratificada de 5 folds **con mezcla** sobre el entrenamiento, también con el balanceo aplicado solo a los folds de entrenamiento y cada fold evaluado con datos reales. No se usa para elegir: sirve para medir cuánto se inflan las métricas cuando se mezclan fechas.
+
+| Modelo (pesos de clase) | CV temporal en orden (4 folds) | CV mezclada (5 folds) | Diferencia |
+|---|---:|---:|---:|
+| Regresión logística | 0,120 ± 0,004 | 0,126 ± 0,003 | +5% |
+| Árbol de decisión | 0,125 ± 0,014 | 0,150 ± 0,005 | +20% |
+| Random forest | 0,126 ± 0,006 | 0,312 ± 0,005 | +147% |
+| Gradient boosting | 0,136 ± 0,012 | 0,178 ± 0,003 | +31% |
+
+PR-AUC promedio ± desvío entre folds. La mezcla hace parecer mejores a todos los modelos, sobre todo al random forest, que memoriza cotizaciones "gemelas". Por eso se elige con la temporal.
 
 ---
 
@@ -100,20 +111,22 @@ Probamos cada modelo con y sin esta variable. La diferencia en validación fue d
 | Línea base | Accuracy | Accuracy balanceada | Recall | PR-AUC |
 |---|---:|---:|---:|---:|
 | Decir siempre "sin recargo" | **91,7%** | 50,0% | 0% | 0,083 |
+| Decir siempre "con recargo" | 8,3% | 50,0% | 100% | 0,083 |
 | Decir "con recargo" al azar, con la tasa real | 85,0% | 50,1% | 8,2% | 0,083 |
+| Tasa histórica de recargo de la zona de origen (sin modelo) | 66,0% | 58,7% | 50,0% | 0,118 |
 
-Decir siempre "no" ya acierta el 91,7%. Por eso la accuracy sola engaña y la informamos **siempre junto a la línea base y a la accuracy balanceada** (promedio del acierto en cada clase; 50% = azar).
+Decir siempre "no" ya acierta el 91,7%. La referencia más exigente es la **tasa de la zona de origen**: sin ningún modelo, ordenar las cotizaciones por el recargo histórico de la zona ya da PR-AUC 0,118. Los modelos llegan a 0,14: aprenden algo más que "dónde sube", pero no mucho más. Por eso la accuracy sola engaña y la informamos **siempre junto a la línea base y a la accuracy balanceada** (promedio del acierto en cada clase; 50% = azar).
 
 ### 4.4 Los cuatro algoritmos y los hiperparámetros que probamos
 
-Cada algoritmo se probó con una **búsqueda en grilla** (`GridSearchCV`) con la validación temporal en orden. La métrica para elegir fue el **PR-AUC en validación**: se concentra en la clase minoritaria y su valor de azar es la tasa de recargo (≈ 0,08).
+Cada algoritmo se probó con una **búsqueda en grilla** (`GridSearchCV`) con la validación temporal en orden. La métrica para elegir fue el **PR-AUC en validación**: se concentra en la clase minoritaria y su valor de azar es la tasa de recargo (≈ 0,08). Las grillas se **extendieron hasta que el valor elegido quedara adentro** y no en un extremo: si el mejor valor es el borde de la grilla, el óptimo podría estar más allá y el parámetro no quedaría justificado.
 
 | Algoritmo | Por qué lo elegimos | Fijo | Hiperparámetros probados | Combinaciones | Elegido (pesos de clase) |
 |---|---|---|---|---:|---|
-| **Regresión logística** | Modelo base de clasificación de la cátedra; da probabilidades y odds ratio interpretables | Penalización L2, `lbfgs`, 3000 iteraciones | `C`: 0,0001 · 0,0003 · 0,001 · 0,01 · 0,1 · 1 · 10 | 7 | `C = 0,0001` |
-| **Árbol de decisión** | Reglas legibles; capta escalones e interacciones | — | `max_depth`: 3 · 5 · 7 · 9 · 12 · 15 · 20 · 25 · 30 · 40 <br> `min_samples_leaf`: 20 · 100 · 500 <br> `criterion`: gini · entropy | 60 | `gini`, `max_depth = 12`, `min_samples_leaf = 500` |
-| **Random forest** | Promedia muchos árboles (bagging): reduce el sobreajuste de un árbol solo | 150 árboles, `max_features = sqrt` | `max_depth`: 10 · 16 · sin límite <br> `min_samples_leaf`: 10 · 50 · 200 | 9 | `max_depth = 16`, `min_samples_leaf = 10` |
-| **Gradient boosting** (`HistGradientBoostingClassifier`) | Árboles en serie, cada uno corrige al anterior (la idea de AdaBoost vista en clase, en versión moderna) | 200 árboles, `min_samples_leaf = 100`, `l2_regularization = 1` | `learning_rate`: 0,05 · 0,1 <br> `max_leaf_nodes`: 15 · 63 | 4 | `learning_rate = 0,05`, `max_leaf_nodes = 15` |
+| **Regresión logística** | Modelo base de clasificación de la cátedra; da probabilidades y odds ratio interpretables | Penalización L2, `lbfgs`, 3000 iteraciones | `C`: 0,00001 · 0,00003 · 0,0001 · 0,0003 · 0,001 · 0,01 · 0,1 · 1 · 10 | 9 | `C = 0,00003` |
+| **Árbol de decisión** | Reglas legibles; capta escalones e interacciones | — | `max_depth`: 3 · 5 · 7 · 9 · 12 · 15 · 20 · 25 · 30 · 40 <br> `min_samples_leaf`: 20 · 100 · 500 · 1000 · 2000 <br> `criterion`: gini · entropy | 100 | `gini`, `max_depth = 12`, `min_samples_leaf = 500` |
+| **Random forest** | Promedia muchos árboles (bagging): reduce el sobreajuste de un árbol solo | 150 árboles, `max_features = sqrt` | `max_depth`: 7 · 10 · 16 · 24 <br> `min_samples_leaf`: 5 · 10 · 50 | 12 | `max_depth = 24`, `min_samples_leaf = 10` |
+| **Gradient boosting** (`HistGradientBoostingClassifier`) | Árboles en serie, cada uno corrige al anterior (la idea de AdaBoost vista en clase, en versión moderna) | 200 árboles, `min_samples_leaf = 100`, `l2_regularization = 1` | `learning_rate`: 0,02 · 0,05 · 0,1 <br> `max_leaf_nodes`: 7 · 15 · 31 | 9 | `learning_rate = 0,05`, `max_leaf_nodes = 15` |
 
 **Qué significa cada hiperparámetro:**
 - **`C`** (logística): la inversa de la regularización. Una `C` chica achica los coeficientes, y eso generaliza mejor entre fechas cuando la señal es débil, como en nuestro caso.
@@ -133,6 +146,8 @@ Cada algoritmo se probó con una **búsqueda en grilla** (`GridSearchCV`) con la
 
 El árbol más complejo tiene casi el triple de PR-AUC en entrenamiento que el elegido, pero es **peor** en fechas nuevas: memoriza días puntuales. Elegimos la configuración con mejor validación, no la mejor en entrenamiento. La Figura 3 del informe ([`../5_Graficos/fig03_recargo_validacion_profundidad.png`](../5_Graficos/fig03_recargo_validacion_profundidad.png)) muestra esta curva.
 
+En random forest la mejor profundidad quedó en 24, el máximo de la grilla, pero la validación es plana desde 16 (0,1261 contra 0,1262) y sin límite de profundidad, probado en la versión anterior, no mejoraba.
+
 Las búsquedas completas están en `../6_Resultados/recargo_busqueda_*.csv`.
 
 ### 4.5 El balanceo de clases: cuatro técnicas
@@ -148,7 +163,7 @@ Sin balanceo, el modelo aprende que decir siempre "no" le da 91,7% de acierto y 
 
 Detalles importantes:
 - **El balanceo se aplica solo al entrenamiento**, dentro de un pipeline de `imblearn`. En cada fold se balancea solo la parte de entrenamiento, y la validación y la prueba **siempre** tienen la proporción real.
-- **Cada combinación de algoritmo y técnica tiene su propia búsqueda de hiperparámetros**: 4 algoritmos × 4 técnicas = 16 búsquedas, 320 configuraciones en total. Así la comparación es justa.
+- **Cada combinación de algoritmo y técnica tiene su propia búsqueda de hiperparámetros**: 4 algoritmos × 4 técnicas = 16 búsquedas, 520 configuraciones en total. Así la comparación es justa.
 - Los datasets balanceados se exportaron a [`../4_Datasets/datasets balanceados/`](../4_Datasets/datasets%20balanceados/).
 
 **Qué aprendimos:**
@@ -157,6 +172,17 @@ Detalles importantes:
 - **SMOTE no conviene con nuestros datos:** la mayoría de las variables son dummies, y al interpolar crea valores imposibles como "0,4 de Back Bay", que los árboles memorizan.
 - **Elegimos pesos de clase** porque formó el par con mejor PR-AUC en validación (gradient boosting + pesos, 0,136) y además usa todos los datos reales sin inventar filas.
 
+**¿Hace falta balancear si el umbral también se ajusta?** Sin balanceo, el problema es que con el umbral 0,5 el modelo nunca avisa. Para separar los dos efectos, entrenamos cada algoritmo sin balanceo y le elegimos el umbral con el mismo criterio que al modelo final (la matriz de beneficio, sección 4.7):
+
+| Modelo | Sin balanceo (umbral ajustado) | Pesos de clase (umbral ajustado) |
+|---|---:|---:|
+| Regresión logística | USD 26 | USD 29 |
+| Árbol de decisión | USD 51 | USD 43 |
+| Random forest | USD 61 | USD 55 |
+| Gradient boosting | USD 54 | USD 56 |
+
+Beneficio en la prueba, en USD cada 1.000 cotizaciones. **Con el umbral ajustado, sin balanceo rinde casi igual** (en el árbol y en random forest, incluso un poco mejor): balancear mueve el umbral, no mejora el ranking. Los umbrales sin balanceo son mucho más bajos (0,10 a 0,14) porque las probabilidades no se corrieron.
+
 ### 4.6 Cómo elegimos el modelo final
 
 Con la mejor configuración de cada combinación, elegimos el par **algoritmo + técnica con mayor PR-AUC en validación**. La prueba no interviene.
@@ -164,44 +190,90 @@ Con la mejor configuración de cada combinación, elegimos el par **algoritmo + 
 | Algoritmo (pesos de clase) | PR-AUC validación | ROC-AUC validación |
 |---|---:|---:|
 | **Gradient boosting** ★ | **0,136 ± 0,012** | 0,659 |
-| Random forest | 0,126 ± 0,006 | 0,654 |
+| Random forest | 0,126 ± 0,006 | 0,653 |
 | Árbol de decisión | 0,125 ± 0,014 | 0,637 |
 | Regresión logística | 0,120 ± 0,003 | 0,649 |
 
 Gana gradient boosting, aunque los cuatro quedan cerca. Eso indica que **el límite no está en el algoritmo sino en la información disponible**.
 
-### 4.7 El umbral de decisión
+### 4.7 El umbral de decisión: matriz de beneficio
 
-Por defecto, un modelo dice "con recargo" si la probabilidad es ≥ 0,5, pero ese número es arbitrario. Elegimos el umbral así:
+Por defecto, un modelo dice "con recargo" si el puntaje es ≥ 0,5, pero ese número es arbitrario. Elegimos el umbral con una **matriz de beneficio**, que le pone un valor en dólares a cada casilla de la matriz de confusión (comparado con no tener modelo):
 
-1. Con las predicciones de la validación temporal (cada bloque predicho por un modelo entrenado solo con fechas anteriores), probamos todos los umbrales posibles.
-2. Nos quedamos con el que **maximiza el F1** de la clase "con recargo" (el mejor equilibrio entre detectar recargos y no dar falsas alarmas).
+| | Predice **sin recargo** | Predice **con recargo** (aviso) |
+|---|---|---|
+| **Real: sin recargo** | VN · USD 0 | FP · **−USD 1,00**: el pasajero compara o espera sin necesidad (supuesto: unos 5 minutos) |
+| **Real: con recargo** | FN · USD 0: paga el recargo, igual que sin modelo | VP · **+USD 7,73**: evita el recargo medio (USD 8,73, medido en el entrenamiento) y pierde el tiempo de comparar |
+
+1. Con las predicciones de la validación temporal (cada bloque predicho por un modelo entrenado solo con fechas anteriores), calculamos el beneficio de cada umbral posible.
+2. Nos quedamos con el que **maximiza el beneficio**.
 3. Lo aplicamos **tal cual** a la prueba.
 
-Para gradient boosting el umbral quedó en **0,55**. Con los pesos de clase, el puntaje **no es la probabilidad real**: el modelo exagera el riesgo a propósito, así que un puntaje de 0,8 no significa 80% de chance.
+**Qué dice la matriz:** un aviso conviene si la probabilidad de recargo supera costo / recargo = 1 / 8,73 = **11,4%**. Para gradient boosting el umbral quedó en **0,57**. Con el umbral de máximo F1 (0,55) el modelo avisaba en el 38,5% de las cotizaciones; con la matriz, en el 31,7%: **es más selectivo**.
+
+Con los pesos de clase, el puntaje **no es la probabilidad real**: el modelo exagera el riesgo a propósito, así que un puntaje de 0,8 no significa 80% de chance.
+
+**Sensibilidad al costo de una falsa alarma** (el costo es un supuesto, así que repetimos la elección del umbral para varios valores):
+
+| Costo de una falsa alarma | Precisión mínima | Umbral | Avisa en | Recall | Precisión | Beneficio / 1.000 |
+|---|---:|---:|---:|---:|---:|---:|
+| USD 0,50 | 5,7% | 0,32 | 74,0% | 92,7% | 10,4% | USD 301 |
+| **USD 1,00** | **11,4%** | **0,57** | **31,7%** | **51,4%** | **13,5%** | **USD 56** |
+| USD 1,50 | 17,2% | 0,72 | 0,6% | 1,5% | 21,5% | USD 2 |
+| USD 2,00 | 22,9% | no avisar | 0% | 0% | – | USD 0 |
+| USD 3,00 | 34,3% | no avisar | 0% | 0% | – | USD 0 |
+
+**Hasta dónde se pueden bajar los falsos negativos** (umbral fijado en validación para detectar cada % de recargos, medido en la prueba):
+
+| Recargos a detectar | Umbral | Recall real | FN | FP | Precisión | Accuracy | Beneficio / 1.000 |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| 90% | 0,27 | 96,5% | 173 | 43.508 | 9,9% | 26,5% | −USD 113 |
+| 70% | 0,45 | 81,4% | 919 | 29.423 | 12,0% | 48,9% | USD 27 |
+| 50% | 0,54 | 63,4% | 1.802 | 20.887 | 13,0% | 61,8% | USD 55 |
+| 30% | 0,60 | 35,2% | 3.193 | 10.210 | 14,5% | 77,4% | USD 54 |
+| 10% | 0,66 | 8,2% | 4.525 | 1.734 | 18,9% | 89,5% | USD 23 |
+
+**En qué conviene enfocarse:** en la **precisión** (menos falsas alarmas), no en detectar todos los recargos. Bajar los falsos negativos siempre cuesta muchos falsos positivos, y la precisión del modelo nunca pasa de ~20%: es el **límite del dominio**, porque falta la oferta y la demanda en tiempo real. Si una falsa alarma costara USD 2 o más, no convendría avisar nunca.
 
 ### 4.8 Resultados en la prueba (15 al 18/12)
 
-| Modelo | Umbral | Accuracy | Accuracy balanceada | Precisión | Recall | F1 | ROC-AUC | PR-AUC |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|
-| **Gradient boosting** ★ | 0,55 | **63,3%** | **62,1%** | **13,1%** | 60,7% | **0,215** | **0,676** | 0,140 |
-| Regresión logística | 0,53 | 56,6% | 61,4% | 12,1% | 67,1% | 0,204 | 0,651 | 0,121 |
-| Random forest | 0,46 | 56,1% | 62,4% | 12,3% | 69,9% | 0,209 | 0,675 | 0,141 |
-| Árbol de decisión | 0,49 | 49,7% | 63,2% | 11,9% | 79,3% | 0,207 | 0,672 | 0,138 |
+| Modelo | Umbral | Accuracy | Accuracy balanceada | Precisión | Recall | F1 | ROC-AUC | PR-AUC | Beneficio / 1.000 |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| **Gradient boosting** ★ | 0,57 | **68,6%** | **60,8%** | **13,5%** | 51,4% | **0,214** | **0,676** | 0,140 | **USD 56** |
+| Regresión logística | 0,54 | 59,1% | 61,1% | 12,2% | 63,5% | 0,205 | 0,651 | 0,121 | USD 29 |
+| Random forest | 0,44 | 67,4% | 61,0% | 13,3% | 53,3% | 0,213 | 0,675 | 0,142 | USD 55 |
+| Árbol de decisión | 0,63 | 84,3% | 55,5% | 16,0% | 21,1% | 0,182 | 0,672 | 0,138 | USD 43 |
 
 **Matriz de confusión del modelo elegido** (59.395 cotizaciones: 4.928 con recargo y 54.467 sin):
 
 | | Predijo **sin recargo** | Predijo **con recargo** |
 |---|---:|---:|
-| **Real: sin recargo** | **VN = 34.590** · acierto | **FP = 19.877** · falsa alarma |
-| **Real: con recargo** | **FN = 1.937** · recargo no detectado | **VP = 2.991** · recargo detectado |
+| **Real: sin recargo** | **VN = 38.202** · acierto | **FP = 16.265** · falsa alarma |
+| **Real: con recargo** | **FN = 2.394** · recargo no detectado | **VP = 2.534** · recargo detectado |
 
-- **Accuracy** = (VP + VN) / total = (2.991 + 34.590) / 59.395 = **63,3%**
-- **Precisión** = VP / (VP + FP) = 2.991 / 22.868 = **13,1%**: de cada 100 alertas, 13 son recargos reales (el azar acierta 8).
-- **Recall** = VP / (VP + FN) = 2.991 / 4.928 = **60,7%**: detecta 6 de cada 10 recargos.
-- **Especificidad** = VN / (VN + FP) = **63,5%**, y la accuracy balanceada es el promedio entre recall y especificidad: **62,1%**.
+- **Accuracy** = (VP + VN) / total = (2.534 + 38.202) / 59.395 = **68,6%**
+- **Precisión** = VP / (VP + FP) = 2.534 / 18.799 = **13,5%**: de cada 100 alertas, 13 o 14 son recargos reales (el azar acierta 8).
+- **Recall** = VP / (VP + FN) = 2.534 / 4.928 = **51,4%**: detecta 5 de cada 10 recargos.
+- **Especificidad** = VN / (VN + FP) = **70,1%**, y la accuracy balanceada es el promedio entre recall y especificidad: **60,8%**.
 
-La accuracy (63,3%) es menor que la de decir siempre "no" (91,7%) porque el modelo **sí avisa** recargos y al avisar comete falsas alarmas. Priorizamos el recall porque un falso negativo le cuesta al pasajero un 46% más (precio promedio con recargo), mientras que una falsa alarma solo le hace perder unos minutos comparando con Uber.
+La accuracy (68,6%) es menor que la de decir siempre "no" (91,7%) porque el modelo **sí avisa** recargos y al avisar comete falsas alarmas.
+
+**Niveles de certeza (intervalos de confianza del 95%).** Para que los números no dependan de la suerte de 4 días, hicimos 1.000 remuestreos por bootstrap de las 87 horas del período de prueba (se remuestrean horas completas, porque las cotizaciones de una misma hora comparten el recargo):
+
+| Métrica | Valor | IC 95% |
+|---|---:|---|
+| Accuracy | 68,6% | 67,3% a 69,8% |
+| Accuracy balanceada | 60,8% | 59,4% a 62,1% |
+| Precisión | 13,5% | 12,7% a 14,3% |
+| Recall | 51,4% | 48,4% a 54,5% |
+| ROC-AUC | 0,676 | 0,663 a 0,689 |
+| PR-AUC | 0,140 | 0,132 a 0,150 |
+| Beneficio (USD / 1.000) | 56 | 35 a 78 |
+| Ventaja de PR-AUC sobre la tasa de la zona | +0,022 | +0,015 a +0,029 |
+
+El modelo está por encima del azar con certeza, y su ventaja sobre la regla simple por zona es positiva en todo el intervalo: chica, pero no es casualidad.
+
+**Curva ROC:** un ROC-AUC de 0,676 significa que, si se toma al azar una cotización con recargo y una sin recargo, el modelo le da más puntaje a la que tiene recargo el 68% de las veces.
 
 ### 4.9 Interpretación: qué aprendió el modelo
 
@@ -217,7 +289,7 @@ La accuracy (63,3%) es menor que la de decir siempre "no" (91,7%) porque el mode
 | Producto | 0,000 |
 | Hora y día | 0,000 |
 
-**Odds ratio de la regresión logística** (contra South Station): salir de **Back Bay** multiplica la chance de recargo por 1,29, de **Northeastern** o **Fenway** por 1,27. Salir de **North End** o **Haymarket Square** la multiplica por 0,52, es decir, la reduce casi a la mitad.
+**Odds ratio de la regresión logística** (contra South Station), calculados con una logística de **regularización débil (C = 1)**, porque la elegida (C = 0,00003) encoge los coeficientes hacia 0 y los odds ratio hacia 1: salir de **Northeastern** multiplica la chance de recargo por 1,29, de **Boston University** por 1,24, de **Fenway** por 1,23 y de **Back Bay** por 1,22. Salir de **North End** (0,38) o **Haymarket Square** (0,37) la reduce a menos de la mitad. Con la logística elegida, North End daría 0,65: por eso no se usa para interpretar.
 
 **Deciles de riesgo.** Si se ordenan las cotizaciones de prueba por el puntaje del modelo, el 10% más riesgoso tiene un 15,7% de recargos reales (1,9 veces el promedio) y el 10% menos riesgoso, un 1,1%. El 20% más riesgoso concentra el 35% de todos los recargos.
 
@@ -239,11 +311,12 @@ La métrica para elegir fue el **RMSE en log(price) en validación** (validació
 
 | Algoritmo | Por qué lo elegimos | Fijo | Hiperparámetros probados | Elegido (con surge) | Elegido (sin surge) |
 |---|---|---|---|---|---|
-| **Ridge** (regresión lineal con penalización L2) | Referencia simple e interpretable; la L2 estabiliza los coeficientes ante dummies correlacionadas (la Entrega 2 prometía un lineal regularizado) | Escalado, categorías de referencia | `alpha`: 0,01 · 0,1 · 1 · 10 · 100 · 1000 | `alpha = 1000` | `alpha = 1000` |
-| **Árbol de decisión** | Capta los escalones de la tarifa | — | `max_depth`: 6 · 10 · 14 · 18 · 24 <br> `min_samples_leaf`: 5 · 20 · 100 | `max_depth = 18`, hojas de 20 | `max_depth = 24`, hojas de 100 |
-| **Random forest** | Más estable que un árbol solo | `max_features = 0,5`; 60 árboles en la búsqueda y 150 en el modelo final | `max_depth`: 16 · 24 <br> `min_samples_leaf`: 5 · 20 | `max_depth = 16`, hojas de 5 | `max_depth = 24`, hojas de 20 |
+| **Ridge** (regresión lineal con penalización L2) | Referencia simple e interpretable; la L2 estabiliza los coeficientes ante dummies correlacionadas (la Entrega 2 prometía un lineal regularizado) | Escalado, categorías de referencia | `alpha`: 0,01 · 0,1 · 1 · 10 · 100 · 1000 · 10.000 · 100.000 | `alpha = 1000` | `alpha = 1000` |
+| **Árbol de decisión** | Capta los escalones de la tarifa | — | `max_depth`: 6 · 10 · 14 · 18 · 24 · 30 <br> `min_samples_leaf`: 5 · 20 · 100 · 300 | `max_depth = 18`, hojas de 20 | `max_depth = 24`, hojas de 100 |
+| **Random forest** | Más estable que un árbol solo | `max_features = 0,5`; 60 árboles en la búsqueda y 150 en el modelo final | `max_depth`: 12 · 16 · 24 · 32 <br> `min_samples_leaf`: 2 · 5 · 20 · 50 | `max_depth = 16`, hojas de 5 | `max_depth = 24`, hojas de 20 |
 
-- **`alpha`** (Ridge): cuánto se castigan los coeficientes grandes. Ganó la regularización más fuerte: coeficientes más chicos generalizan mejor a fechas posteriores.
+- **`alpha`** (Ridge): cuánto se castigan los coeficientes grandes. Ganó `alpha = 1000`, ahora dentro de la grilla (que llega a 100.000); el error de validación casi no cambia con alpha porque el modelo lineal tiene pocos coeficientes para tantos datos.
+- Con las grillas extendidas, todos los valores elegidos quedaron **dentro** de la grilla.
 
 **El modelo elegido** fue el de menor RMSE en validación entre los seis (3 algoritmos × 2 variantes): **random forest con surge** (RMSE log 0,1269).
 
@@ -263,7 +336,8 @@ Comparados contra una **línea base** que solo conoce el producto (predice la me
 
 - **MAE:** error absoluto medio, en dólares. **RMSE:** como el MAE, pero castiga más los errores grandes. **MAPE:** error relativo medio. **Error ≤ 10%:** porcentaje de viajes cuyo precio se predice con un error de hasta 10% (es lo más parecido a una "accuracy" en regresión).
 - **Los árboles superan al lineal** (USD 1,08 contra USD 1,39 con las mismas variables): el precio crece por escalones y la tarifa por milla cambia según el producto, cosa que una recta no capta del todo.
-- **`surge_multiplier` aporta, pero poco:** sin él, el random forest ya logra R² = 0,928; con él, el MAE baja un 18%.
+- **`surge_multiplier` aporta, pero poco:** sin él, el random forest ya logra R² = 0,928 y USD 1,32 de error medio; con él, el MAE baja un 18%. Informamos los dos números porque el multiplicador y el precio salen del mismo cálculo de la plataforma.
+- **Certeza (IC 95%, bootstrap de las 87 horas de prueba):** error medio USD 1,07 a 1,09, R² 0,966 a 0,968 y viajes con error ≤ 10% entre 74,7% y 75,2%. Sin surge: USD 1,31 a 1,34.
 - **Por producto:** el error va del 4,1% del precio medio en los productos caros al 18,9% en Shared, donde el precio depende del emparejamiento con otros pasajeros, que no está en los datos.
 
 ### 5.4 Interpretación
@@ -310,7 +384,7 @@ Primero probamos un K-Means de rutas, pero la silueta daba casi igual para todos
 
 ```bash
 pip install -r ../3_Codigo/requirements.txt
-python ../3_Codigo/modelado_entrega3.py           # completo, ~25 min con 10 núcleos
+python ../3_Codigo/modelado_entrega3.py           # completo, ~15 min con 10 núcleos
 python ../3_Codigo/modelado_entrega3.py --rapido  # prueba en ~2 min (escribe en una carpeta temporal)
 ```
 
@@ -325,6 +399,6 @@ El script usa semilla fija (`SEED = 42`), así que da siempre los mismos resulta
 | Código del K-Means | `3_Codigo/modelado_entrega3.py`, "PARTE C" |
 | Todas las métricas | `6_Resultados/metricas.json` |
 | Búsquedas de hiperparámetros completas | `6_Resultados/recargo_busqueda_*.csv` y `precio_busqueda_*.csv` |
-| Gráficos | `5_Graficos/fig01` a `fig10` (mismo número que en el informe) |
+| Gráficos | `5_Graficos/fig01` a `fig11` (mismo número que en el informe; la matriz de beneficio es la `fig06`) |
 | Informe completo | `1_Informe/Entrega3_Grupo11.docx` (secciones 3 a 7) |
 | Presentación | `2_Presentacion_Colab/` |
