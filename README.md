@@ -49,11 +49,11 @@ El proyecto se organiza bajo el marco ágil **Scrum**, dividido en cuatro entreg
   - Documentación técnica: [`Contenido Entrega 2/Dataset Codificado/Explicacion_Codificacion_BD.md`](Contenido%20Entrega%202/Dataset%20Codificado/Explicacion_Codificacion_BD.md)
 
 ### 4. Modelado (Entrega 3 · versión final)
-- **Carpeta oficial:** [`Contenido Entrega 3 mejoras/`](Contenido%20Entrega%203%20mejoras/) — empezar por su [`LEEME.md`](Contenido%20Entrega%203%20mejoras/LEEME.md).
-- **Informe:** [`1_Informe/Entrega3_Grupo11.docx`](Contenido%20Entrega%203%20mejoras/1_Informe/)
-- **Presentación oral (Colab):** [abrir en Google Colab](https://colab.research.google.com/github/Perez-Alvaro/uber-lyft-dataset/blob/main/Contenido%20Entrega%203%20mejoras/2_Presentacion_Colab/Presentacion_Entrega3_Grupo11.ipynb) · [versión PDF](Contenido%20Entrega%203%20mejoras/2_Presentacion_Colab/Presentacion_Entrega3_Grupo11.pdf)
-- **Datasets de modelado y balanceados:** [`4_Datasets/`](Contenido%20Entrega%203%20mejoras/4_Datasets/)
-- La carpeta `Contenido Entrega 3/` es un **borrador** (versión preliminar con partición aleatoria) y se conserva solo como registro; qué se corrigió está en [`7_Revision_version_preliminar/`](Contenido%20Entrega%203%20mejoras/7_Revision_version_preliminar/REVISION_ENTREGA3_PRELIMINAR.md).
+- **Carpeta oficial:** [`Contenido Entrega 3/`](Contenido%20Entrega%203/) — empezar por su [`LEEME.md`](Contenido%20Entrega%203/LEEME.md).
+- **Informe:** [`1_Informe/Entrega3_Grupo11.docx`](Contenido%20Entrega%203/1_Informe/)
+- **Presentación oral (Colab):** [abrir en Google Colab](https://colab.research.google.com/github/Perez-Alvaro/uber-lyft-dataset/blob/main/Contenido%20Entrega%203/2_Presentacion_Colab/Presentacion_Entrega3_Grupo11.ipynb) · [versión PDF](Contenido%20Entrega%203/2_Presentacion_Colab/Presentacion_Entrega3_Grupo11.pdf)
+- **Datasets de modelado y balanceados:** [`4_Datasets/`](Contenido%20Entrega%203/4_Datasets/)
+- La subcarpeta [`Cosas que hicimos en casa/`](Contenido%20Entrega%203/Cosas%20que%20hicimos%20en%20casa/) es el **borrador** (versión preliminar con partición aleatoria) y se conserva solo como registro; qué se corrigió está en [`7_Revision_version_preliminar/`](Contenido%20Entrega%203/7_Revision_version_preliminar/REVISION_ENTREGA3_PRELIMINAR.md).
 
 ---
 
@@ -109,9 +109,7 @@ El proyecto se organiza bajo el marco ágil **Scrum**, dividido en cuatro entreg
 │   │   └── Explicacion_Codificacion_BD.docx # Versión Word de respaldo
 │   └── graficos/                            # 18 figuras de soporte visual (Antes vs Después)
 │
-├── Contenido Entrega 3/                     # BORRADOR (versión preliminar, solo como registro)
-│
-├── Contenido Entrega 3 mejoras/             # VERSIÓN FINAL de la Entrega 3
+├── Contenido Entrega 3/                     # VERSIÓN FINAL de la Entrega 3
 │   ├── LEEME.md                             # Guía de la carpeta y resultados principales
 │   ├── DEFENSA_PROFE.md                     # Resumen breve de toda la entrega
 │   ├── CAMBIOS_RESPECTO_VERSION_ANTERIOR.md # Qué cambió respecto de la versión anterior
@@ -124,7 +122,8 @@ El proyecto se organiza bajo el marco ágil **Scrum**, dividido en cuatro entreg
 │   ├── 4_Datasets/                          # datasets de modelado y datasets balanceados
 │   ├── 5_Graficos/                          # fig01 a fig11 (numeradas como en el informe)
 │   ├── 6_Resultados/                        # metricas.json y tablas CSV
-│   └── 7_Revision_version_preliminar/       # Qué se corrigió respecto del borrador
+│   ├── 7_Revision_version_preliminar/       # Qué se corrigió respecto del borrador
+│   └── Cosas que hicimos en casa/           # BORRADOR (versión preliminar, solo como registro)
 │
 ├── .gitignore                               # Exclusiones de datasets intermedios y caché
 └── README.md                                # Ficha técnica y guía integral del proyecto

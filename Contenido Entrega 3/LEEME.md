@@ -2,7 +2,7 @@
 
 Grupo 11 · Ciencia de Datos 5K1 · UTN FRC · Uber y Lyft en Boston
 
-> La carpeta `Contenido Entrega 3/` es un **borrador** (versión preliminar) y quedó sin tocar como registro. **Esta es la versión que se entrega y se presenta.** Qué cambió y por qué: [`7_Revision_version_preliminar/`](7_Revision_version_preliminar/REVISION_ENTREGA3_PRELIMINAR.md).
+> La subcarpeta [`Cosas que hicimos en casa/`](Cosas%20que%20hicimos%20en%20casa/) es el **borrador** (versión preliminar) y quedó sin tocar como registro. **Esta es la versión que se entrega y se presenta.** Qué cambió y por qué: [`7_Revision_version_preliminar/`](7_Revision_version_preliminar/REVISION_ENTREGA3_PRELIMINAR.md).
 
 ## Qué abrir según lo que necesites
 
@@ -25,7 +25,7 @@ Grupo 11 · Ciencia de Datos 5K1 · UTN FRC · Uber y Lyft en Boston
 ## Estructura
 
 ```
-Contenido Entrega 3 mejoras/
+Contenido Entrega 3/
 ├── LEEME.md                              ← este archivo
 ├── DEFENSA_PROFE.md                      resumen breve de toda la entrega, para la docente
 ├── CAMBIOS_RESPECTO_VERSION_ANTERIOR.md  qué cambió respecto de la versión anterior y por qué
@@ -52,8 +52,9 @@ Contenido Entrega 3 mejoras/
 │       └── surge_test_sin_balancear.zip  59.395 filas · 8,3% con recargo (proporción real)
 ├── 5_Graficos/                           fig01 a fig11, igual que en el informe
 ├── 6_Resultados/                         metricas.json + CSV (prefijos precio_, recargo_, productos_)
-└── 7_Revision_version_preliminar/
-    └── REVISION_ENTREGA3_PRELIMINAR.md   qué estaba mal en la versión preliminar y qué se corrigió
+├── 7_Revision_version_preliminar/
+│   └── REVISION_ENTREGA3_PRELIMINAR.md   qué estaba mal en la versión preliminar y qué se corrigió
+└── Cosas que hicimos en casa/            borrador (versión preliminar), sin tocar, solo como registro
 ```
 
 ## Los resultados en siete líneas

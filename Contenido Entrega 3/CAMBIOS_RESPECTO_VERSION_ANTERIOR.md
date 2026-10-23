@@ -2,7 +2,7 @@
 
 Grupo 11 · Ciencia de Datos 5K1 · UTN FRC
 
-Este documento resume qué cambió entre la versión anterior de `Contenido Entrega 3 mejoras/` (commit `78f5fc7`) y la versión actual, por qué y cómo cambian los resultados. La carpeta `Contenido Entrega 3/` (borrador preliminar) sigue sin tocar.
+Este documento resume qué cambió entre la versión anterior de esta carpeta (commit `78f5fc7`, cuando se llamaba `Contenido Entrega 3 mejoras/`) y la versión actual, por qué y cómo cambian los resultados. El borrador preliminar (antes `Contenido Entrega 3/`) ahora está en la subcarpeta `Cosas que hicimos en casa/`, sin cambios en su contenido.
 
 ---
 
@@ -21,6 +21,7 @@ Este documento resume qué cambió entre la versión anterior de `Contenido Entr
 | 9 | **Precio con y sin `surge_multiplier`** en todos los resúmenes | El multiplicador y el precio salen del mismo cálculo de la plataforma: lo honesto es mostrar los dos números | Informe 1 y 4.2 · Colab sección 5 · `DEFENSA_PROFE.md` |
 | 10 | **Colab de presentación reorganizado** y **árbol de decisión** incluido | Foco en modelos, pruebas, decisiones, mejoras, accuracy, matriz de beneficio y curva ROC-AUC | `2_Presentacion_Colab/` (notebook y PDF) |
 | 11 | **Corrida más rápida**: de ~25 minutos a ~15 minutos | Más procesos en paralelo y grillas de random forest y gradient boosting acotadas | `3_Codigo/modelado_entrega3.py` |
+| 12 | **Carpetas renombradas**: `Contenido Entrega 3 mejoras/` pasó a ser `Contenido Entrega 3/`, y el borrador (antes `Contenido Entrega 3/`) quedó dentro, en `Cosas que hicimos en casa/` | Una sola carpeta para la Entrega 3, con el borrador como registro | Raíz del repositorio · links del README y del botón de Colab actualizados |
 
 ---
 

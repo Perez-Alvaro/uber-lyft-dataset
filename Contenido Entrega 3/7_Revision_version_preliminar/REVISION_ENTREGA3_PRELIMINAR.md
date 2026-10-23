@@ -1,8 +1,8 @@
 # Revisión de la versión preliminar de la Entrega 3
 
-Qué estaba mal o faltaba en `Contenido Entrega 3/` y cómo se resolvió en `Contenido Entrega 3 mejoras/`.
+Qué estaba mal o faltaba en el borrador (subcarpeta `Cosas que hicimos en casa/`, antes llamada `Contenido Entrega 3/`) y cómo se resolvió en la versión final (`Contenido Entrega 3/`, antes llamada `Contenido Entrega 3 mejoras/`).
 
-La carpeta preliminar **no se tocó**: queda como registro del punto de partida y para comparar las dos versiones. Todo lo nuevo está en esta carpeta.
+El contenido del borrador **no se tocó**: queda como registro del punto de partida y para comparar las dos versiones.
 
 ---
 

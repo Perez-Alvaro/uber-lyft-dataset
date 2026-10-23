@@ -1,7 +1,7 @@
 """Entrega 3 — Modelado y análisis de resultados · Grupo 11 · Ciencia de Datos 5K1 (UTN FRC).
 
 Entrada : Contenido Entrega 2/Dataset Codificado/dataset_codificado.zip  (636.568 filas x 71 columnas)
-Salidas (dentro de "Contenido Entrega 3 mejoras"):
+Salidas (dentro de "Contenido Entrega 3"):
   4_Datasets/   datasets de modelado y datasets balanceados
   5_Graficos/   figuras, numeradas igual que en el informe
   6_Resultados/ métricas (metricas.json) y tablas CSV
@@ -78,7 +78,7 @@ N_JOBS_PESADO = 2 if RAPIDO else 8      # procesos en paralelo para random fores
 SLUG = {"Regresión logística": "logistica", "Árbol de decisión": "arbol", "Random forest": "random_forest",
         "Gradient boosting": "gradient_boosting", "Ridge": "ridge"}
 AQUI = Path(__file__).resolve().parent          # 3_Codigo
-RAIZ = AQUI.parent                               # Contenido Entrega 3 mejoras
+RAIZ = AQUI.parent                               # Contenido Entrega 3
 ENTRADA = RAIZ.parent / "Contenido Entrega 2" / "Dataset Codificado" / "dataset_codificado.zip"
 SALIDA = Path(tempfile.gettempdir()) / "entrega3_rapido" if RAPIDO else RAIZ
 GRAF = SALIDA / "5_Graficos"
