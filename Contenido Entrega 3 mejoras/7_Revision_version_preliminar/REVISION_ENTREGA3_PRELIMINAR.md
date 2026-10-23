@@ -12,12 +12,13 @@ La carpeta preliminar **no se tocó**: queda como registro del punto de partida 
 |---|---|---|
 | Dataset de entrada | `dataset_nueva_columna.zip` (sin codificar) | `dataset_codificado.zip` (el último de la Entrega 2) |
 | Partición train/test | Aleatoria | Por fecha: train hasta el 14/12, test del 15 al 18/12 |
-| Hiperparámetros | Fijos a mano, sin justificar | Búsqueda en grilla con validación agrupada por fecha, tabla de justificación |
-| Umbral de decisión | 0,5 fijo | Elegido por F1 sobre el train (sin mirar el test) |
+| Hiperparámetros | Fijos a mano, sin justificar | Búsqueda en grilla con validación temporal en orden (5 bloques de fechas), tabla de justificación |
+| Umbral de decisión | 0,5 fijo | Elegido por F1 con las predicciones de validación dentro del train (sin mirar el test) |
 | Métricas de has_surge | Accuracy, recall, precision, F1, ROC-AUC (sin línea base) | + accuracy balanceada, PR-AUC, F1 macro/weighted, curvas ROC y PR, líneas base |
+| Modelos de has_surge | Regresión logística y árbol | Regresión logística, árbol, random forest y gradient boosting (elegido por validación) |
 | Modelos de price | Lineal sin regularizar y árbol, sin surge_multiplier | Ridge, árbol y random forest, cada uno con y sin surge_multiplier |
 | Interpretación | No había | Importancia por familias, odds ratio, reglas del árbol, deciles de riesgo, hipótesis H1–H6 |
-| Tercer análisis | Multiclase de Uber (circular) | K-Means de rutas (objetivo de la Entrega 1) |
+| Tercer análisis | Multiclase de Uber (circular) | K-Means de los 12 productos: 3 familias de tarifa (objetivo de la Entrega 1) |
 | Informe | `.md` con emojis y links locales de Windows | `1_Informe/Entrega3_Grupo11.docx` con el formato de la Entrega 2 |
 | Presentación oral | Notebook sin ejecutar, con todo el código a la vista | `2_Presentacion_Colab/`: notebook-presentación ya ejecutado, código oculto, gráficos en orden y una demo en vivo |
 | Datasets de salida | No había | `4_Datasets/datasets modelado/` (price y surge) y `4_Datasets/datasets balanceados/` (submuestreo, SMOTE y test real) |
@@ -44,12 +45,12 @@ Cargaba `dataset_nueva_columna.zip` y volvía a codificar con `get_dummies`, con
 
 **2. Partición aleatoria.**
 Todos los modelos usaban `train_test_split` al azar. Eso contradice lo que dijimos en la Entrega 2 (validar agrupando por fecha, porque en el 95,7% de los grupos ruta–minuto todos los productos comparten `has_surge`) e infla las métricas: cotizaciones del mismo minuto y ruta quedan en train y en test.
-Lo medimos: con partición aleatoria el PR-AUC del random forest sale **un 49% más alto** (0,202 frente a 0,135), y el random forest parece mejor que el árbol cuando no lo es.
-→ Test = 4 fechas posteriores; los hiperparámetros se eligen con `GroupKFold` por fecha dentro del train. La comparación aleatoria vs temporal está en la sección 5.7 del informe.
+Lo medimos: con partición aleatoria el PR-AUC del random forest sale **un 87% más alto** (0,264 frente a 0,141), y el random forest parece mucho mejor que gradient boosting cuando en realidad quedan parejos (0,141 y 0,140 por fecha).
+→ Test = 4 fechas posteriores; los hiperparámetros se eligen con una validación temporal en orden dentro del train (5 bloques de fechas: cada fold valida con fechas posteriores a las de entrenamiento). La comparación aleatoria vs temporal está en la sección 5.7 del informe.
 
 **3. La clasificación multiclase de Uber era circular.**
 Predecía el servicio (`service_tier`) usando `price` y `price_per_mile`. El precio es la variable objetivo del objetivo 1 y depende del servicio elegido: predecir el servicio a partir del precio es ir al revés y no responde ninguna pregunta del proyecto. Tampoco estaba en el plan de la Entrega 2. Además decía "clases balanceadas" cuando Estándar tiene el doble que el resto (33,3%).
-→ Se eliminó. En su lugar hay una segmentación de rutas con K-Means (codo y silueta), ligada a un objetivo específico de la Entrega 1 y a las hipótesis H4 y H6.
+→ Se eliminó. En su lugar hay un K-Means de los 12 productos según su tarifa base y su precio por milla (codo y silueta coinciden en k = 3, silueta 0,68), ligado a un objetivo específico de la Entrega 1 y a las hipótesis H4 y H6. Primero se probó un K-Means de rutas, pero su silueta era plana (ver la segunda revisión, punto 6).
 
 **4. Los números del informe no se podían reproducir.**
 - El informe reporta MAE de regresión, pero `ejecutar_experimentos_sprint3.py` no calcula MAE (lo importa y no lo usa).
@@ -61,15 +62,15 @@ Predecía el servicio (`service_tier`) usando `price` y `price_per_mile`. El pre
 ### Importantes (requisitos de la consigna que faltaban)
 
 **5. Hiperparámetros sin justificar.** `max_depth = 12`, `10` y `8`, y la `C` por defecto de la regresión logística, sin búsqueda ni explicación. La consigna pide "definir el valor de los parámetros y justificar los utilizados".
-→ Búsqueda en grilla para los 6 modelos, tabla con el rol de cada parámetro y por qué se eligió, y curva de validación del árbol que muestra el sobreajuste.
+→ Búsqueda en grilla para todos los modelos (cada combinación de modelo y técnica de balanceo, y cada variante con/sin surge, tiene su propia búsqueda), tabla con el rol de cada parámetro y por qué se eligió, y curva de validación del árbol que muestra el sobreajuste.
 
 **6. Umbral fijo en 0,5.** Con datos desbalanceados el umbral define el compromiso entre recall y precisión, y la clase de matriz de confusión pide interpretarlo.
-→ Se elige con predicciones fuera de fold sobre el train (máximo F1) y se aplica tal cual al test.
+→ Se elige con las predicciones de la validación temporal dentro del train (máximo F1) y se aplica tal cual al test.
 
 **7. Métricas incompletas.** Faltaba el PR-AUC que prometimos en la Entrega 2, no había curvas ROC graficadas, no se reportaban los promedios macro y weighted, y no había líneas base (por ejemplo, "siempre sin recargo", que tiene 91,7% de accuracy).
 → Están todas, más la curva Precisión-Recall y dos líneas base.
 
-**Sobre la accuracy (la profe la remarcó):** la versión preliminar la mostraba, pero sin compararla con nada. Ahora se informa en todas las tablas y se lee **siempre contra la línea base** (91,7% de decir siempre "no"), junto con la **accuracy balanceada** (promedio del acierto en cada clase; 50% = azar). El árbol final tiene 69,2% de accuracy y 61,5% de accuracy balanceada: acierta el 70,7% de los viajes sin recargo y el 52,2% de los viajes con recargo. Está explicado en las secciones 3.3, 5.1 y 5.4 del informe y en la sección 4 del Colab, con una demo en vivo.
+**Sobre la accuracy (la profe la remarcó):** la versión preliminar la mostraba, pero sin compararla con nada. Ahora se informa en todas las tablas y se lee **siempre contra la línea base** (91,7% de decir siempre "no"), junto con la **accuracy balanceada** (promedio del acierto en cada clase; 50% = azar). El modelo final (gradient boosting) tiene 63,3% de accuracy y 62,1% de accuracy balanceada: acierta el 63,5% de los viajes sin recargo y el 60,7% de los viajes con recargo. Está explicado en las secciones 3.3, 5.1 y 5.4 del informe y en las secciones 6 (con una demo en vivo) y 8 del Colab.
 
 **8. Conclusión de balanceo sobredimensionada.** El informe llamaba a `class_weight` "método campeón" y "herramienta útil" mirando solo el recall (83%), con una precisión de 12% contra 8% de azar. No explicaba que el ROC-AUC casi no cambia al balancear: balancear corre las probabilidades respecto del umbral, no mejora el ranking. Tampoco explicaba por qué SMOTE rinde mal.
 → El informe compara las técnicas con métricas que dependen y que no dependen del umbral, y explica el problema de SMOTE con variables dummy: interpola valores imposibles como "0,4 de Back Bay" y los árboles los memorizan.
