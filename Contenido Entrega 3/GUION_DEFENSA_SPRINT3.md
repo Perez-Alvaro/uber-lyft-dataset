@@ -1,103 +1,199 @@
-# Guion de Defensa Oral: Sprint 3 (Modelado Predictivo)
-**Catedra:** Ciencia de Datos - Curso 5K1 (UTN-FRC)  
-**Proyecto:** Determinantes de Precio y Tarifa Dinamica en Uber y Lyft (Boston, MA)  
-**Grupo 11:** Alvaro Perez, Juan Ignacio Cremona, Ignacio Gil, Federico Gon, Sofia Medina, Facundo Dagnino Dailly  
-**Soporte Visual:** `Presentacion_Entrega3_Grupo11.ipynb` / `Presentacion_Entrega3_Grupo11.pdf`
+# GUION DE DEFENSA ORAL — SPRINT 3: MODELADO PREDICTIVO Y EVALUACIÓN
+
+**Cátedra:** Ciencia de Datos — Curso 5K1 (UTN-FRC)  
+**Proyecto:** Determinantes de Precio y Tarifa Dinámica en Uber y Lyft (Boston, MA)  
+**Grupo 11:** Álvaro Pérez, Juan Ignacio Cremona, Ignacio Gil, Federico Gon, Sofía Medina, Facundo Dagnino Dailly  
+**Soporte Visual:** `Presentacion_Entrega3_Grupo11.ipynb` (Cuaderno Colab Sintetizado de 5 Secciones y 14 Celdas)  
+**Tiempo Objetivo de Exposición:** **6 minutos 30 segundos** (Rango reglamentario: 5 a 7 minutos)  
 
 ---
 
-## 1. Curaduria de Graficos: Criterio de Calidad para la Exposicion
+## 1. PAUTAS DE ENTREGA Y COORDINACIÓN DE LA DEFENSA ORAL
 
-El proyecto dispone de 11 figuras tecnicas (`fig01` a `fig11`). Para una presentacion oral rigurosa y concisa de 10 a 12 minutos ante el tribunal docente, se priorizan los **5 graficos esenciales**, desplazando los 6 restantes a un bloque de anexo tecnico.
+Para asegurar una presentación oral de excelencia académica y profesionalismo técnico ante el tribunal docente de la cátedra:
 
-### Graficos Esenciales (Bloque Principal de Defensa)
-1. **`fig01_precio_real_vs_predicho.png` (Regresion del Precio):** Demuestra el ajuste predictivo cuantitativo ($R^2=0.967$, MAE USD 1.08) y confirma que la tarifa es netamente estructural.
-2. **`fig05_recargo_matrices_confusion.png` (Matrices de Confusion y Balanceo):** Contrapone visualmente el 91.7% de accuracy trivial frente al modelo calibrado con pesos de clase que logra un Recall del 51.4% (2.531 recargos detectados).
-3. **`fig06_recargo_matriz_beneficio.png` (Matriz de Beneficio Economico):** Aporte metodologico distintivo. Fundamenta el umbral de corte de probabilidad en terminos monetarios (ganancia de +USD 56 cada 1.000 cotizaciones con umbral 0.57) en lugar de una metrica abstracta.
-4. **`fig07_recargo_curvas_roc_pr.png` (Curvas ROC y Precision-Recall):** Rigor estadistico formal sobre datos futuros no vistos (ROC-AUC 0.676 y PR-AUC 0.140 sobre la tasa base del 8.2%).
-5. **`fig11_productos_kmeans.png` (Clustering K-Means no supervisado):** Validación no supervisada mediante Metodo del Codo y Coeficiente de Silueta ($k=3$, $s=0.682$), agrupando los 12 productos en 3 familias simetricas entre Uber y Lyft.
-
-### Graficos Secundarios (Bloque de Anexo y Respaldo Tecnico)
-* `fig02_precio_importancia_y_tarifas`: Detalle de importancia de features (se menciona al explicar la Figura 1).
-* `fig03_recargo_validacion_profundidad` y `fig09_recargo_arbol_reglas`: Respaldo para justificar la poda y evitar el sobreajuste del arbol.
-* `fig04_recargo_balanceo`: Comparativa de distribuciones del laboratorio de balanceo.
-* `fig08_recargo_importancia_odds_ratio`: Odds ratios geograficos de la regresion logistica.
-* `fig10_recargo_deciles_riesgo`: Grafico de concentracion de riesgo acumulado (Lift Chart).
+1. **Ritmo y Tono:** Mantener un ritmo vocal natural de **140 a 145 palabras por minuto** (el guión está calibrado a exactamente 940 palabras habladas para 6:30 min). El tono debe ser seguro, analítico y enfocado en la justificación metodológica y el impacto de negocio, evitando la lectura mecánica de código.
+2. **Sincronización con el Colab:** Proyectar el cuaderno sintetizado `Presentacion_Entrega3_Grupo11.ipynb`. Cada bloque del guión cuenta con una indicación visual explícita `[Avanzar a Celda...]` para garantizar que la pantalla y la voz marchen en sincronía estricta.
+3. **Distribución del Equipo:** Las 5 secciones están concebidas para ser expuestas fluidamente por uno, dos o más integrantes mediante transiciones naturales, o por un expositor principal con el equipo apoyando en la ronda de repreguntas.
+4. **Foco en Decisiones de Ingeniería:** El tribunal evaluará especialmente el criterio técnico: por qué se descartaron ciertas técnicas (ej. split aleatorio, SMOTE), cómo se tradujeron las probabilidades a dinero real y cómo se evitaron sesgos y fuga de información (*Data Leakage*).
 
 ---
 
-## 2. Analisis Metodologico de los 11 Graficos
+## 2. MATRIZ DE ALINEACIÓN ESTRUCTURAL (COLAB SINTETIZADO VS. GUION ORAL)
 
-| Grafico | Algoritmo / Metodo | Lectura de los Datos | Conclusion Tecnico-Metodologica |
-| :--- | :--- | :--- | :--- |
-| **`fig01`** | Random Forest Regresor sobre log(price). | Dispersion de valores predichos vs reales alineada en la diagonal principal. El 75% de los viajes tiene error relativo inferior al 10%. | Error medio de **USD 1.08** ($R^2=0.967$). Sin el multiplicador como predictor, el error es USD 1.32. El precio responde a una estructura deterministica. |
-| **`fig02`** | Importancia por permutacion de variables. | Producto (`name_*`) y distancia concentran el 95% del peso. Factores climaticos y franjas horarias registran peso nulo. | Confirma H1 y refuta H5: el clima adverso no encarece la tarifa base en Boston. |
-| **`fig03`** | Validacion temporal (`GroupKFold`) variando `max_depth`. | Divergencia abrupta entre train (1.0) y validacion despues de profundidad 5. | Evidencia empirica de sobreajuste que justifica la poda preventiva del arbol de decision. |
-| **`fig04`** | Comparativa de tecnicas de balanceo. | Base (0% recall), Submuestreo (perdida de muestra), SMOTE (creacion de valores invalidos en variables binarias) y Pesos de clase. | `class_weight='balanced'` sensibiliza la funcion de perdida utilizando el 100% de cotizaciones reales. |
-| **`fig05`** | Matrices de confusion en conjunto de prueba (59.395 casos). | Linea base sin balancear: 0 detecciones. Gradient Boosting con pesos de clase: 2.531 aciertos (Recall 51.4%). | Muestra el compromiso operativo necesario entre sensibilidad y volumen de falsas alarmas. |
-| **`fig06`** | Matriz de beneficio economico y analisis de sensibilidad. | Asignacion monetaria: VP = +USD 7.73 (recargo evitado), FP = -USD 1.00 (espera/comparacion innecesaria). Maximo en umbral 0.57. | **Criterio optimo:** genera un beneficio de **+USD 56 cada 1.000 cotizaciones**. Supera al umbral estandar 0.50 reduciendo alertas espurias. |
-| **`fig07`** | Curvas ROC (AUC=0.676) y Precision-Recall (AUC=0.140). | Desempeño sostenido por encima del clasificador aleatorio y de la tasa base poblacional (8.2%). | Certifica capacidad de discriminacion y ordenamiento de riesgo en fechas futuras no vistas. |
-| **`fig08`** | Odds Ratio en Regresion Logistica (con regularizacion $C=1.0$). | Mayor probabilidad de recargo en Northeastern (1.29) y Fenway (1.23); minima en Haymarket (0.37) y North End (0.38). | El recargo responde a un fenomeno espacial/geografico antes que a un factor temporal. |
-| **`fig09`** | Visualizacion de reglas del Arbol de Decision. | Divisiones iniciales estructuradas por tasa historica del origen y distancia. | Proporciona explicabilidad transparente (modelo de caja blanca) para usuarios y conductores. |
-| **`fig10`** | Deciles de riesgo acumulado (Lift Chart). | El decil 10 concentra el 22% de todos los recargos; los dos deciles superiores concentran el 35%. | Valida la utilidad practica del modelo para identificar zonas calientes de alta demanda. |
-| **`fig11`** | K-Means ($k=3$) con curvas de Inercia y Silueta. | Quiebre de inercia y maximo de silueta en $s=0.682$. Mapeo en 2D de Tarifa Base vs. Costo por Milla. | Confirma H6: identificacion de 3 familias tarifarias simetricas (Economica, Intermedia, Premium) entre ambas companias. |
+| Sección Colab | Celdas Cuaderno | Soporte Visual Primario | Ventana Temporal | Duración | Mensaje Núcleo a Transmitir |
+| :---: | :---: | :--- | :---: | :---: | :--- |
+| **Sección 1** | Celdas 02 y 03 | Gráfico `fig04_recargo_balanceo.png` y resumen de partición | `00:00 - 01:15` | 1 min 15 s | Blindaje contra Data Leakage, validación temporal consecutiva (14 días train / 4 días test ciegos) y pesos de clase sin inventar datos sintéticos. |
+| **Sección 2** | Celdas 04, 05 y 06 | Gráfico `fig01_precio_real_vs_predicho.png` y tabla de modelos | `01:15 - 02:45` | 1 min 30 s | Random Forest predice el precio con $R^2=0.967$ y MAE USD 1.08; el precio es determinístico (producto y distancia); Gradient Boosting lidera clasificación. |
+| **Sección 3** | Celdas 07, 08 y 09 | Gráficos `fig05_confusion.png` y `fig06_beneficio.png` | `02:45 - 04:15` | 1 min 30 s | Descarte del umbral 0.50 ciego; calibración en umbral 0.57 que maximiza el beneficio en **+USD 56.11 cada 1.000 cotizaciones** (2.534 recargos detectados). |
+| **Sección 4** | Celdas 10 y 11 | Gráfico `fig07_recargo_curvas_roc_pr.png` (Panel doble) | `04:15 - 05:30` | 1 min 15 s | Capacidad discriminativa global (ROC-AUC 0.676 y PR-AUC 0.140 sobre base de 8.3%); justificación causal del techo físico de ~0.68. |
+| **Sección 5** | Celdas 12 y 13 | Gráfico `fig11_productos_kmeans.png` y balance de hipótesis | `05:30 - 06:30` | 1 min 00 s | Balance de hipótesis (H1 confirmada, H5 refutada, H6 confirmada con K-Means $k=3$, $s=0.682$); recomendaciones de negocio y cierre formal. |
 
 ---
 
-## 3. Guion de Exposicion Oral (Paso a Paso con el Cuaderno Colab)
+## 3. GUION VERBAL LITERAL PASO A PASO (TEXTO DIRECTO DE EXPOSICIÓN ORAL)
 
-### Minutos 0 a 2: Introduccion y Control de Fuga de Datos (Seccion 1 del Colab)
-> "Buenas tardes profesores. En esta Entrega 3 implementamos la etapa de Modelado Predictivo y Evaluacion del ciclo CRISP-DM, respondiendo a dos preguntas concretas:
-> 1. Que determina el valor del viaje y con que precision se puede predecir (`price`).
-> 2. Si es posible anticipar la aparicion de tarifa dinamica (`has_surge`) en Lyft.
->
-> Antes de entrenar los algoritmos, aplicamos un riguroso protocolo contra la fuga de datos (*Data Leakage*):
-> Primero, para clasificar el recargo prohibimos estrictamente el uso de `price` y `surge_multiplier`, ya que contienen directamente el fenomeno a predecir.
-> Segundo, implementamos una particion temporal por fechas. En este dataset, cotizaciones del mismo minuto y trayecto comparten el recargo. Si hicieramos una particion aleatoria clasica, el modelo memorizaria cotizaciones gemelas e inflaria las metricas hasta un 87%. Por ello, entrenamos exclusivamente del 25 de noviembre al 14 de diciembre y evaluamos el rendimiento en 4 dias posteriores completamente ciegos para el modelo, del 15 al 18 de diciembre."
+### [00:00 - 01:15] SECCIÓN 1: CÓMO ENTRENAMOS LOS MODELOS (Preparación Básica, Validación Temporal, Balanceo)
 
-### Minutos 2 a 5: Objetivo 1 - Regresion del Precio (Seccion 2 del Colab - Figura 1)
-> *(Presentar Seccion 2 y exhibir la Figura 1)*  
-> "Para predecir el precio del viaje evaluamos modelos lineales regularizados (Ridge), arboles de decision y Random Forest, trabajando sobre la transformacion logaritmica de la tarifa para mitigar la asimetria de las gamas de lujo.
->
-> Como se observa en la **Figura 1**, el modelo con mejor desempeño fue **Random Forest con multiplicador de recargo**, alcanzando un coeficiente de determinacion **$R^2 = 0.967$** y un error absoluto medio (MAE) de apenas **USD 1.08**. Tres de cada cuatro viajes se predicen con un error menor al 10%. En un escenario ciego donde no se disponga del multiplicador, el modelo mantiene una capacidad explicativa notable, con un MAE de USD 1.32.
->
-> Este resultado confirma nuestra Hipotesis 1: el precio es una funcion netamente **estructural**, explicada por el tipo de producto contratado y la distancia. A su vez, los factores climaticos y horarios exhibieron un peso prácticamente despreciable, refutando la creencia popular de la Hipotesis 5 de que la lluvia o el frio encarecen las tarifas base."
+*(Proyectar Celda 02 [Markdown] y avanzar a Celda 03 [Código] del Colab — Soporte visual en pantalla: Resumen de partición y `fig04_recargo_balanceo.png`)*
 
-### Minutos 5 a 8: Objetivo 2 - Clasificacion de Recargo y Dilema del Accuracy (Seccion 3 del Colab - Figura 5)
-> *(Avanzar a Seccion 3 y exhibir la Figura 5)*  
-> "Al abordar la clasificacion binaria del recargo dinamico nos enfrentamos a un **desbalance critico del 91.8% de viajes sin recargo frente a solo 8.2% con recargo**.
+> **[Pausa inicial, contacto visual con el tribunal evaluador]**  
+> "Buenas tardes profesores. En este Sprint 3 completamos el Modelado y Evaluación del ciclo CRISP-DM para responder: qué determina el precio base del viaje y si es posible anticipar la tarifa dinámica en Lyft.
 >
-> Este contexto pone de manifiesto la trampa del Accuracy tradicional: un clasificador ingenuo que responda siempre 'sin recargo' obtiene un 91.7% de precision global aparente, pero un Recall del 0%, siendo nulo para el negocio.
+> Para garantizar solidez metodológica y evitar vicios empíricos, fijamos tres decisiones clave:
 >
-> Tras comparar tecnicas de balanceo aplicadas unicamente en entrenamiento, determinamos que los pesos de clase (`class_weight='balanced'`) ofrecen la solucion optima, ya que penalizan fuertemente los errores en la clase minoritaria sin alterar la muestra con datos sinteticos o descartar informacion valiosa.
+> **Primero, control de Data Leakage:** prohibimos taxativamente `price` y `surge_multiplier` para clasificar el recargo, ya que contienen directamente el objetivo. Cualquier transformación se ajustó únicamente sobre entrenamiento.
 >
-> En la matriz de confusion de la **Figura 5** vemos que el modelo final basado en Gradient Boosting logra un **Recall del 51.4%**, identificando 2.531 viajes con recargo real sobre fechas futuras no vistas, operando con una Accuracy Balanceada del 60.8% frente al 50% de una regla aleatoria."
+> **Segundo, validación temporal estricta:** el 95.7% de las cotizaciones del mismo minuto y ruta comparten el recargo. Un split aleatorio mezclaría cotizaciones gemelas en train y test, inflando falsamente el PR-AUC de 0.140 a 0.309. Por eso dividimos por fechas: entrenamos con 196.558 casos de 14 fechas consecutivas y evaluamos en 59.395 casos de 4 fechas posteriores totalmente ciegas.
+>
+> **[Señalar el gráfico `fig04_recargo_balanceo.png` en pantalla]**  
+> **Tercero, desbalance de clases:** con solo 8.2% de recargos, la Accuracy del 91.7% es engañosa pues un modelo ciego logra 0% de Recall. Descartamos submuestreo porque perdía el 90% de la muestra, y SMOTE porque generaba distorsiones en dummies categóricas. Seleccionamos pesos de clase (`class_weight='balanced'`), penalizando 11 veces más el error minoritario sobre datos 100% reales."
 
-### Minutos 8 a 10: Matriz de Beneficio y Curvas de Riesgo (Secciones 4 y 5 del Colab - Figuras 6 y 7)
-> *(Avanzar a Secciones 4 y 5, exhibiendo Figuras 6 y 7)*  
-> "Para definir el umbral de decision descartamos el valor estandar de 0.50 y el F1 abstracto, incorporando una **Matriz de Beneficio Economico**:
-> - Acertar un recargo real le ahorra al pasajero en promedio **+USD 7.73** (permitiendole comparar con Uber o postergar el pedido).
-> - Una falsa alarma le genera un costo estimado de **-USD 1.00** en tiempo invertido.
->
-> Como ilustra la **Figura 6**, al modelar la curva de costos encontramos un punto optimo en el **umbral 0.57**. Este criterio selectivo maximiza el retorno, generando un beneficio de **+USD 56 cada 1.000 cotizaciones**.
->
-> Respaldando esta calibracion, la **Figura 7** muestra un **ROC-AUC de 0.676** y un **PR-AUC de 0.140**. Todos los algoritmos ensayados tocan un techo similar cercano a 0.68 porque las variables exogenas del dataset (clima, trayecto y hora) no capturan la relacion oferta-demanda de choferes en tiempo real. No obstante, el modelo discrimina con solvencia el riesgo relativo."
+---
 
-### Minutos 10 a 11: Aprendizaje No Supervisado con K-Means (Seccion 6 del Colab - Figura 11)
-> *(Avanzar a Seccion 6 y exhibir la Figura 11)*  
-> "Finalmente, en cumplimiento de los objetivos no supervisados y para contrastar la Hipotesis 6, aplicamos **clustering particional K-Means** sobre los 12 productos de ambas companias, cruzando su tarifa de arranque (bajada de bandera) y su costo por milla en viajes sin recargo.
->
-> El numero de agrupamientos se determino de manera rigurosa: el **Metodo del Codo y el Coeficiente de Silueta coincidieron en $k=3$, alcanzando un score de silueta de 0.682**, lo que garantiza clusters compactos y bien diferenciados.
->
-> Como exhibe la **Figura 11**, los productos se ordenan de forma natural en tres familias equivalentes:
-> 1. **Economica:** Shared, UberPool, Lyft, UberX y WAV (tarifa base de USD 3 a 6 y costo de USD 1.2 a 1.7 por milla).
-> 2. **Intermedia:** Lyft XL, Lux, UberXL, Black y Lux Black (base de USD 8 a 12).
-> 3. **Premium:** Black SUV y Lux Black XL (tarifas de arranque superiores a USD 21).
->
-> El analisis evidencia que Lyft es mas competitiva en las opciones accesibles, mientras que Uber ofrece mejores valores en las gamas ejecutivas."
+### [01:15 - 02:45] SECCIÓN 2: COMPARACIÓN DE LOS MODELOS QUE ENTRENAMOS
 
-### Minutos 11 a 12: Cierre y Preguntas (Seccion 7 del Colab)
-> *(Mostrar tabla final de conclusiones)*  
-> "En sintesis: logramos modelar el precio con una precision del 96.7% respaldada en la arquitectura de producto y distancia; demostramos las limitaciones estructurales y la seleccion economica de umbral para el recargo dinamico; y segmentamos objetivamente las familias de servicio mediante metodos no supervisados.
+*(Avanzar a Celda 04 [Markdown], Celda 05 [Código] y Celda 06 [Código] del Colab — Soporte visual en pantalla: `fig01_precio_real_vs_predicho.png` y Tabla Comparativa de Modelos)*
+
+> **[Transición fluida, tono analítico]**  
+> "En la comparación de algoritmos, optimizamos dos familias bajo la misma partición temporal.
 >
-> En el bloque de anexo del notebook disponemos del respaldo de hiperparámetros, arboles de reglas y análisis de sensibilidad para cualquier consulta puntual. Quedamos a disposicion de sus preguntas. Muchas gracias."
+> Para clasificar el recargo dinámico evaluamos cuatro modelos:
+> - Regresión Logística regularizada L2, cuyos Odds Ratios revelaron que orígenes como Back Bay aumentan la probabilidad de recargo un 29% respecto a South Station, mientras North End la reduce un 35%.
+> - Árbol de Decisión, con poda preventiva en profundidad 6 para evitar sobreajuste.
+> - Random Forest, con gran capacidad discriminativa.
+> - Y Gradient Boosting (`HistGradientBoostingClassifier`), modelo campeón con un PR-AUC de 0.136 en validación al incorporar limpiamente la tasa histórica de la ruta.
+>
+> **[Señalar el gráfico `fig01_precio_real_vs_predicho.png` en pantalla]**  
+> En la regresión continua del precio modelamos el logaritmo de la tarifa para estabilizar la varianza de las gamas ejecutivas.
+>
+> Como observan en la Figura 1, el campeón indiscutido fue Random Forest: alcanzó un R² de 0.967 y un error medio (MAE) de apenas 1 dólar con 08 centavos. Tres de cada cuatro viajes se predicen con un error menor al 10%. Incluso a ciegas sin el multiplicador de recargo, mantiene un MAE de 1 dólar con 32.
+>
+> La importancia por permutación confirmó que el servicio y la distancia explican más del 95% del valor, mientras que el clima no aporta nada, con una caída de R² despreciable de dos millonésimas. Esto confirma la Hipótesis 1 y refuta la Hipótesis 5: el clima no encarece las tarifas base."
+
+---
+
+### [02:45 - 04:15] SECCIÓN 3: MATRIZ DE CONFUSIÓN Y MATRIZ DE BENEFICIO ECONÓMICO
+
+*(Avanzar a Celda 07 [Markdown], Celda 08 [Código] y Celda 09 [Código] del Colab — Soporte visual en pantalla: `fig05_recargo_matrices_confusion.png` y `fig06_recargo_matriz_beneficio.png`)*
+
+> **[Tono enfático y de negocio]**  
+> "Llegamos al aporte metodológico central: ¿cómo evaluamos el clasificador de recargo sobre los 59.395 casos de prueba futuros?
+>
+> **[Señalar la matriz de confusión `fig05_recargo_matrices_confusion.png` en pantalla]**  
+> En el umbral estándar de 0.50 sin balancear tendríamos cero detecciones. Nuestro modelo calibrado detecta 2.534 recargos reales, logrando un Recall del 51.4% y una Accuracy Balanceada del 60.8%, superando ampliamente al 50% del azar.
+>
+> Pero en un entorno real no decidimos con un corte ciego de 0.50 ni buscando un F1 abstracto. Diseñamos una Matriz de Beneficio Económico que traduce las métricas a dinero tangible:
+> - Cada Verdadero Positivo ahorra al usuario un promedio de +7 dólares con 73 centavos, al postergar el viaje o pedir Uber.
+> - Cada Falso Positivo le cuesta -1 dólar en tiempo perdido de espera innecesaria.
+>
+> La precisión mínima de indiferencia es de 11.45%.
+>
+> **[Señalar la curva de beneficio `fig06_recargo_matriz_beneficio.png` en pantalla]**  
+> Operar con el umbral 0.50 genera una ganancia de +USD 37 cada 1.000 cotizaciones. Sin embargo, al optimizar la función económica encontramos el punto óptimo exacto en el umbral 0.57.
+>
+> Este corte selectivo reduce falsas alarmas y maximiza el retorno a +56 dólares con 11 centavos cada 1.000 cotizaciones. Y el análisis de sensibilidad confirma su rentabilidad aun si el costo de una falsa alarma aumenta un 50%."
+
+---
+
+### [04:15 - 05:30] SECCIÓN 4: CURVA ROC (Y PR)
+
+*(Avanzar a Celda 10 [Markdown] y Celda 11 [Código] del Colab — Soporte visual en pantalla: `fig07_recargo_curvas_roc_pr.png`)*
+
+> **[Rigor analítico y estadístico]**  
+> "Para evaluar la capacidad intrínseca del clasificador independientemente del umbral operativo, examinamos las curvas ROC y Precision-Recall sobre el conjunto de prueba ciego.
+>
+> **[Señalar la curva ROC a la izquierda del panel doble]**  
+> En el panel izquierdo, la Curva ROC alcanza un área de 0.676 con Gradient Boosting y 0.675 con Random Forest, muy por encima de la diagonal de azar de 0.50, certificando capacidad real de ordenamiento de riesgo en fechas futuras.
+>
+> **[Señalar la curva Precision-Recall a la derecha del panel doble]**  
+> Sin embargo, ante el fuerte desbalance la métrica determinante es Precision-Recall. Como observamos a la derecha, la tasa base poblacional es de solo 8.3%. Nuestro modelo alcanza un PR-AUC de 0.140, superando en más de un 70% a la línea base de mercado.
+>
+> ¿Por qué todos los algoritmos encuentran un techo en torno a 0.68 de ROC y 0.14 de PR?
+>
+> Por una razón causal de micro-mercado: la tarifa dinámica en Lyft es endógena, determinada por el balance instantáneo de choferes conectados y solicitudes en minutos específicos. Con variables exógenas públicas como clima, ruta y hora, 0.68 representa el límite físico de predictibilidad. El modelo extrae toda la señal disponible sin sobreajustar."
+
+---
+
+### [05:30 - 06:30] SECCIÓN 5: RESULTADOS FINALES Y BALANCE DE HIPÓTESIS
+
+*(Avanzar a Celda 12 [Markdown] y Celda 13 [Código] del Colab — Soporte visual en pantalla: Tabla de Hipótesis H1-H6 y `fig11_productos_kmeans.png`)*
+
+> **[Conclusión, síntesis ejecutiva y cierre formal]**  
+> "Para concluir nuestra defensa, sintetizamos el balance de hipótesis:
+>
+> 1. **En Regresión del Precio:** confirmamos la Hipótesis 1. El valor del viaje se modela con 96.7% de precisión ($R^2=0.967$, MAE USD 1.08) según producto y distancia. Y refutamos categóricamente la Hipótesis 5: el clima adverso no encarece las tarifas base.
+> 2. **En Tarifa Dinámica:** con pesos de clase y umbral económico 0.57, logramos un beneficio neto de +USD 56.11 cada 1.000 cotizaciones, capturando el 51.4% de los recargos futuros con 60.8% de accuracy balanceada.
+> 3. **En Aprendizaje No Supervisado:** confirmamos la Hipótesis 6. K-Means con $k=3$ y silueta de 0.682 identificó tres familias tarifarias simétricas entre Uber y Lyft: Económica, Intermedia y Premium.
+> 4. **En Rigor Metodológico:** la validación temporal en bloques sucesivos blindó al proyecto contra fuga de datos, garantizando métricas reproducibles en producción.
+>
+> Cumplimos así todos los compromisos del Sprint 3 bajo el marco CRISP-DM. Muchas gracias, y quedamos a disposición de sus preguntas."
+
+---
+
+## 4. TABLA DE AUDITORÍA CUANTITATIVA RIGUROSA (1:1 CON `metricas.json`)
+
+Para garantizar total consistencia ante preguntas numéricas del tribunal evaluador, la siguiente tabla audita cada valor mencionado en el guión frente al archivo maestro `Contenido Entrega 3/6_Resultados/metricas.json`:
+
+| Parámetro / Métrica | Valor Verbalizado en el Guión | Valor Exacto en `metricas.json` | Clave JSON / Ruta de Verificación | Estado |
+| :--- | :---: | :---: | :--- | :---: |
+| **Volumen Total Lyft (sin Shared)** | 255.953 cotizaciones | `255953` | `d['A_datos']['filas']` | ✅ Verificado |
+| **Casos Positivos de Recargo (`has_surge=1`)**| 20.975 (8.2%) | `20975` (8.195%) | `d['A_datos']['positivos']`, `d['A_datos']['tasa']` | ✅ Verificado |
+| **Conjunto de Entrenamiento (Train)** | 196.558 filas (14 fechas) | `196558` (14 fechas) | `d['A_datos']['train']`, `d['A_datos']['fechas_train']` | ✅ Verificado |
+| **Conjunto de Evaluación (Test ciego)** | 59.395 filas (4 fechas) | `59395` (4 fechas) | `d['A_datos']['test']`, `d['A_datos']['fechas_test']` | ✅ Verificado |
+| **Tasa de Positivos en Test** | 8.3% | `0.08297` (8.30%) | `d['A_datos']['tasa_test']` | ✅ Verificado |
+| **Accuracy Trivial (Línea Base 'Siempre No')**| 91.7% | `0.91703` (91.70%) | `d['A_lineas_base'][0]['accuracy']` | ✅ Verificado |
+| **Recall Trivial (Línea Base 'Siempre No')** | 0.0% | `0.0` | `d['A_lineas_base'][0]['recall']` | ✅ Verificado |
+| **PR-AUC Inflado con Partición Mezclada** | > 0.309 (más del doble) | `0.30910` / `0.31170` | `d['A_cv_mezclada'][2]['pr_auc_mezclada']` | ✅ Verificado |
+| **PR-AUC Real con Validación Temporal** | 0.126 (RF) / 0.136 (GB) | `0.12620` / `0.13593` | `d['A_cv_mezclada'][2]['pr_auc_temporal']` | ✅ Verificado |
+| **Modelo Campeón de Recargo** | Gradient Boosting | `"Gradient boosting"` | `d['A_elegido']` | ✅ Verificado |
+| **Técnica de Balanceo Seleccionada** | Pesos de clase (`balanced`) | `"pesos"` / `"balanced"` | `d['A_tecnica_elegida']['clave']` | ✅ Verificado |
+| **Ahorro por Verdadero Positivo ($V_{TP}$)** | +USD 7.73 | `7.73380` | `d['A_matriz_beneficio']['vp']` | ✅ Verificado |
+| **Costo por Falso Positivo ($C_{FP}$)** | -USD 1.00 | `-1.0` | `d['A_matriz_beneficio']['fp']` | ✅ Verificado |
+| **Precisión Mínima Requerida ($p^*$)** | 11.45% | `0.11450` | `d['A_matriz_beneficio']['precision_minima']` | ✅ Verificado |
+| **Beneficio en Umbral 0.50 (GB)** | +USD 37 / 1.000 cotiz. | `37.438` | `d['A_finales']['Gradient boosting']['umbral_0.5']['beneficio_1000']` | ✅ Verificado |
+| **Umbral Óptimo de Beneficio** | 0.57 (0.5722) | `0.57220` | `d['A_finales']['Gradient boosting']['umbral_opt']['umbral']` | ✅ Verificado |
+| **Beneficio Óptimo por 1.000 Cotizaciones** | +USD 56.11 (+USD 56) | `56.10659` | `d['A_finales']['Gradient boosting']['umbral_opt']['beneficio_1000']` | ✅ Verificado |
+| **Verdaderos Positivos Detectados (TP Test)**| 2.534 recargos | `2534` | `d['A_finales']['Gradient boosting']['umbral_opt']['tp']` | ✅ Verificado |
+| **Falsos Positivos en Test (FP Test)** | 16.265 alertas falsas | `16265` | `d['A_finales']['Gradient boosting']['umbral_opt']['fp']` | ✅ Verificado |
+| **Verdaderos Negativos en Test (TN Test)** | 38.202 casos | `38202` | `d['A_finales']['Gradient boosting']['umbral_opt']['tn']` | ✅ Verificado |
+| **Falsos Negativos en Test (FN Test)** | 2.394 no detectados | `2394` | `d['A_finales']['Gradient boosting']['umbral_opt']['fn']` | ✅ Verificado |
+| **Recall en Test con Umbral 0.57** | 51.4% | `0.51420` (51.42%) | `d['A_finales']['Gradient boosting']['umbral_opt']['recall']` | ✅ Verificado |
+| **Accuracy Balanceada en Test (GB 0.57)** | 60.8% | `0.60779` (60.78%) | `d['A_finales']['Gradient boosting']['umbral_opt']['accuracy_balanceada']`| ✅ Verificado |
+| **Accuracy Global en Test (GB 0.57)** | 68.6% | `0.68585` (68.58%) | `d['A_finales']['Gradient boosting']['umbral_opt']['accuracy']` | ✅ Verificado |
+| **Precisión en Test (GB 0.57)** | 13.5% | `0.13479` (13.48%) | `d['A_finales']['Gradient boosting']['umbral_opt']['precision']` | ✅ Verificado |
+| **ROC-AUC en Test (GB)** | 0.676 | `0.67636` | `d['A_finales']['Gradient boosting']['umbral_opt']['roc_auc']` | ✅ Verificado |
+| **PR-AUC en Test (GB)** | 0.140 | `0.14008` | `d['A_finales']['Gradient boosting']['umbral_opt']['pr_auc']` | ✅ Verificado |
+| **Odds Ratio Mayor (Zona Back Bay)** | 1.287 (+29% riesgo) | `1.287` | `d['A_odds_elegida']` (vs South Station) | ✅ Verificado |
+| **Odds Ratio Menor (Zona North End)** | 0.646 (-35% riesgo) | `0.646` | `d['A_odds_elegida']` (vs South Station) | ✅ Verificado |
+| **$R^2$ Random Forest Precio (con surge)** | 0.967 (96.7%) | `0.96707` | `d['B_regresion'][6]['r2']` | ✅ Verificado |
+| **MAE Random Forest Precio (con surge)** | USD 1.08 | `1.07765` | `d['B_regresion'][6]['mae']` | ✅ Verificado |
+| **$R^2$ Random Forest Precio (sin surge)** | 0.928 | `0.92845` | `d['B_regresion'][5]['r2']` | ✅ Verificado |
+| **MAE Random Forest Precio (sin surge)** | USD 1.32 | `1.32065` | `d['B_regresion'][5]['mae']` | ✅ Verificado |
+| **Porcentaje de Viajes con Error $\le 10\%$** | 75.0% | `0.74956` (74.96%)| `d['B_pruebas']['Random forest']['p75_error']` | ✅ Verificado |
+| **Impacto Climático en Precio (caída $R^2$)** | 0.000002 (despreciable) | `2.446e-06` | `d['B_importancia']['grupos'][5]['caida']` | ✅ Verificado |
+| **Clustering K-Means ($k=3$) Silueta / Codo** | $s=0.682$, codo = 2.00 | `0.682`, `2.004` | `d['C']['silueta'][1]`, `d['C']['inercia'][1]` | ✅ Verificado |
+
+---
+
+## 5. MATRIZ DE DEFENSA TÉCNICA Y PREGUNTAS DEL TRIBUNAL DOCENTE (FAQ / REPREGUNTAS UTN)
+
+Esta sección equipa a los alumnos para responder con solvencia las preguntas más punzantes que los docentes de la cátedra suelen formular en el coloquio:
+
+#### P1: "¿Por qué no usan Accuracy como métrica principal si su modelo sin balancear daba 91.7%?"
+> **Respuesta:** "Porque en un escenario con 91.8% de cotizaciones sin recargo, un clasificador ciego que responda siempre 'sin recargo' obtiene un 91.7% de accuracy diciendo que nunca hay recargo. Ese modelo tiene un Recall del 0%, no detecta ningún recargo y carece de todo valor de negocio. Por eso la cátedra y las buenas prácticas exigen usar métricas insensibles a la clase mayoritaria como PR-AUC, Accuracy Balanceada y Recall, que en nuestro modelo calibrado alcanzan 60.8% y 51.4% respectivamente."
+
+#### P2: "¿Por qué afirman que una partición aleatoria clásica es metodológicamente incorrecta en este dataset?"
+> **Respuesta:** "Porque en este dataset, en el 95.7% de las cotizaciones que ocurren dentro de la misma ruta y el mismo minuto, todos los productos de Lyft comparten el recargo. Si aplicáramos un `train_test_split` aleatorio, cotizaciones gemelas de ese mismo minuto caerían una en entrenamiento y otra en prueba. El algoritmo memorizaría la cotización hermana y el PR-AUC subiría engañosamente de 0.140 a 0.309 (más del doble). La única forma de medir generalización honesta hacia el futuro es mediante validación temporal estricta por bloques de fechas sucesivos."
+
+#### P3: "¿Por qué falló SMOTE frente a los pesos de clase?"
+> **Respuesta:** "SMOTE genera ejemplos sintéticos interpolando linealmente entre vecinos más cercanos. En variables numéricas continuas funciona bien, pero en nuestro dataset el 90% de las predictoras son dummies categóricas (como zonas o productos). SMOTE termina creando combinaciones geométricas imposibles, como '0.4 de Back Bay y 0.6 de Fenway'. Los árboles memorizan esos artefactos sintéticos y pierden generalización sobre datos reales, haciendo que el PR-AUC caiga a 0.113. Los pesos de clase (`class_weight='balanced'`), en cambio, sensibilizan la función de costo directamente sobre el 100% de los datos reales observados."
+
+#### P4: "¿De dónde surgen los valores de la Matriz de Beneficio (+USD 7.73 y -USD 1.00)?"
+> **Respuesta:** "Analizamos las cotizaciones con recargo en el entrenamiento: el multiplicador promedio es de 1.42 y el sobreprecio neto medio respecto a la tarifa base es de USD 8.73. Si el usuario recibe la alerta y posterga el viaje unos minutos o solicita Uber, ahorra ese sobreprecio (ahorro neto medio de +USD 7.73 descontando pequeños costos de ajuste). Por el contrario, si el modelo da una falsa alarma (FP), el usuario pierde tiempo abriendo otra aplicación o esperando innecesariamente, lo que valorizamos conservadoramente en -USD 1.00. La fórmula de precisión mínima requerida es $p^* = \frac{C_{FP}}{V_{TP} + C_{FP}} = 11.45\%$. Nuestro modelo supera esa valla (13.5%), logrando el beneficio máximo de +USD 56.11 cada 1.000 cotizaciones en el umbral 0.57."
+
+#### P5: "¿Por qué el ROC-AUC no supera 0.68 a pesar de usar Gradient Boosting y Random Forest?"
+> **Respuesta:** "No es una deficiencia algorítmica ni de hiperparámetros, sino una restricción fundamental de la información disponible. La tarifa dinámica de Lyft es un mecanismo endógeno de micro-mercado en tiempo real (relación instantánea entre choferes conectados y pedidos concurrentes). Nuestro dataset dispone de variables macro-ambientales (clima, distancias, hora). Esas variables permiten detectar zonas calientes estructurales (como Back Bay o Fenway), pero no capturan la fluctuación de conductores minuto a minuto. Con los datos públicos disponibles, 0.68 representa el límite físico del poder predictivo."
+
+#### P6: "¿Por qué transformaron el precio a escala logarítmica (`log(price)`) en la regresión?"
+> **Respuesta:** "La distribución del precio en viajes presenta una asimetría positiva muy pronunciada: la mayoría de los viajes económicos se concentran entre 5 y 15 dólares, pero existen viajes de lujo (como Black SUV) que superan los 80 dólares. Si entrenáramos directamente sobre la escala lineal, los errores cuadráticos en las tarifas altas dominarían la función de pérdida y descalibrarían el modelo en los viajes comunes. La transformación logarítmica estabiliza la varianza residual (homocedasticidad) y minimiza el error porcentual relativo."
