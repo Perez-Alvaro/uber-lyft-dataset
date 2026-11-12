@@ -23,3 +23,6 @@ rideshare_kaggle.csv
 .idea/
 .DS_Store
 Thumbs.db
+
+# Agent workspaces
+.agents/
