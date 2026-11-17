@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { fInt, fDec, fPct, fUsd, Tip } from '../lib/ui.jsx'
 import {
-  PRECIO_RECARGO, ETL_PASOS, CALENDARIO, PARTICION, ZONAS, KMEANS, DECILES, RECARGO, BALANCEO,
+  PRECIO_RECARGO, ETL_PASOS, CALENDARIO, PARTICION, ZONAS, KMEANS, DECILES, RECARGO, BALANCEO, FINAL,
 } from '../data/metrics.js'
 import CURVAS from '../data/curvas.json'
 import TARIFAS from '../data/tarifas.json'
@@ -508,26 +508,28 @@ export function Deciles({ width = 620, height = 320 }) {
 }
 
 /* ───────────────── Laboratorio de umbral ───────────────── */
-export const UMBRALES = CURVAS.umbral
+export const UMBRALES = [...CURVAS.umbral, {
+  t: FINAL.umbral, tp: FINAL.tp, fp: FINAL.fp, fn: FINAL.fn, tn: FINAL.tn, b: FINAL.beneficio,
+}].sort((a, b) => a.t - b.t)
 export const N_TEST = CURVAS.n
 export function BeneficioCurva({ t, width = 560, height = 230, elegido }) {
   const pad = { l: 50, r: 14, t: 14, b: 34 }
   const xs = UMBRALES
   const x = (v) => pad.l + ((v - 0.2) / 0.6) * (width - pad.l - pad.r)
-  const ymin = -300, ymax = 100
+  const ymin = -160, ymax = 80
   const y = (v) => pad.t + (1 - (v - ymin) / (ymax - ymin)) * (height - pad.t - pad.b)
   const path = xs.map((p, i) => `${i ? 'L' : 'M'}${x(p.t).toFixed(1)},${y(p.b).toFixed(1)}`).join(' ')
   const cur = xs.reduce((a, p) => (Math.abs(p.t - t) < Math.abs(a.t - t) ? p : a), xs[0])
   return (
-    <svg width={width} height={height}>
-      {[-300, -200, -100, 0, 100].map((v) => (
+    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Ahorro neto en la prueba final según el límite de riesgo. El límite 0,57 se fijó previamente en validación.">
+      {[-150, -100, -50, 0, 50].map((v) => (
         <g key={v} className="axis"><line x1={pad.l} x2={width - pad.r} y1={y(v)} y2={y(v)} style={v === 0 ? { stroke: 'var(--line-2)' } : null} /><text x={pad.l - 8} y={y(v)} dy=".35em" textAnchor="end">{v}</text></g>
       ))}
       {[0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8].map((v) => <text key={v} x={x(v)} y={height - 12} textAnchor="middle" className="tick">{fDec(v, 1)}</text>)}
       <path d={`${path} L${x(0.8)},${y(0)} L${x(0.2)},${y(0)} Z`} fill="var(--accent-soft)" opacity={0.6} />
       <path className="draw" pathLength="1" d={path} fill="none" stroke="var(--accent)" strokeWidth={2.5} />
       <line x1={x(elegido)} x2={x(elegido)} y1={pad.t} y2={height - pad.b} stroke="var(--text-2)" strokeDasharray="3 4" />
-      <text x={x(elegido) + 6} y={pad.t + 10} className="val-muted" style={{ fontSize: 12 }}>elegido en validación</text>
+      <text x={x(elegido) + 6} y={pad.t + 10} className="val-muted" style={{ fontSize: 12 }}>límite elegido: 0,57</text>
       <circle cx={x(cur.t)} cy={y(cur.b)} r={7} fill="var(--text)" stroke="var(--accent)" strokeWidth={3} />
     </svg>
   )
@@ -563,26 +565,12 @@ export function ForkLine({ width = 1424, height = 190 }) {
   )
 }
 
-/* ───────────────── Recargo: de 7 multiplicadores a una variable sí / no ───────────────── */
-const MULT = [['×1,25', 11085], ['×1,5', 5065], ['×1,75', 2420], ['×2', 2239], ['×2,5', 154], ['×3', 12]]
+/* ───────────────── Cotizaciones según el aumento aplicado ───────────────── */
+const MULT = [['+25%', 11085], ['+50%', 5065], ['+75%', 2420], ['+100%', 2239], ['+150%', 154], ['+200%', 12]]
 export function SurgeCollapse({ width = 600 }) {
-  const max = 11085, labelW = 70, plotW = width - labelW - 210
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
-      <svg width={labelW + plotW + 70} height={MULT.length * 26}>
-        {MULT.map(([k, v], i) => (
-          <g key={k}>
-            <text x={labelW - 10} y={i * 26 + 13} dy=".35em" textAnchor="end" className="val-muted">{k}</text>
-            <rect className="growx" style={{ '--d': i }} x={labelW} y={i * 26 + 5} width={Math.max(3, (v / max) * plotW)} height={16} rx={3} fill="var(--recargo)" opacity={0.85} />
-            <text x={labelW + Math.max(3, (v / max) * plotW) + 8} y={i * 26 + 13} dy=".35em" className="val-muted">{fInt(v)}</text>
-          </g>
-        ))}
-      </svg>
-      <div style={{ fontSize: 34, color: 'var(--muted)' }}>→</div>
-      <div>
-        <div className="num recargo" style={{ fontSize: 34 }}>{fInt(20975)}</div>
-        <div className="small t2">has_surge = 1<br />(8,2% del total)</div>
-      </div>
+    <div role="img" aria-label="Cantidad de cotizaciones por aumento: 25%, 11.085; 50%, 5.065; 75%, 2.420; 100%, 2.239; 150%, 154; 200%, 12. Todos se agrupan como cotizaciones con recargo.">
+      <HBar rows={MULT.map(([label, value]) => ({ label, value, text: fInt(value), color: 'var(--recargo)' }))} width={width} rowH={31} labelW={80} valueW={76} barH={18} max={11085} d={3} />
     </div>
   )
 }

@@ -6,6 +6,8 @@ const readHash = () => Math.min(SLIDES.length - 1, Math.max(0, parseInt((locatio
 const toSec = (s) => { if (!s || s === '—') return null; const [m, ss] = s.split(':').map(Number); return m * 60 + ss }
 const mmss = (s) => `${s < 0 ? '−' : ''}${Math.floor(Math.abs(s) / 60)}:${String(Math.floor(Math.abs(s) % 60)).padStart(2, '0')}`
 
+const DURACION = Math.max(...SLIDES.map((s) => toSec(s.fin) ?? 0))
+
 // Convierte **negrita** del guion en <strong>
 const rich = (t) => t.split(/(\*\*[^*]+\*\*)/g).map((p, i) => (p.startsWith('**') ? <strong key={i}>{p.slice(2, -2)}</strong> : p))
 
@@ -66,8 +68,8 @@ export default function Presenter() {
       </main>
       <aside className="side">
         <div className="card">
-          <div className="label">Cronómetro · objetivo 10:00</div>
-          <div className="clock" style={{ color: elapsed > 600 ? 'var(--bad)' : 'var(--text)' }}>{mmss(elapsed)}</div>
+          <div className="label">Cronómetro · objetivo {mmss(DURACION)}</div>
+          <div className="clock" style={{ color: elapsed > DURACION ? 'var(--bad)' : 'var(--text)' }}>{mmss(elapsed)}</div>
           <div className="small" style={{ color: status, marginTop: 4 }}>
             {delta == null ? 'Slide de respaldo' : !running && elapsed === 0 ? 'Iniciá con S o con la primera flecha' : elapsed < ini - 10 ? `Vas adelantado ${mmss(ini - elapsed)}` : delta < 0 ? `Pasado ${mmss(-delta)} de esta slide` : `Quedan ${mmss(delta)} para esta slide`}
           </div>

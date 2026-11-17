@@ -74,7 +74,7 @@ export function Origen({ ids, style }) {
 }
 
 // ── Gráfico original de una entrega anterior, embebido en la slide ──
-export function Figura({ id, h = 520, d = 3, style }) {
+export function Figura({ id, h = 520, d = 3, style, caption }) {
   const { openImage } = useDeck()
   const i = findImg(id)
   if (i < 0) return null
@@ -82,7 +82,7 @@ export function Figura({ id, h = 520, d = 3, style }) {
   return (
     <figure className="fig rv" style={{ '--d': d, ...style }} onClick={() => openImage(i)} title="Clic para ampliar">
       <img src={g.src} alt={g.titulo} style={{ maxHeight: h }} />
-      <figcaption><span className="fig-tag">Entrega {g.entrega}</span>{g.titulo}</figcaption>
+      <figcaption><span className="fig-tag">Entrega {g.entrega}</span>{caption ?? g.titulo}</figcaption>
     </figure>
   )
 }

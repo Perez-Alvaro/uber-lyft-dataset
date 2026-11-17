@@ -1,6 +1,6 @@
 # Entrega 4 · Presentación final (Data Storytelling)
 
-Presentación web tipo diapositivas para la defensa de 10 minutos: 33 slides (una idea por slide, todas con gráfico o animación) más 1 de anexo con preguntas probables. Tema claro por defecto.
+Presentación web tipo diapositivas para la defensa de hasta 10 minutos (guion estimado: 8:41): 27 slides (una idea por slide, todas con gráfico o animación) más 1 de anexo con preguntas probables. Tema claro por defecto.
 
 **Hilo conductor: el recorrido por las 4 entregas.** La barra de progreso de abajo muestra en qué entrega estamos y cada slide indica de qué entrega viene su contenido. La slide 2 muestra cómo la pregunta de la Entrega 1 (solo el precio) se partió en dos variables en la Entrega 2.
 
@@ -13,9 +13,9 @@ Arriba a la derecha de cada slide hay un distintivo que dice a qué variable se 
 | Entrega | Slides | Ejes de la cátedra que cubre |
 |---|---|---|
 | E1 · Dominio | 3–7 | Introducción al dominio |
-| E2 · ETL y exploración | 8–20 | Qué predecimos · Algo importante del ETL · Hallazgos |
-| E3 · Modelado | 21–26 | Qué modelos usamos |
-| E4 · Valor y cierre | 27–33 | Qué valor ofrecemos · Qué aporta el dominio · Hipótesis · Conclusión |
+| E2 · ETL y exploración | 8–17 | Qué predecimos · Algo importante del ETL · Hallazgos |
+| E3 · Modelado | 18–22 | Qué modelos usamos |
+| E4 · Valor y cierre | 23–27 | Qué valor ofrecemos · Hipótesis · Conclusión |
 
 Los gráficos originales de las entregas 1 a 3 aparecen **dentro de la slide** donde se habla de ellos (clic para ampliar).
 
@@ -48,9 +48,9 @@ Sugerencia para el día de la defensa: proyectar la ventana principal en pantall
 
 ## Slides interactivas
 
-- **Slide 17 · Uber vs Lyft:** comparador por nivel de servicio y distancia, con las tarifas que aprendió el random forest.
-- **Slide 25 · Modelos de recargo:** pestaña de curvas Precisión-Recall de los 4 modelos.
-- **Slide 28 · Umbral:** control deslizante del umbral de decisión. La matriz de confusión y el beneficio en USD se recalculan con las 59.395 predicciones reales de la prueba.
+- **Slide 14 · Uber vs Lyft:** comparador por nivel de servicio y distancia, con las tarifas que aprendió el random forest.
+- **Slide 21 · Modelos de recargo:** comparación de validación (para elegir), comparación de la prueba final y curvas Precisión-Recall de los 4 modelos.
+- **Slide 24 · Umbral:** control deslizante del umbral de decisión. El gráfico y el ahorro neto se actualizan con las 59.395 predicciones reales de la prueba. Un celular ilustra el ahorro por aviso correcto para el pasajero.
 
 ## De dónde salen los datos
 
@@ -74,7 +74,7 @@ python3 scripts/generar_curvas.py "../Contenido Entrega 3/6_Resultados/recargo_p
 src/
   App.jsx            motor de la presentación (teclado, escala, ampliar gráficos, vista general)
   Presenter.jsx      ventana del presentador (guion + cronómetro)
-  slides.jsx         las 34 slides y el guion oral de cada una
+  slides.jsx         las 28 slides y el guion oral de cada una
   components/charts.jsx  gráficos SVG propios
   data/              métricas, curvas, tarifas y lista de gráficos
   styles.css         tema claro/oscuro y animaciones
