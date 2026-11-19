@@ -271,7 +271,7 @@ export function Particion({ width = 560 }) {
 const LON0 = -71.114, LAT1 = 42.3705, KX = 9000, KY = 12180
 const LBL = {
   'Back Bay': [0, 44, 'middle'], 'Northeastern University': [32, 4, 'start'], Fenway: [0, 44, 'middle'],
-  'Theatre District': [0, 46, 'middle'], 'Boston University': [0, -34, 'middle'], 'Beacon Hill': [-28, 4, 'end'],
+  'Theatre District': [0, 46, 'middle'], 'Boston University': [10, -34, 'middle'], 'Beacon Hill': [-28, 4, 'end'],
   'South Station': [28, 4, 'start'], 'Financial District': [26, 4, 'start'], 'West End': [-24, 10, 'end'],
   'North Station': [-22, -4, 'end'], 'Haymarket Square': [20, 8, 'start'], 'North End': [20, -2, 'start'],
 }
@@ -358,13 +358,13 @@ export function ZoneMap({ width = 700, height = 500 }) {
               <circle className="pop" style={{ '--d': 11 - i }} cx={p.x} cy={p.y} r={p.r} fill="var(--accent)" fillOpacity={op} stroke="var(--bg)" strokeWidth={2} />
               {i < 5 && <circle className="zone-ripple anim-loop" style={{ animationDelay: `${1.6 + i * 0.5}s`, '--r': p.r }} cx={p.x} cy={p.y} r={p.r} fill="none" stroke="var(--accent)" strokeWidth={2} />}
               {h === i && <circle cx={p.x} cy={p.y} r={p.r + 6} fill="none" stroke="var(--accent)" strokeWidth={2} />}
-              <text x={p.x + dx} y={p.y + dy - 8} textAnchor={anchor} className="lbl" style={{ fontSize: 13.5 }}>{p.zona}</text>
-              <text x={p.x + dx} y={p.y + dy + 9} textAnchor={anchor} className="val" style={{ fontSize: 13, fill: i < 5 ? 'var(--accent)' : 'var(--muted)' }}>{fPct(p.tasa)}</text>
+              <text x={p.x + dx} y={p.y + dy - 9} textAnchor={anchor} className="lbl" style={{ fontSize: 16.5, fontWeight: 600, paintOrder: 'stroke', stroke: 'var(--card)', strokeWidth: 4, strokeLinejoin: 'round' }}>{p.zona}</text>
+              <text x={p.x + dx} y={p.y + dy + 11} textAnchor={anchor} className="val" style={{ fontSize: 15.5, fontWeight: 700, fill: i < 5 ? 'var(--accent)' : 'var(--muted)', paintOrder: 'stroke', stroke: 'var(--card)', strokeWidth: 4, strokeLinejoin: 'round' }}>{fPct(p.tasa)}</text>
               <circle cx={p.x} cy={p.y} r={Math.max(p.r, 22)} fill="transparent" />
             </g>
           )
         })}
-        <text x={width - 4} y={height - 6} textAnchor="end" className="val-muted" style={{ fontFamily: 'var(--sans)', fontSize: 12 }}>Mapa esquemático · ubicaciones aproximadas · tamaño y color = % con recargo</text>
+        <text x={width - 4} y={height - 6} textAnchor="end" className="val-muted" style={{ fontFamily: 'var(--sans)', fontSize: 14.5, fill: 'var(--text-2)', paintOrder: 'stroke', stroke: 'var(--card)', strokeWidth: 4, strokeLinejoin: 'round' }}>Mapa esquemático · ubicaciones aproximadas · tamaño y color = % con recargo</text>
       </svg>
       {h != null && (
         <Tip x={pts[h].x} y={pts[h].y - pts[h].r}>
@@ -428,7 +428,7 @@ const KLBL = {
 }
 export function KMeansScatter({ width = 640, height = 400 }) {
   const [h, setH] = useState(null)
-  const pad = { l: 52, r: 24, t: 36, b: 44 }
+  const pad = { l: 58, r: 24, t: 40, b: 58 }
   const x = (v) => pad.l + (v / 25) * (width - pad.l - pad.r)
   const y = (v) => pad.t + (1 - (v - 1) / 4) * (height - pad.t - pad.b)
   const groups = useMemo(() => {
@@ -443,10 +443,10 @@ export function KMeansScatter({ width = 640, height = 400 }) {
           <g key={t} className="axis"><line x1={pad.l} x2={width - pad.r} y1={y(t)} y2={y(t)} /><text x={pad.l - 10} y={y(t)} dy=".35em" textAnchor="end">{t}</text></g>
         ))}
         {[0, 5, 10, 15, 20, 25].map((t) => (
-          <text key={t} x={x(t)} y={height - 16} textAnchor="middle" className="tick">{t}</text>
+          <text key={t} x={x(t)} y={height - 26} textAnchor="middle" className="tick">{t}</text>
         ))}
-        <text x={(pad.l + width - pad.r) / 2} y={height + 2} textAnchor="middle" className="tick">Tarifa base estimada (USD)</text>
-        <text x={pad.l - 10} y={12} textAnchor="start" className="tick" style={{ fontSize: 12 }}>USD por milla</text>
+        <text x={(pad.l + width - pad.r) / 2} y={height - 2} textAnchor="middle" className="tick">Tarifa base estimada (USD)</text>
+        <text x={pad.l - 10} y={16} textAnchor="start" className="tick" style={{ fontSize: 16 }}>USD por milla</text>
         {Object.entries(groups).map(([g, ps], gi) => {
           const xs = ps.map((p) => x(p.base)), ys = ps.map((p) => y(p.milla))
           const x0 = Math.min(...xs) - 22, x1 = Math.max(...xs) + 22, y0 = Math.min(...ys) - 22, y1 = Math.max(...ys) + 22
@@ -460,7 +460,7 @@ export function KMeansScatter({ width = 640, height = 400 }) {
               {p.plataforma === 'Uber'
                 ? <circle className="pop" style={{ '--d': i }} cx={cx} cy={cy} r={8} fill={c} stroke="var(--card)" strokeWidth={2} />
                 : <rect className="pop" style={{ '--d': i }} x={cx - 7.5} y={cy - 7.5} width={15} height={15} rx={3} fill={c} stroke="var(--card)" strokeWidth={2} />}
-              {lb && <text x={cx + lb[0]} y={cy + lb[1]} dy=".35em" textAnchor={lb[2]} className="lbl" style={{ fontSize: 13 }}>{lb[3] ?? p.producto}</text>}
+              {lb && <text x={cx + lb[0]} y={cy + lb[1]} dy=".35em" textAnchor={lb[2]} className="lbl" style={{ fontSize: 16.5, fontWeight: 500, paintOrder: 'stroke', stroke: 'var(--card)', strokeWidth: 3.5, strokeLinejoin: 'round' }}>{lb[3] ?? p.producto}</text>}
               <circle cx={cx} cy={cy} r={16} fill="transparent" />
             </g>
           )
@@ -492,8 +492,8 @@ export function Curvas({ tipo, width = 1290, height = 400 }) {
   const [modelo, setModelo] = useState('Gradient boosting')
   const [objetivo, setObjetivo] = useState(0.5)
   const roc = tipo === 'roc'
-  const graphW = width - 332
-  const pad = { l: 62, r: 22, t: 60, b: 66 }
+  const graphW = width - 372
+  const pad = { l: 72, r: 22, t: 64, b: 74 }
   const ymax = roc ? 1 : Math.ceil(Math.max(...MODEL_ORDER.flatMap((m) => CURVAS.curvas[m].pr.map((p) => p[1]))) * 20) / 20
   const x = (v) => pad.l + v * (graphW - pad.l - pad.r)
   const y = (v) => pad.t + (1 - v / ymax) * (height - pad.t - pad.b)
@@ -509,10 +509,10 @@ export function Curvas({ tipo, width = 1290, height = 400 }) {
   }
   return (
     <div className="curvas" style={{ width }}>
-      <div className="curvas-panel" style={{ gridTemplateColumns: `${graphW}px 308px` }}>
+      <div className="curvas-panel" style={{ gridTemplateColumns: `${graphW}px 348px` }}>
         <svg width={graphW} height={height} onMouseMove={move} role="img" aria-label={roc ? 'Curvas ROC de los cuatro modelos' : 'Curvas de precisión y recargos detectados de los cuatro modelos'}>
-          <text x={pad.l} y={20} className="curvas-axis-title">{roc ? 'Recargos detectados' : 'Precisión: avisos que aciertan'}</text>
-          <text x={graphW - pad.r} y={20} textAnchor="end" className="curvas-axis-hint">Más arriba = mejor</text>
+          <text x={pad.l} y={22} className="curvas-axis-title">{roc ? 'Recargos detectados' : 'Precisión: avisos que aciertan'}</text>
+          <text x={graphW - pad.r} y={22} textAnchor="end" className="curvas-axis-hint">Más arriba = mejor</text>
           {yt.map((t) => (
             <g key={t} className="axis">
               <line x1={pad.l} x2={graphW - pad.r} y1={y(t)} y2={y(t)} />
@@ -522,12 +522,12 @@ export function Curvas({ tipo, width = 1290, height = 400 }) {
           {[0, 0.25, 0.5, 0.75, 1].map((t) => (
             <g key={t} className="axis">
               <line x1={x(t)} x2={x(t)} y1={pad.t} y2={height - pad.b} style={{ strokeDasharray: '2 6' }} />
-              <text x={x(t)} y={height - pad.b + 24} textAnchor="middle">{fDec(t * 100, 0)} %</text>
+              <text x={x(t)} y={height - pad.b + 28} textAnchor="middle">{fDec(t * 100, 0)} %</text>
             </g>
           ))}
           <text x={(pad.l + graphW - pad.r) / 2} y={height - 8} textAnchor="middle" className="curvas-axis-title">{roc ? 'Falsas alarmas' : 'Recargos detectados (recall)'}</text>
           <line x1={x(0)} y1={y(roc ? 0 : base)} x2={x(1)} y2={y(roc ? 1 : base)} stroke="var(--muted)" strokeWidth={1.5} strokeDasharray="6 6" />
-          <text x={x(0.98)} y={y(roc ? 0.8 : base) + 22} textAnchor="end" className="curvas-base">{roc ? 'Azar' : `Azar: ${fDec(base * 100, 1)} % de avisos acertados`}</text>
+          <text x={x(0.98)} y={y(roc ? 0.8 : base) + 24} textAnchor="end" className="curvas-base">{roc ? 'Azar' : `Azar: ${fDec(base * 100, 1)} % de avisos acertados`}</text>
           {[...MODEL_ORDER.filter((m) => m !== modelo), modelo].map((m) => (
             <path key={m} d={path(CURVAS.curvas[m][tipo])} fill="none" stroke={CURVA_ESTILO[m].color}
               strokeDasharray={CURVA_ESTILO[m].dash} strokeWidth={m === modelo ? 3.5 : 2.2} strokeOpacity={m === modelo ? 1 : 0.65} strokeLinejoin="round" />
@@ -636,7 +636,7 @@ export const UMBRALES = CURVAS.umbral.map((p) => ({
 })).sort((a, b) => a.t - b.t)
 export const N_TEST = CURVAS.n
 export function BeneficioCurva({ t, width = 560, height = 230, elegido, antes }) {
-  const pad = { l: 76, r: 18, t: 48, b: 52 }
+  const pad = { l: 82, r: 22, t: 54, b: 62 }
   const xs = UMBRALES
   const x = (v) => pad.l + ((v - 0.2) / 0.6) * (width - pad.l - pad.r)
   const ymin = -800, ymax = 0
@@ -646,8 +646,8 @@ export function BeneficioCurva({ t, width = 560, height = 230, elegido, antes })
   const sinModelo = xs[xs.length - 1].b
   return (
     <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Costo neto en dólares cada 1.000 cotizaciones, según el umbral de aviso. Menor costo hacia arriba. Resultados de la prueba final, con umbral 0,35 fijado previamente en validación.">
-      <text x={pad.l} y={16} className="curvas-axis-title" style={{ fontSize: 14 }}>Costo neto (USD cada 1.000 cotizaciones)</text>
-      <text x={width - pad.r} y={16} textAnchor="end" className="curvas-axis-hint" style={{ fontSize: 12 }}>Menor costo arriba</text>
+      <text x={pad.l} y={20} className="curvas-axis-title" style={{ fontSize: 18 }}>Costo neto (USD cada 1.000 cotizaciones)</text>
+      <text x={width - pad.r} y={20} textAnchor="end" className="curvas-axis-hint" style={{ fontSize: 16 }}>Menor costo arriba</text>
       {[0, 200, 400, 600, 800].map((costo) => (
         <g key={costo} className="axis">
           <line x1={pad.l} x2={width - pad.r} y1={y(-costo)} y2={y(-costo)} />
@@ -657,17 +657,17 @@ export function BeneficioCurva({ t, width = 560, height = 230, elegido, antes })
       <line x1={pad.l} x2={pad.l} y1={pad.t} y2={height - pad.b} stroke="var(--line-2)" />
       <line x1={pad.l} x2={width - pad.r} y1={height - pad.b} y2={height - pad.b} stroke="var(--line-2)" />
       <line x1={pad.l} x2={width - pad.r} y1={y(sinModelo)} y2={y(sinModelo)} stroke="var(--bad)" strokeDasharray="4 5" opacity=".6" />
-      <text x={x(0.22)} y={y(sinModelo) - 8} className="tick" style={{ fontSize: 12, fill: 'var(--bad)' }}>Sin avisos</text>
-      {[0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8].map((v) => <text key={v} x={x(v)} y={height - pad.b + 22} textAnchor="middle" className="tick">{fDec(v, 1)}</text>)}
-      <text x={(pad.l + width - pad.r) / 2} y={height - 4} textAnchor="middle" className="curvas-axis-title" style={{ fontSize: 14 }}>Umbral de aviso (puntaje de riesgo)</text>
+      <text x={x(0.22)} y={y(sinModelo) - 10} className="tick" style={{ fontSize: 16, fontWeight: 600, fill: 'var(--bad)' }}>Sin avisos</text>
+      {[0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8].map((v) => <text key={v} x={x(v)} y={height - pad.b + 26} textAnchor="middle" className="tick">{fDec(v, 1)}</text>)}
+      <text x={(pad.l + width - pad.r) / 2} y={height - 6} textAnchor="middle" className="curvas-axis-title" style={{ fontSize: 18 }}>Umbral de aviso (puntaje de riesgo)</text>
       <path d={`${path} L${x(0.8)},${y(ymin)} L${x(0.2)},${y(ymin)} Z`} fill="var(--accent-soft)" opacity={0.6} />
       <path className="draw" pathLength="1" d={path} fill="none" stroke="var(--accent)" strokeWidth={2.5} />
       {antes != null && <>
         <line x1={x(antes)} x2={x(antes)} y1={pad.t} y2={height - pad.b} stroke="var(--muted)" strokeDasharray="2 5" />
-        <text x={x(antes) + 6} y={pad.t - 10} className="val-muted" style={{ fontSize: 12 }}>antes: {fDec(antes, 2)}</text>
+        <text x={x(antes) + 8} y={pad.t - 12} className="val-muted" style={{ fontSize: 16, fontWeight: 600 }}>antes: {fDec(antes, 2)}</text>
       </>}
       <line x1={x(elegido)} x2={x(elegido)} y1={pad.t} y2={height - pad.b} stroke="var(--text-2)" strokeDasharray="3 4" />
-      <text x={x(elegido) - 6} y={pad.t - 10} textAnchor="end" className="val-muted" style={{ fontSize: 12, fill: 'var(--text)' }}>elegido: {fDec(elegido, 2)}</text>
+      <text x={x(elegido) - 8} y={pad.t - 12} textAnchor="end" className="val-muted" style={{ fontSize: 16, fontWeight: 600, fill: 'var(--text)' }}>elegido: {fDec(elegido, 2)}</text>
       <circle cx={x(cur.t)} cy={y(cur.b)} r={7} fill="var(--text)" stroke="var(--accent)" strokeWidth={3} />
     </svg>
   )
@@ -678,7 +678,7 @@ export function ForkLine({ width = 1424, height = 300 }) {
   const col = width / 4
   const xs = [0, 1, 2, 3].map((i) => i * col + 12)
   const sp = Math.min(88, height * 0.29), y0 = height / 2, yA = y0 - sp, yB = y0 + sp
-  const compact = height < 250, fs = compact ? 17 : 21, fv = compact ? 19 : 24, ot = compact ? 14 : 24, ob = compact ? 30 : 40
+  const compact = height < 250, fs = compact ? 20 : 24, fv = compact ? 22 : 26, ot = compact ? 16 : 24, ob = compact ? 34 : 42
   const fx = xs[1] - 110
   const end = width - 14
   const trunk = `M${xs[0]},${y0} L${fx},${y0}`
@@ -740,7 +740,7 @@ export function ForkLine({ width = 1424, height = 300 }) {
           ))}
         </g>
       ))}
-      <text x={xs[0] + 22} y={y0 - 22} className="lbl" style={{ fontSize: compact ? 17 : 20 }}>Solo el precio</text>
+      <text x={xs[0] + 22} y={y0 - 22} className="lbl" style={{ fontSize: compact ? 20 : 23 }}>Solo el precio</text>
       <g className="fade" style={{ '--d': 10 }}>
         <text x={xs[1] + 26} y={yA - ot} className="lbl-strong" style={{ fontSize: fs, fill: 'var(--precio)' }}>PRECIO · parte estructural · regresión</text>
         <text x={xs[1] + 26} y={yB + ob} className="lbl-strong" style={{ fontSize: fs, fill: 'var(--recargo)' }}>RECARGO · parte dinámica · clasificación</text>
@@ -765,7 +765,7 @@ export function SurgeCollapse({ width = 600 }) {
 export function ColumnBlocks({ blocks, width = 1300 }) {
   const total = blocks.reduce((a, b) => a + b[1], 0)
   const colors = ['var(--mid)', 'var(--eco)', 'var(--prem)', 'var(--neutral)']
-  const gap = 4, H = 88, TOP = 64
+  const gap = 4, H = 88, TOP = 68
   const cw = (width - (total - 1) * gap) / total
   // Llave sobre el último bloque (clima), el que domina el dataset
   const last = blocks[blocks.length - 1]
@@ -777,7 +777,7 @@ export function ColumnBlocks({ blocks, width = 1300 }) {
       <svg width={width} height={H + TOP} style={{ overflow: 'visible' }}>
         <g className="fade" style={{ '--d': 14 }}>
           <path d={`M${x0 + 2},${TOP - 24} v-8 H${x1 - 2} v8`} fill="none" stroke="var(--text-2)" strokeWidth={1.5} />
-          <text x={(x0 + x1) / 2} y={TOP - 42} textAnchor="middle" className="lbl-strong" style={{ fontSize: 19 }}>
+          <text x={(x0 + x1) / 2} y={TOP - 40} textAnchor="middle" className="lbl-strong" style={{ fontSize: 23 }}>
             {pct} % de las columnas son clima
           </text>
         </g>
@@ -794,8 +794,8 @@ export function ColumnBlocks({ blocks, width = 1300 }) {
         {blocks.map(([name, n], bi) => (
           <div key={name} className="fade" style={{ '--d': 10 + bi }}>
             <i className="sq" style={{ background: colors[bi], opacity: bi === 3 ? 0.55 : 0.92, width: 16, height: 16 }} />
-            <span className="num" style={{ fontSize: 32 }}>{n}</span>
-            <span className="t2" style={{ fontSize: 18 }}>{name}</span>
+            <span className="num" style={{ fontSize: 36 }}>{n}</span>
+            <span className="t2" style={{ fontSize: 22 }}>{name}</span>
           </div>
         ))}
       </div>
@@ -854,8 +854,8 @@ export function Donut({ ok = 4, total = 6, size = 260 }) {
       <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--bad)" strokeOpacity={0.35} strokeWidth={28} />
       <circle className="donut" pathLength="1" cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--good)" strokeWidth={28}
         transform={`rotate(-90 ${size / 2} ${size / 2})`} style={{ strokeDasharray: `${ok / total} 1`, '--off': ok / total }} />
-      <text x={size / 2} y={size / 2 - 6} textAnchor="middle" className="num" style={{ fontSize: 56, fill: 'var(--text)' }}>{ok}/{total}</text>
-      <text x={size / 2} y={size / 2 + 30} textAnchor="middle" className="lbl">confirmadas</text>
+      <text x={size / 2} y={size / 2 - 6} textAnchor="middle" className="num" style={{ fontSize: 62, fill: 'var(--text)' }}>{ok}/{total}</text>
+      <text x={size / 2} y={size / 2 + 34} textAnchor="middle" className="lbl">confirmadas</text>
     </svg>
   )
 }
@@ -1063,7 +1063,7 @@ export function LimpiezaFlow({ width = 790 }) {
           <div className="t2 lf-cap">cotizaciones limpias · <b style={{ color: 'var(--text)' }}>el {fDec((limpio / crudo) * 100, 1)} %</b></div>
         </div>
       </div>
-      <svg width={W} height={196} style={{ overflow: 'visible', marginTop: 30 }}>
+      <svg width={W} height={208} style={{ overflow: 'visible', marginTop: 30 }}>
         <defs>
           <linearGradient id="lf-shine" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="160" y2="0">
             <stop offset="0" stopColor="#fff" stopOpacity="0" /><stop offset=".5" stopColor="#fff" stopOpacity=".45" /><stop offset="1" stopColor="#fff" stopOpacity="0" />
@@ -1082,11 +1082,11 @@ export function LimpiezaFlow({ width = 790 }) {
         {/* llaves */}
         <g className="fade" style={{ '--d': 22 }}>
           <path d={`M2,${barY - 10} v-8 H${xk - 2} v8`} fill="none" stroke="var(--accent)" strokeWidth={1.5} />
-          <text x={xk / 2} y={barY - 26} textAnchor="middle" className="lbl-strong" style={{ fontSize: 16, fill: 'var(--accent)' }}>se conserva el {fDec((limpio / crudo) * 100, 1)} %</text>
+          <text x={xk / 2} y={barY - 26} textAnchor="middle" className="lbl-strong" style={{ fontSize: 20, fill: 'var(--accent)' }}>se conserva el {fDec((limpio / crudo) * 100, 1)} %</text>
         </g>
         <g className="fade" style={{ '--d': 26 }}>
           <path d={`M${xk + 2},${barY + barH + 66} v8 H${W - 2} v-8`} fill="none" stroke="var(--bad)" strokeWidth={1.5} />
-          <text x={W} y={barY + barH + 98} textAnchor="end" className="lbl-strong" style={{ fontSize: 16, fill: 'var(--bad)' }}>se eliminan {fInt(totalQuitado)} · {fDec((totalQuitado / crudo) * 100, 1)} %</text>
+          <text x={W} y={barY + barH + 98} textAnchor="end" className="lbl-strong" style={{ fontSize: 20, fill: 'var(--bad)' }}>se eliminan {fInt(totalQuitado)} · {fDec((totalQuitado / crudo) * 100, 1)} %</text>
         </g>
       </svg>
       <div className="label" style={{ marginTop: 6 }}>Qué borramos</div>
@@ -1112,18 +1112,18 @@ const COL_GRUPOS = [
   { n: 2, t: 'copias exactas', c: 'var(--neutral)' },
 ]
 export function ColumnasFlow({ width = 1360 }) {
-  const numW = 120, unit = (width - numW) / 57, bw = unit - 4, bh = 64
-  const y1 = 34, y2 = 262
+  const numW = 120, unit = (width - numW) / 57, bw = unit - 4, bh = 54
+  const y1 = 38, y2 = 258
   let k = 0
   const grupos = COL_GRUPOS.map((g) => { const s = k; k += g.n; return { ...g, s } })
   const cx = (g) => (g.s + g.n / 2) * unit - 2
   const lblY = y1 + bh + 26
   const quitados = grupos.filter((g) => !g.keep)
   return (
-    <svg width={width} height={y2 + bh + 70} style={{ overflow: 'visible' }}>
+    <svg width={width} height={y2 + bh + 54} style={{ overflow: 'visible' }}>
       {/* fila Antes */}
-      <text x={0} y={y1 - 14} className="label fade" style={{ '--d': 1, fontSize: 14, fill: 'var(--muted)', letterSpacing: '.1em' }}>ANTES · DATASET CRUDO</text>
-      <text x={width} y={y1 + bh / 2} dy=".35em" textAnchor="end" className="num fade" style={{ '--d': 6, fontSize: 46, fill: 'var(--text-2)' }}>57</text>
+      <text x={0} y={y1 - 14} className="label fade" style={{ '--d': 1, fontSize: 17, fill: 'var(--muted)', letterSpacing: '.1em' }}>ANTES · DATASET CRUDO</text>
+      <text x={width} y={y1 + bh / 2} dy=".35em" textAnchor="end" className="num fade" style={{ '--d': 6, fontSize: 52, fill: 'var(--text-2)' }}>57</text>
       {grupos.flatMap((g) => Array.from({ length: g.n }, (_, j) => {
         const i = g.s + j
         return (
@@ -1135,15 +1135,15 @@ export function ColumnasFlow({ width = 1360 }) {
       {/* motivos de lo eliminado */}
       <g className="fade" style={{ '--d': 24 }}>
         <path d={`M${16 * unit},${y1 + bh + 8} v6 H${57 * unit - 4} v-6`} fill="none" stroke="var(--bad)" strokeWidth={1.5} />
-        <text x={(16 * unit + 57 * unit) / 2} y={y1 + bh + 34} textAnchor="middle" className="lbl-strong" style={{ fontSize: 17, fill: 'var(--bad)' }}>41 eliminadas</text>
+        <text x={(16 * unit + 57 * unit) / 2} y={y1 + bh + 34} textAnchor="middle" className="lbl-strong" style={{ fontSize: 21, fill: 'var(--bad)' }}>41 eliminadas</text>
         {quitados.map((g, i) => {
           const lvl = i < 2 ? 0 : i - 1
-          const ty = lblY + 34 + lvl * 22
+          const ty = lblY + 34 + lvl * 25
           const small = g.n <= 2
           return (
             <g key={g.t}>
               {small && <line x1={cx(g)} x2={cx(g)} y1={y1 + bh + 14} y2={ty - 14} stroke="var(--line-2)" />}
-              <text x={small ? cx(g) + 6 : cx(g)} y={ty} textAnchor={small ? 'end' : 'middle'} className="lbl" style={{ fontSize: 15 }} dx={small ? -10 : 0}>
+              <text x={small ? cx(g) + 6 : cx(g)} y={ty} textAnchor={small ? 'end' : 'middle'} className="lbl" style={{ fontSize: 18 }} dx={small ? -10 : 0}>
                 <tspan className="num" style={{ fontWeight: 600, fill: 'var(--text)' }}>{g.n}</tspan> {g.t}
               </text>
             </g>
@@ -1156,8 +1156,8 @@ export function ColumnasFlow({ width = 1360 }) {
         <path d={`M${8 * unit - 7},${y2 - 40} l7,10 l7,-10`} stroke="var(--precio)" strokeWidth={2} fill="none" />
       </g>
       {/* fila Después */}
-      <text x={0} y={y2 - 14} className="label fade" style={{ '--d': 30, fontSize: 14, fill: 'var(--accent)', letterSpacing: '.1em' }}>DESPUÉS · DATASET LIMPIO</text>
-      <text x={width} y={y2 + bh / 2} dy=".35em" textAnchor="end" className="num cf-in" style={{ animationDelay: '3.4s', fontSize: 46, fill: 'var(--accent)' }}>27</text>
+      <text x={0} y={y2 - 14} className="label fade" style={{ '--d': 30, fontSize: 17, fill: 'var(--accent)', letterSpacing: '.1em' }}>DESPUÉS · DATASET LIMPIO</text>
+      <text x={width} y={y2 + bh / 2} dy=".35em" textAnchor="end" className="num cf-in" style={{ animationDelay: '3.4s', fontSize: 52, fill: 'var(--accent)' }}>27</text>
       {Array.from({ length: 16 }, (_, i) => (
         <rect key={`k${i}`} className="cf-move" style={{ '--dy': `${y1 - y2}px`, animationDelay: `${3 + i * 0.03}s` }} x={i * unit} y={y2} width={bw} height={bh} rx={3} fill="var(--precio)" />
       ))}
@@ -1167,8 +1167,8 @@ export function ColumnasFlow({ width = 1360 }) {
         </g>
       ))}
       <g className="cf-in" style={{ animationDelay: '4.6s' }}>
-        <text x={8 * unit} y={y2 + bh + 30} textAnchor="middle" className="lbl" style={{ fontSize: 15 }}><tspan className="num" style={{ fontWeight: 600, fill: 'var(--precio)' }}>16</tspan> conservadas</text>
-        <text x={(16 + 5.5) * unit} y={y2 + bh + 30} textAnchor="middle" className="lbl" style={{ fontSize: 15 }}><tspan className="num" style={{ fontWeight: 600, fill: 'var(--accent)' }}>11</tspan> nuevas</text>
+        <text x={8 * unit} y={y2 + bh + 32} textAnchor="middle" className="lbl" style={{ fontSize: 19 }}><tspan className="num" style={{ fontWeight: 600, fill: 'var(--precio)' }}>16</tspan> conservadas</text>
+        <text x={(16 + 5.5) * unit} y={y2 + bh + 32} textAnchor="middle" className="lbl" style={{ fontSize: 19 }}><tspan className="num" style={{ fontWeight: 600, fill: 'var(--accent)' }}>11</tspan> nuevas</text>
       </g>
     </svg>
   )
@@ -1176,10 +1176,10 @@ export function ColumnasFlow({ width = 1360 }) {
 
 /* ───────────────── Precio: el mismo error de USD 2 pesa distinto ───────────────── */
 export function ErrorRelativo({ width = 620 }) {
-  const unit = (width - 150) / 42, bh = 38, err = 2
-  const viajes = [{ p: 10, y: 30 }, { p: 40, y: 118 }]
+  const unit = (width - 190) / 42, bh = 38, err = 2
+  const viajes = [{ p: 10, y: 34 }, { p: 40, y: 128 }]
   return (
-    <svg width={width} height={190} style={{ overflow: 'visible' }}>
+    <svg width={width} height={212} style={{ overflow: 'visible' }}>
       <defs>
         <pattern id="err-stripes" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
           <rect width="10" height="10" fill="var(--bad)" /><rect width="4" height="10" fill="#fff" opacity=".3" />
@@ -1191,21 +1191,21 @@ export function ErrorRelativo({ width = 620 }) {
         const pct = Math.round((err / v.p) * 100)
         return (
           <g key={v.p}>
-            <text x={0} y={v.y - 10} className="lbl" style={{ fontSize: 15 }}>Viaje de <tspan style={{ fontWeight: 700, fill: 'var(--text)' }}>USD {v.p}</tspan></text>
+            <text x={0} y={v.y - 10} className="lbl" style={{ fontSize: 19 }}>Viaje de <tspan style={{ fontWeight: 700, fill: 'var(--text)' }}>USD {v.p}</tspan></text>
             <rect className="growx" style={{ '--d': 2 + i * 4 }} x={0} y={v.y} width={w} height={bh} rx={5} fill="color-mix(in srgb, var(--precio) 30%, var(--card))" />
             <g className="err-in" style={{ animationDelay: `${1.3 + i * 0.5}s` }}>
               <rect className="err-chunk" x={w - err * unit} y={v.y - 4} width={err * unit} height={bh + 8} rx={4} fill="url(#err-stripes)" />
             </g>
             <g className="fade" style={{ '--d': 20 + i * 6 }}>
-              <text x={w + 16} y={v.y + bh / 2} dy=".35em" className="num" style={{ fontSize: 34, fontWeight: 600, fill: 'var(--bad)' }}>{pct} %</text>
-              <text x={w + 16 + (pct > 9 ? 92 : 70)} y={v.y + bh / 2} dy=".35em" className="lbl" style={{ fontSize: 14 }}>del precio</text>
+              <text x={w + 16} y={v.y + bh / 2} dy=".35em" className="num" style={{ fontSize: 38, fontWeight: 600, fill: 'var(--bad)' }}>{pct} %</text>
+              <text x={w + 16 + (pct > 9 ? 102 : 76)} y={v.y + bh / 2} dy=".35em" className="lbl" style={{ fontSize: 18 }}>del precio</text>
             </g>
           </g>
         )
       })}
       <g className="fade" style={{ '--d': 16 }}>
-        <rect x={0} y={172} width={14} height={14} rx={2} fill="url(#err-stripes)" />
-        <text x={22} y={184} className="lbl" style={{ fontSize: 14 }}>el mismo error de <tspan style={{ fontWeight: 700, fill: 'var(--bad)' }}>USD 2</tspan> en los dos viajes</text>
+        <rect x={0} y={184} width={14} height={14} rx={2} fill="url(#err-stripes)" />
+        <text x={22} y={197} className="lbl" style={{ fontSize: 18 }}>el mismo error de <tspan style={{ fontWeight: 700, fill: 'var(--bad)' }}>USD 2</tspan> en los dos viajes</text>
       </g>
     </svg>
   )
@@ -1253,7 +1253,7 @@ export function Gauge({ value, label, color = 'var(--precio)', size = 150, d = 0
         <circle cx={c} cy={c} r={r} fill="none" stroke="color-mix(in srgb, var(--text-2) 14%, transparent)" strokeWidth={14} />
         {v > 0 && <circle className="gauge-arc" style={{ '--v': v, '--d': d }} cx={c} cy={c} r={r} fill="none" stroke={color} strokeWidth={14} strokeLinecap="round" pathLength="100" strokeDasharray={`${v} 100`} transform={`rotate(-90 ${c} ${c})`} />}
         {v > 2 && <circle className="gauge-glint anim-loop" style={{ '--v': v, animationDelay: `${2 + d * 0.15}s` }} cx={c} cy={c} r={r} fill="none" stroke="#fff" strokeOpacity=".7" strokeWidth={6} strokeLinecap="round" pathLength="100" strokeDasharray="1.5 98.5" transform={`rotate(-90 ${c} ${c})`} />}
-        <text x={c} y={c} dy=".35em" textAnchor="middle" className="num" style={{ fontSize: size * 0.16, fontWeight: 600, fill: muted ? 'var(--muted)' : color }}>{fDec(value, value % 1 ? 1 : 0)}%</text>
+        <text x={c} y={c} dy=".35em" textAnchor="middle" className="num" style={{ fontSize: size * 0.185, fontWeight: 600, fill: muted ? 'var(--muted)' : color }}>{fDec(value, value % 1 ? 1 : 0)}%</text>
       </svg>
       <div className="gauge-lbl" style={muted ? { color: 'var(--muted)' } : null}>{label}</div>
     </div>
@@ -1291,7 +1291,7 @@ export function LluviaVsSeco({ lluvia, seco }) {
 
 /* ───────────────── Recargo por hora del día (casi plano) ───────────────── */
 export function HoraLinea({ width = 860, height = 420, simple = false }) {
-  const pad = { l: 46, r: 20, t: 26, b: 40 }, maxY = 12
+  const pad = { l: 60, r: 24, t: 30, b: 46 }, maxY = 12
   const x = (h) => pad.l + (h / 23) * (width - pad.l - pad.r)
   const y = (v) => pad.t + (1 - v / maxY) * (height - pad.t - pad.b)
   const d = RECARGO_HORA.map((v, h) => `${h ? 'L' : 'M'}${x(h)},${y(v)}`).join(' ')
@@ -1305,13 +1305,13 @@ export function HoraLinea({ width = 860, height = 420, simple = false }) {
       {[0, 3, 6, 9, 12, 15, 18, 21].map((h) => <text key={h} x={x(h)} y={height - 12} textAnchor="middle" className="tick">{h} h</text>)}
       <rect className="fade" style={{ '--d': 10 }} x={pad.l} y={y(hi)} width={width - pad.l - pad.r} height={y(lo) - y(hi)} fill="var(--accent-soft)" />
       {simple
-        ? <text className="fade" style={{ '--d': 12, fontSize: 22, fill: 'var(--recargo)' }} x={(width + pad.l) / 2} y={y(hi) - 18} textAnchor="middle" fontWeight="600">Casi una línea plana: la hora no cambia el recargo</text>
-        : <text className="fade" style={{ '--d': 12, fontSize: 15, fill: 'var(--recargo)' }} x={width - pad.r - 6} y={y(hi) - 8} textAnchor="end" fontWeight="600">todo el día se mueve entre {fDec(lo, 1)} % y {fDec(hi, 1)} %</text>}
+        ? <text className="fade" style={{ '--d': 12, fontSize: 26, fill: 'var(--recargo)' }} x={(width + pad.l) / 2} y={y(hi) - 18} textAnchor="middle" fontWeight="600">Casi una línea plana: la hora no cambia el recargo</text>
+        : <text className="fade" style={{ '--d': 12, fontSize: 18, fill: 'var(--recargo)' }} x={width - pad.r - 6} y={y(hi) - 8} textAnchor="end" fontWeight="600">todo el día se mueve entre {fDec(lo, 1)} % y {fDec(hi, 1)} %</text>}
       <path className="draw" pathLength="1" d={d} fill="none" stroke="var(--recargo)" strokeWidth={3.5} strokeLinejoin="round" />
       {RECARGO_HORA.map((v, h) => <circle key={h} className="pop" style={{ '--d': 6 + h * 0.4 }} cx={x(h)} cy={y(v)} r={h === hMax || h === hMin ? 7 : 4} fill="var(--recargo)" stroke="var(--card)" strokeWidth={2} />)}
       <g className="fade" style={{ '--d': 16, display: simple ? 'none' : undefined }}>
-        <text x={x(hMax)} y={y(hi) - 16} textAnchor="middle" className="lbl-strong" style={{ fontSize: 15 }}>máx. {fDec(hi, 1)} % · 8 h</text>
-        <text x={x(hMin)} y={y(lo) + 26} textAnchor="middle" className="lbl-strong" style={{ fontSize: 15 }}>mín. {fDec(lo, 1)} % · 11 h</text>
+        <text x={x(hMax)} y={y(hi) - 16} textAnchor="middle" className="lbl-strong" style={{ fontSize: 18 }}>máx. {fDec(hi, 1)} % · 8 h</text>
+        <text x={x(hMin)} y={y(lo) + 26} textAnchor="middle" className="lbl-strong" style={{ fontSize: 18 }}>mín. {fDec(lo, 1)} % · 11 h</text>
       </g>
       <g className="anim-loop">
         <circle r={16} fill="var(--recargo)" opacity=".22"><animateMotion dur="8s" begin="2s" repeatCount="indefinite" path={d} /></circle>
@@ -1423,7 +1423,7 @@ export function MatrizFN({ width = 1100 }) {
     { id: 'vp', sig: 'VP', t: 'Avisado', v: m.tp, p: m.tp / conR, rgb: '12,138,44' },
   ]
   const pick = (v) => { setAuto(false); setK(v) }
-  const cw = (width - 230) / 2
+  const cw = (width - 255) / 2
   return (
     <div className="mx" style={{ width }}>
       <div className="mx-top">
@@ -1432,7 +1432,7 @@ export function MatrizFN({ width = 1100 }) {
           <button className={k === 'despues' ? 'on' : ''} onClick={() => pick('despues')}>Después · umbral {fDec(MATRIZ_FN.despues.umbral, 2)}</button>
         </div>
       </div>
-      <div className="mx-grid" style={{ gridTemplateColumns: `70px 160px ${cw}px ${cw}px` }}>
+      <div className="mx-grid" style={{ gridTemplateColumns: `70px 185px ${cw}px ${cw}px` }}>
         <span /><span />
         <span className="mx-axis-top" style={{ gridColumn: '3 / 5' }}>Predicho</span>
         <span /><span />
@@ -1664,8 +1664,8 @@ export function PrecioLog({ width = 600, height = 250 }) {
         <line x1={0} x2={width} y1={height - padB} y2={height - padB} stroke="var(--line-2)" />
         {ticks.map((t) => <text key={k + t.t} x={t.x} y={height - 10} textAnchor="middle" className="tick">USD {t.t}</text>)}
         {k === 'usd'
-          ? <text className="fade" key="a1" x={(14 / B) * width + 6} y={height - padB - 60} className="lbl-strong" style={{ fontSize: 14, fill: 'var(--bad)' }}>cola larga: pocos viajes muy caros (hasta USD 97,5)</text>
-          : <text className="fade" key="a2" x={width} y={-4} textAnchor="end" className="lbl-strong" style={{ fontSize: 14, fill: 'var(--precio)' }}>con logaritmo queda casi simétrica</text>}
+          ? <text key="a1" x={(14 / B) * width + 6} y={height - padB - 60} className="fade lbl-strong" style={{ fontSize: 16, fill: 'var(--bad)' }}>cola larga: pocos viajes muy caros (hasta USD 97,5)</text>
+          : <text key="a2" x={width} y={-4} textAnchor="end" className="fade lbl-strong" style={{ fontSize: 16, fill: 'var(--precio)' }}>con logaritmo queda casi simétrica</text>}
       </svg>
     </div>
   )
@@ -1709,44 +1709,44 @@ export function PrecioHistDuo({ width = 720, height = 120 }) {
 
 /* ───────────────── Recargo: los multiplicadores confluyen en “sí” / “no” ───────────────── */
 export function MultiplicadorFlujo({ width = 720 }) {
-  const rowH = 38, chipW = 250, boxX = width - 210, boxW = 210
-  const rows = MULTIPLICADORES.map((r, i) => ({ ...r, y: 20 + i * rowH }))
-  const noY = 20 + 6 * rowH + 44
+  const rowH = 38, chipW = 278, boxW = 224, boxX = width - boxW
+  const rows = MULTIPLICADORES.map((r, i) => ({ ...r, y: 32 + i * rowH }))
+  const noY = 32 + 6 * rowH + 44
   const H = noY + 50
-  const siTop = 10, siH = 6 * rowH - 4, siMid = siTop + siH / 2
+  const siTop = 22, siH = 6 * rowH - 4, siMid = siTop + siH / 2
   const maxN = MULTIPLICADORES[0].n
   const total = MULTIPLICADORES.reduce((a, r) => a + r.n, 0)
   const flow = (y, ty) => `M${chipW + 6},${y} C${chipW + 110},${y} ${boxX - 110},${ty} ${boxX - 4},${ty}`
   return (
     <svg width={width} height={H} style={{ overflow: 'visible' }}>
-      <text x={0} y={2} className="label" style={{ fontSize: 12, fill: 'var(--muted)', letterSpacing: '.08em' }}>CON AUMENTO</text>
+      <text x={0} y={14} className="label" style={{ fontSize: 15, fill: 'var(--muted)', letterSpacing: '.08em' }}>CON AUMENTO</text>
       {rows.map((r, i) => (
         <g key={r.m} className="fade" style={{ '--d': 2 + i }}>
           <rect x={0} y={r.y - 14} width={chipW} height={28} rx={8} fill="var(--card)" stroke="var(--line)" />
-          <rect className="growx" style={{ '--d': 3 + i }} x={96} y={r.y - 6} width={Math.max(2, (r.n / maxN) * 80)} height={12} rx={3} fill="var(--recargo)" opacity={0.85} />
-          <text x={12} y={r.y} dy=".35em" fontFamily="var(--mono)" fontSize={17} fontWeight={700} fill="var(--recargo)">{r.m}</text>
-          <text x={chipW - 12} y={r.y} dy=".35em" textAnchor="end" fontFamily="var(--mono)" fontSize={14} fill="var(--text-2)">{fInt(r.n)}</text>
+          <rect className="growx" style={{ '--d': 3 + i }} x={102} y={r.y - 6} width={Math.max(2, (r.n / maxN) * 74)} height={12} rx={3} fill="var(--recargo)" opacity={0.85} />
+          <text x={12} y={r.y} dy=".35em" fontFamily="var(--mono)" fontSize={19} fontWeight={700} fill="var(--recargo)">{r.m}</text>
+          <text x={chipW - 12} y={r.y} dy=".35em" textAnchor="end" fontFamily="var(--mono)" fontSize={16} fill="var(--text-2)">{fInt(r.n)}</text>
           <path className="sino-flow anim-loop" style={{ animationDelay: `${i * 0.12}s` }} d={flow(r.y, siMid - 50 + i * 20)} fill="none" stroke="var(--recargo)" strokeWidth={2} strokeDasharray="3 7" />
         </g>
       ))}
-      <text x={0} y={noY - 26} className="label" style={{ fontSize: 12, fill: 'var(--muted)', letterSpacing: '.08em' }}>SIN AUMENTO</text>
+      <text x={0} y={noY - 26} className="label" style={{ fontSize: 15, fill: 'var(--muted)', letterSpacing: '.08em' }}>SIN AUMENTO</text>
       <g className="fade" style={{ '--d': 9 }}>
         <rect x={0} y={noY - 16} width={chipW} height={32} rx={8} fill="var(--card)" stroke="var(--line)" />
-        <text x={12} y={noY} dy=".35em" fontFamily="var(--mono)" fontSize={17} fontWeight={700} fill="var(--text-2)">×1,0</text>
-        <text x={chipW - 12} y={noY} dy=".35em" textAnchor="end" fontFamily="var(--mono)" fontSize={14} fill="var(--text-2)">{fInt(MULT_SIN)}</text>
+        <text x={12} y={noY} dy=".35em" fontFamily="var(--mono)" fontSize={19} fontWeight={700} fill="var(--text-2)">×1,0</text>
+        <text x={chipW - 12} y={noY} dy=".35em" textAnchor="end" fontFamily="var(--mono)" fontSize={16} fill="var(--text-2)">{fInt(MULT_SIN)}</text>
         <path className="sino-flow anim-loop" d={`M${chipW + 6},${noY} L${boxX - 4},${noY}`} fill="none" stroke="var(--neutral)" strokeWidth={2} strokeDasharray="3 7" />
       </g>
       <g className="pop" style={{ '--d': 12 }}>
         <rect className="sino-yes" x={boxX} y={siTop} width={boxW} height={siH} rx={16} fill="var(--recargo)" />
-        <text x={boxX + boxW / 2} y={siMid - 26} textAnchor="middle" style={{ fontFamily: 'var(--serif)', fontSize: 56, fill: '#fff' }}>Sí</text>
-        <text x={boxX + boxW / 2} y={siMid + 18} textAnchor="middle" fill="#fff" fontFamily="var(--mono)" fontSize={20} fontWeight={700}>{fInt(total)}</text>
-        <text x={boxX + boxW / 2} y={siMid + 44} textAnchor="middle" fill="#fff" fontFamily="var(--mono)" fontSize={16} opacity=".9">{fDec((total / MULT_TOTAL) * 100, 1)} %</text>
+        <text x={boxX + boxW / 2} y={siMid - 28} textAnchor="middle" style={{ fontFamily: 'var(--serif)', fontSize: 56, fill: '#fff' }}>Sí</text>
+        <text x={boxX + boxW / 2} y={siMid + 18} textAnchor="middle" fill="#fff" fontFamily="var(--mono)" fontSize={22} fontWeight={700}>{fInt(total)}</text>
+        <text x={boxX + boxW / 2} y={siMid + 46} textAnchor="middle" fill="#fff" fontFamily="var(--mono)" fontSize={19} opacity=".9">{fDec((total / MULT_TOTAL) * 100, 1)} %</text>
       </g>
       <g className="pop" style={{ '--d': 14 }}>
         <rect x={boxX} y={noY - 26} width={boxW} height={52} rx={14} fill="color-mix(in srgb, var(--text-2) 20%, var(--card))" />
-        <text x={boxX + 16} y={noY} dy=".35em" style={{ fontFamily: 'var(--serif)', fontSize: 30, fill: 'var(--text)' }}>No</text>
-        <text x={boxX + boxW - 14} y={noY - 8} dy=".35em" textAnchor="end" fontFamily="var(--mono)" fontSize={15} fontWeight={700} fill="var(--text)">{fInt(MULT_SIN)}</text>
-        <text x={boxX + boxW - 14} y={noY + 11} dy=".35em" textAnchor="end" fontFamily="var(--mono)" fontSize={13} fill="var(--text-2)">{fDec((MULT_SIN / MULT_TOTAL) * 100, 1)} %</text>
+        <text x={boxX + 16} y={noY} dy=".35em" style={{ fontFamily: 'var(--serif)', fontSize: 34, fill: 'var(--text)' }}>No</text>
+        <text x={boxX + boxW - 14} y={noY - 9} dy=".35em" textAnchor="end" fontFamily="var(--mono)" fontSize={17} fontWeight={700} fill="var(--text)">{fInt(MULT_SIN)}</text>
+        <text x={boxX + boxW - 14} y={noY + 12} dy=".35em" textAnchor="end" fontFamily="var(--mono)" fontSize={16} fill="var(--text-2)">{fDec((MULT_SIN / MULT_TOTAL) * 100, 1)} %</text>
       </g>
     </svg>
   )
@@ -1802,10 +1802,10 @@ const BAL_INFO = [
   { ok: true, txt: 'datos reales; cada recargo cuenta ×11 al equivocarse' },
 ]
 export function BalanceoGrande({ width = 1360 }) {
-  const nameW = 280, gap = 24
+  const nameW = 315, gap = 24
   const barW = width - nameW - gap - 40 // 40 = relleno lateral de cada fila
   const max = 361022
-  const x = (v) => (v / max) * (barW - 150)
+  const x = (v) => (v / max) * (barW - 190)
   return (
     <div className="bg" style={{ width }}>
       <div className="bg-head" style={{ gridTemplateColumns: `${nameW}px ${barW}px`, columnGap: gap }}>

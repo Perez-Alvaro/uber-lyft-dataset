@@ -23,7 +23,7 @@ const E = (n) => ENTREGAS[n]
 const B = ({ children, c }) => <b style={{ color: c || 'var(--text)', fontWeight: 600 }}>{children}</b>
 const Big = ({ children, c, size = 80, d = 4 }) => <div className="num rv" style={{ '--d': d, fontSize: size, lineHeight: 1, color: c }}>{children}</div>
 const Side = ({ children, gap = 30 }) => <div style={{ display: 'flex', flexDirection: 'column', gap, justifyContent: 'center' }}>{children}</div>
-const Say = ({ children, d = 5, size = 23, style }) => <p className="say rv" style={{ '--d': d, fontSize: size, ...style }}>{children}</p>
+const Say = ({ children, d = 5, size = 26, style }) => <p className="say rv" style={{ '--d': d, fontSize: size, ...style }}>{children}</p>
 
 /* ═════════════ Portada ═════════════ */
 // Desplazamiento de etiquetas que se pisan entre sí: [dx, dy, anchor]
@@ -54,7 +54,7 @@ function MapaRutas({ scale = 1.05, w = 720, h = 560, fit = false }) {
         <g key={p.zona} className="pop" style={{ '--d': i }}>
           <circle cx={p.x} cy={p.y} r={12 + p.tasa * 160} fill="url(#glow)" />
           <circle cx={p.x} cy={p.y} r={5} fill="var(--accent)" />
-          <text x={p.x + (LBL[p.zona]?.[0] ?? 10)} y={p.y + (LBL[p.zona]?.[1] ?? -10)} textAnchor={LBL[p.zona]?.[2] || 'start'} className="val-muted" style={{ fontSize: 13, fontFamily: 'var(--sans)' }}>{p.zona}</text>
+          <text x={p.x + (LBL[p.zona]?.[0] ?? 10)} y={p.y + (LBL[p.zona]?.[1] ?? -10)} textAnchor={LBL[p.zona]?.[2] || 'start'} className="val-muted" style={{ fontSize: 15, fontFamily: 'var(--sans)' }}>{p.zona}</text>
         </g>
       ))}
       <style>{`@keyframes flow { to { stroke-dashoffset: -140; } }`}</style>
@@ -119,7 +119,7 @@ function Dominio() {
         <div className="dominio-stat rv" style={{ '--d': 2 }}>
           <div className="label">Cotizaciones</div>
           <div className="num dominio-cifra"><Num value={DATASET.crudo} /></div>
-          <div className="dominio-caption">de <Brand name="Uber" size={21} d={5} /> y <Brand name="Lyft" size={21} d={6} /></div>
+          <div className="dominio-caption">de <Brand name="Uber" size={25} d={5} /> y <Brand name="Lyft" size={25} d={6} /></div>
         </div>
         <div className="dominio-stat rv" style={{ '--d': 3 }}>
           <div className="label">Variables</div>
@@ -270,7 +270,7 @@ function ClimaHoraRecargo() {
         <HoraLinea width={1340} height={430} simple />
       </div>
       <div className="rv" style={{ '--d': 8, display: 'flex', justifyContent: 'center', marginTop: 22 }}>
-        <HipVeredicto k="H1" ok={false} d={8} style={{ zoom: 1.3 }} />
+        <HipVeredicto k="H1" ok={false} d={8} style={{ zoom: 1.15 }} />
       </div>
     </div>
   )
@@ -301,7 +301,7 @@ function UberEsconde() {
   const rows = [['Uber', PLATAFORMAS.uber, 'var(--uber)'], ['Lyft', PLATAFORMAS.lyft, 'var(--lyft)']]
   return (
     <div className="slide">
-      <Head ent={E(2)} eje="Recargo · Uber vs Lyft" track="recargo" title={<><Brand name="Uber" size={60} d={1} /> <em>esconde</em> su recargo. <Brand name="Lyft" size={60} d={3} /> lo muestra.</>} />
+      <Head ent={E(2)} eje="Recargo · Uber vs Lyft" track="recargo" title={<><Brand name="Uber" size={66} d={1} /> <em>esconde</em> su recargo. <Brand name="Lyft" size={66} d={3} /> lo muestra.</>} />
       <div className="grid" style={{ gridTemplateColumns: '650px 1fr', gap: 48, alignItems: 'center' }}>
         <div style={{ display: 'flex', gap: 26, zoom: 1.27 }}>
           <Phone d={2}>
@@ -328,16 +328,16 @@ function UberEsconde() {
           <div className="card rv" style={{ '--d': 6, padding: '26px 30px' }}>
             <h3>Cotizaciones con multiplicador de recargo visible</h3>
             {rows.map(([n, p, c], i) => (
-              <div key={n} style={{ display: 'grid', gridTemplateColumns: '84px 1fr 210px', alignItems: 'center', gap: 18, marginTop: 22 }}>
-                <Brand name={n} size={28} d={7 + i * 2} />
+              <div key={n} style={{ display: 'grid', gridTemplateColumns: '96px 1fr 252px', alignItems: 'center', gap: 18, marginTop: 22 }}>
+                <Brand name={n} size={30} d={7 + i * 2} />
                 <div style={{ height: 34, background: 'var(--card-2)', borderRadius: 8, overflow: 'hidden' }}>
                   <div className="growx" style={{ '--d': 6 + i * 6, width: `${(p.conRecargo / p.cotizaciones / 0.075) * 100}%`, height: '100%', background: c, borderRadius: 8 }} />
                 </div>
-                <span className="num" style={{ fontSize: 19 }}>{fInt(p.conRecargo)} de {fInt(p.cotizaciones)}</span>
+                <span className="num" style={{ fontSize: 22 }}>{fInt(p.conRecargo)} de {fInt(p.cotizaciones)}</span>
               </div>
             ))}
           </div>
-          <Say d={12} size={22}><B c="var(--recargo)">→</B> El recargo se estudia solo con <Brand name="Lyft" size={22} />.</Say>
+          <Say d={12} size={26}><B c="var(--recargo)">→</B> El recargo se estudia solo con <Brand name="Lyft" size={26} />.</Say>
         </div>
       </div>
     </div>
@@ -504,7 +504,7 @@ function HoraUTC() {
     <div className="slide">
       <Head ent={E(2)} eje="Limpieza · horario" title={<>Corregimos el <em>huso horario</em></>} />
       <div className="card rv" style={{ '--d': 2, padding: '36px 32px', flex: 'none' }}><HusoHorario width={1356} /></div>
-      <Say d={8} size={28} style={{ marginTop: 36 }}>Pasamos de <B>UTC</B> a hora de Boston (<B>UTC − 5</B>): el pico de las <B c="var(--accent)">8</B> aparecía a las <B c="var(--bad)">13</B>.</Say>
+      <Say d={8} size={31} style={{ marginTop: 36 }}>Pasamos de <B>UTC</B> a hora de Boston (<B>UTC − 5</B>): el pico de las <B c="var(--accent)">8</B> aparecía a las <B c="var(--bad)">13</B>.</Say>
     </div>
   )
 }
@@ -520,12 +520,12 @@ function TratamientoPrecio() {
           <section>
             <p className="trat-step"><span className="num">1</span><span>Los precios están <B>sesgados</B></span></p>
             <p className="tratamiento-explica">El logaritmo deja una distribución casi simétrica.</p>
-            <PrecioHistDuo width={800} height={230} />
+            <PrecioHistDuo width={790} height={225} />
           </section>
           <section className="tratamiento-error">
             <p className="trat-step"><span className="num">2</span><span>El error se mide <B>en proporción al precio</B></span></p>
             <p className="tratamiento-explica">Un error de USD 2 pesa distinto según el viaje.</p>
-            <div className="tratamiento-error-grafico"><ErrorRelativo width={480} /></div>
+            <div className="tratamiento-error-grafico"><ErrorRelativo width={510} /></div>
           </section>
         </div>
       </div>
@@ -559,7 +559,7 @@ function HallazgoFormula() {
         <div className="card rv" style={{ '--d': 2 }}>
           <h3>Qué parte de la variación del precio explica cada variable</h3>
           <p className="sub">Cada una por sí sola, sobre las {fInt(DATASET.limpio)} cotizaciones</p>
-          <HBar rows={rows} width={820} rowH={54} labelW={270} barH={26} max={100} tip={(r) => <><b>{r.label}</b><br />explica el {r.text} de la variación del precio</>} />
+          <HBar rows={rows} width={820} rowH={56} labelW={290} valueW={96} barH={26} max={100} tip={(r) => <><b>{r.label}</b><br />explica el {r.text} de la variación del precio</>} />
         </div>
         <Side gap={30}>
           <div className="rv formula-eq" style={{ '--d': 3 }}>
@@ -571,7 +571,7 @@ function HallazgoFormula() {
             <Gauge value={11.9} label="Distancia" color="color-mix(in srgb, var(--precio) 65%, var(--card))" d={8} />
             <Gauge value={0} label="Hora y clima" muted d={11} />
           </div>
-          <Say d={7} size={21}>Lo que el pasajero <B>elige</B> y lo que <B>recorre</B> definen el precio.</Say>
+          <Say d={7} size={25}>Lo que el pasajero <B>elige</B> y lo que <B>recorre</B> definen el precio.</Say>
           <HipVeredicto k="H2" ok d={9} />
         </Side>
       </div>
@@ -665,7 +665,7 @@ function HallazgoZonas() {
         </div>
         <Side gap={26}>
           <Big c="var(--recargo)" size={110}><Num value={max / min} format={(v) => fDec(v, 1) + '×'} /></Big>
-          <Say size={22} style={{ marginTop: -10 }}>más recargo saliendo de <B>Back Bay</B> que de <B>North End</B>.</Say>
+          <Say size={27} style={{ marginTop: -10 }}>más recargo saliendo de <B>Back Bay</B> que de <B>North End</B>.</Say>
           <div className="zcmp rv" style={{ '--d': 6 }}>
             {[[ZONAS[0].zona, max, 'var(--recargo)'], [ZONAS[ZONAS.length - 1].zona, min, 'var(--neutral)']].map(([z, v, c], i) => (
               <div key={z} className="zcmp-row">
@@ -775,27 +775,27 @@ function ModeloKMeans() {
       <Head ent={E(3)} eje="Modelos · no supervisado" track="precio" title={<>Los 12 productos forman <em>3 familias de tarifa</em></>} />
       <div className="grid" style={{ gridTemplateColumns: '1.15fr 1fr', gap: 34 }}>
         <div className="card rv" style={{ '--d': 2 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-            <h3>K-Means sobre tarifa base y precio por milla</h3>
-            <span className="num small precio">k = 3 · silueta 0,68</span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 16 }}>
+            <h3 style={{ fontSize: 23.5 }}>K-Means sobre tarifa base y precio por milla</h3>
+            <span className="num small precio" style={{ whiteSpace: 'nowrap', flex: 'none' }}>k = 3 · silueta 0,68</span>
           </div>
           <KMeansScatter width={690} height={470} />
           <div className="legend" style={{ marginTop: 14 }}>
-            <span><i className="dot" style={{ background: 'var(--text-2)' }} /><Brand name="Uber" size={17} d={8} /></span>
-            <span><i className="sq" style={{ background: 'var(--text-2)' }} /><Brand name="Lyft" size={17} d={10} /></span>
+            <span><i className="dot" style={{ background: 'var(--text-2)' }} /><Brand name="Uber" size={20} d={8} /></span>
+            <span><i className="sq" style={{ background: 'var(--text-2)' }} /><Brand name="Lyft" size={20} d={10} /></span>
           </div>
         </div>
         <Side gap={18}>
           {fam.map(([g, c, l, b, m], i) => (
             <div key={g} className="card rv" style={{ '--d': 4 + i * 2, borderLeft: `5px solid ${c}`, padding: '18px 22px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                <span style={{ fontSize: 23, fontWeight: 600 }}>{g}</span>
+                <span style={{ fontSize: 27, fontWeight: 600 }}>{g}</span>
                 <span className="num small t2">base {b} · {m}/mi</span>
               </div>
-              <div className="t2" style={{ fontSize: 17, marginTop: 6 }}>{l}</div>
+              <div className="t2" style={{ fontSize: 20, marginTop: 6 }}>{l}</div>
             </div>
           ))}
-          <Say d={11} size={20}><Brand name="Uber" size={20} /> y <Brand name="Lyft" size={20} /> <B>compiten en espejo</B>.</Say>
+          <Say d={11} size={24}><Brand name="Uber" size={24} /> y <Brand name="Lyft" size={24} /> <B>compiten en espejo</B>.</Say>
           <HipVeredicto k="H4" ok d={12} />
         </Side>
       </div>
@@ -875,7 +875,7 @@ function ModelosRecargo() {
         </div>
         {tipo !== 'pr'
           ? <div key={tipo} style={{ marginTop: 22 }}><BarrasSobreAzar rows={rows} azar={azar} /></div>
-          : <div style={{ marginTop: 16 }}><Curvas tipo="pr" width={1290} height={400} /></div>}
+          : <div style={{ marginTop: 16 }}><Curvas tipo="pr" width={1320} height={410} /></div>}
         {tipo === 'test' && <p className="modelo-nota" style={{ marginTop: 14 }}>En la prueba, random forest y gradient boosting quedan prácticamente empatados (0,142 vs 0,140). No cambiamos la elección.</p>}
       </div>
     </div>
@@ -942,7 +942,7 @@ function Asimetria() {
             </div>
           </Phone></div>
           <div>
-            <div className="num" style={{ fontSize: 64, lineHeight: 1, marginTop: 16, color: 'var(--bad)', whiteSpace: 'nowrap' }}><Num value={8.73} format={(v) => '−USD ' + fDec(v, 2)} delay={900} /></div>
+            <div className="num" style={{ fontSize: 68, lineHeight: 1, marginTop: 16, color: 'var(--bad)', whiteSpace: 'nowrap' }}><Num value={8.73} format={(v) => '−USD ' + fDec(v, 2)} delay={900} /></div>
           </div>
         </div>
         {/* Error 2: avisa y no había */}
@@ -965,10 +965,10 @@ function Asimetria() {
           </Phone></div>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 14, flexWrap: 'wrap' }}>
-              <div className="num" style={{ fontSize: 64, lineHeight: 1, color: 'var(--text-2)', whiteSpace: 'nowrap' }}>−USD 1</div>
+              <div className="num" style={{ fontSize: 68, lineHeight: 1, color: 'var(--text-2)', whiteSpace: 'nowrap' }}>−USD 1</div>
               <span className="supuesto-tag">supuesto</span>
             </div>
-            <p className="say" style={{ fontSize: 24, marginTop: 18 }}>Perdió unos minutos comparando <B>sin necesidad</B>.</p>
+            <p className="say" style={{ fontSize: 26, marginTop: 18 }}>Perdió unos minutos comparando <B>sin necesidad</B>.</p>
           </div>
         </div>
       </div>
@@ -988,7 +988,7 @@ function FalsoNegativo() {
   return (
     <div className="slide">
       <Head ent={E(4)} eje="Matriz de confusión" track="recargo" title={<>Lo peor es decir “sin recargo” <em>y que haya</em></>} />
-      <div className="card rv" style={{ '--d': 2, padding: '24px 32px', flex: 'none', display: 'grid', placeItems: 'center' }}><MatrizFN width={1200} /></div>
+      <div className="card rv" style={{ '--d': 2, padding: '24px 32px', flex: 'none', display: 'grid', placeItems: 'center' }}><MatrizFN width={1260} /></div>
     </div>
   )
 }
@@ -1009,7 +1009,7 @@ function Umbral() {
             <div className="um-presets">{presets.map(([v, l]) => <button key={v} className={'chip btn' + (Math.abs(cur.t - v) < 0.0001 ? ' on' : '')} onClick={() => setT(v)}>{l}</button>)}</div>
           </div>
           <input className="um-range" type="range" min={0.2} max={0.8} step={0.0001} value={t} style={{ '--p': pct + '%' }} onChange={(e) => setT(+e.target.value)} aria-label="Límite del puntaje de riesgo para avisar" aria-valuetext={fDec(cur.t, 4)} />
-          <BeneficioCurva t={cur.t} elegido={FINAL.umbral} antes={FINAL.umbralAntes} width={800} height={300} />
+          <BeneficioCurva t={cur.t} elegido={FINAL.umbral} antes={FINAL.umbralAntes} width={880} height={310} />
           <p className="um-explica" key={cur.t < FINAL.umbral - 0.03 ? 'a' : Math.abs(cur.t - FINAL.umbralAntes) < 0.03 ? 'b' : cur.t > FINAL.umbral + 0.03 ? 'c' : 'd'}>
             {cur.t < FINAL.umbral - 0.03 ? <>Límite muy bajo: avisa casi siempre y <B c="var(--bad)">las falsas alarmas se acumulan</B>.</>
               : Math.abs(cur.t - FINAL.umbralAntes) < 0.03 ? <>Con <B>0,57</B> (antes) <B c="var(--bad)">se escapaba casi la mitad</B> de los recargos.</>
@@ -1087,9 +1087,9 @@ function ValorActores() {
 /* ═════════════ E4 · Hipótesis ═════════════ */
 function Hipotesis() {
   const hs = [
-    ['H1', 'Hay patrones por hora y día', false, 'Según la hora, el recargo solo va de 7,0 % a 9,6 %'],
-    ['H2', 'La categoría del servicio y la distancia definen el precio', true, 'La categoría del servicio explica el 77 % y la distancia el 12 %'],
-    ['H3', 'El mal clima encarece los viajes', false, 'Recargo con lluvia 7,9 % vs 8,3 % sin lluvia'],
+    ['H1', 'Hay patrones por hora y día', false, 'Según la hora, el recargo solo va de 7,0\u00A0% a 9,6\u00A0%'],
+    ['H2', 'La categoría del servicio y la distancia definen el precio', true, 'La categoría del servicio explica el 77\u00A0% y la distancia el 12\u00A0%'],
+    ['H3', 'El mal clima encarece los viajes', false, 'Recargo con lluvia 7,9\u00A0% vs 8,3\u00A0% sin lluvia'],
     ['H4', 'Los productos forman grupos tarifarios', true, '3 familias de tarifa: económico, intermedio y premium'],
   ]
   return (
@@ -1100,8 +1100,8 @@ function Hipotesis() {
         <div style={{ display: 'grid', gap: 10 }}>
           {hs.map(([k, h, ok, ev], i) => (
             <div key={k} className="card rv hyp-row" style={{ '--d': 3 + i, borderLeft: `4px solid ${ok ? 'var(--good)' : 'var(--bad)'}` }}>
-              <span className="num muted" style={{ fontSize: 20 }}>{k}</span>
-              <span><span style={{ fontSize: 22, display: 'block' }}>{h}</span><span className="t2" style={{ fontSize: 16 }}>{ev}</span></span>
+              <span className="num muted" style={{ fontSize: 24 }}>{k}</span>
+              <span><span style={{ fontSize: 29, display: 'block' }}>{h}</span><span className="t2" style={{ fontSize: 21 }}>{ev}</span></span>
               <span className="hyp-icon" style={{ color: k === 'H1' ? 'var(--recargo)' : k === 'H3' ? 'var(--muted)' : 'var(--precio)' }} aria-hidden="true"><HipIcon k={k} /></span>
               <span className={'hyp-stamp ' + (ok ? 'ok' : 'no')} style={{ animationDelay: `${1.2 + i * 0.35}s` }}>{ok ? '✓ Confirmada' : '✗ No se cumple'}</span>
             </div>
@@ -1121,11 +1121,11 @@ function Gracias() {
       <div className="portada-centro">
         <div className="gracias-t pop-in" style={{ '--d': 2 }}>¡Gracias!</div>
         <div className="portada-logos" style={{ marginTop: 30 }}>
-          <span className="pop-in" style={{ '--d': 6 }}><Brand name="Uber" size={64} /></span>
-          <span className="portada-vs pop-in" style={{ '--d': 8, fontSize: 30 }}>vs</span>
-          <span className="pop-in" style={{ '--d': 10 }}><Brand name="Lyft" size={64} /></span>
+          <span className="pop-in" style={{ '--d': 6 }}><Brand name="Uber" size={70} /></span>
+          <span className="portada-vs pop-in" style={{ '--d': 8, fontSize: 34 }}>vs</span>
+          <span className="pop-in" style={{ '--d': 10 }}><Brand name="Lyft" size={70} /></span>
         </div>
-        <div className="portada-grupo rv" style={{ '--d': 12, fontSize: 48, marginTop: 40 }}>Grupo 11</div>
+        <div className="portada-grupo rv" style={{ '--d': 12, fontSize: 54, marginTop: 40 }}>Grupo 11</div>
         <div className="t2 rv portada-equipo" style={{ '--d': 14 }}>{EQUIPO.join(' · ')}</div>
       </div>
     </div>
@@ -1134,21 +1134,21 @@ function Gracias() {
 
 function Cierre() {
   return (
-    <div className="slide free" style={{ padding: '64px 88px 96px', justifyContent: 'center' }}>
+    <div className="slide free" style={{ padding: '52px 76px 68px', justifyContent: 'center' }}>
       <div className="kicker rv">Conclusión · el recorrido completo</div>
-      <div className="rv" style={{ '--d': 1, marginTop: 10 }}><ForkLine width={1424} height={200} /></div>
+      <div className="rv" style={{ '--d': 1, marginTop: 10 }}><ForkLine width={1424} height={216} /></div>
       <div className="grid rv" style={{ '--d': 6, gridTemplateColumns: '1fr 1fr', gap: 26, marginTop: 10 }}>
         <div className="card precio-card" style={{ padding: '30px 36px' }}>
           <Track v="precio" />
-          <p style={{ fontFamily: 'var(--serif)', fontSize: 42, lineHeight: 1.1, marginTop: 18 }}>Es una fórmula predecible.</p>
-          <div className="num precio" style={{ fontSize: 72, marginTop: 16 }}>USD 1,08</div>
-          <p className="t2" style={{ fontSize: 20, marginTop: 4 }}>de error medio, con categoría del servicio y distancia</p>
+          <p style={{ fontFamily: 'var(--serif)', fontSize: 46, lineHeight: 1.1, marginTop: 18 }}>Es una fórmula predecible.</p>
+          <div className="num precio" style={{ fontSize: 78, marginTop: 16 }}>USD 1,08</div>
+          <p className="t2" style={{ fontSize: 24, marginTop: 4 }}>de error medio, con categoría del servicio y distancia</p>
         </div>
         <div className="card recargo-card" style={{ padding: '30px 36px' }}>
           <Track v="recargo" />
-          <p style={{ fontFamily: 'var(--serif)', fontSize: 42, lineHeight: 1.1, marginTop: 18 }}>Se anticipa: 9 de cada 10 recargos.</p>
-          <div className="num recargo" style={{ fontSize: 72, marginTop: 16 }}>90 %</div>
-          <p className="t2" style={{ fontSize: 20, marginTop: 4 }}>de los recargos anticipados · al decir “sin recargo” acierta el 97 %</p>
+          <p style={{ fontFamily: 'var(--serif)', fontSize: 46, lineHeight: 1.1, marginTop: 18 }}>Se anticipa: 9 de cada 10 recargos.</p>
+          <div className="num recargo" style={{ fontSize: 78, marginTop: 16 }}>90 %</div>
+          <p className="t2" style={{ fontSize: 24, marginTop: 4 }}>de los recargos anticipados · al decir “sin recargo” acierta el 97 %</p>
         </div>
       </div>
     </div>
