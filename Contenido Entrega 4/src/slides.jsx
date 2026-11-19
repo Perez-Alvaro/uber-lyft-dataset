@@ -4,10 +4,10 @@ import { findImg } from './data/gallery.js'
 import {
   HBar, Dumbbell, Waterfall, ZoneMap, FareCompare, tarifaEn, Balanceo,
   KMeansScatter, Curvas, BeneficioCurva, UMBRALES, N_TEST, ForkLine, SurgeCollapse,
-  ColumnBlocks, UtcBig, AsymBars, Donut, ActorIcon,
+  ColumnBlocks, UtcBig, AsymBars, Donut, ActorIcon, PistaPanel, LimpiezaFlow, ColumnasFlow, ErrorRelativo, RecargoSiNo, Gauge, LluviaVsSeco, HoraLinea, RangoCompare, ArbolReglas,
 } from './components/charts.jsx'
 import {
-  DATASET, PLATAFORMAS, RECARGO, ZONAS, PESO_FACTORES, REGRESION, REGRESION_SIN_SURGE, IMPORTANCIA_RECARGO,
+  DATASET, PLATAFORMAS, RECARGO, ZONAS, PESO_FACTORES, REGRESION, REGRESION_SIN_SURGE, REGRESION_DATOS, IMPORTANCIA_RECARGO,
   CLASIFICACION, FINAL, SIEMPRE_NO, NIVELES, EQUIPO, PRECIO_PRODUCTO, CLIMA_CORR, COLUMNAS,
 } from './data/metrics.js'
 
@@ -27,10 +27,22 @@ const Side = ({ children, gap = 30 }) => <div style={{ display: 'flex', flexDire
 const Say = ({ children, d = 5, size = 23, style }) => <p className="say rv" style={{ '--d': d, fontSize: size, ...style }}>{children}</p>
 
 /* ═════════════ Portada ═════════════ */
+// Desplazamiento de etiquetas que se pisan entre sí: [dx, dy, anchor]
+const LBL = { Fenway: [10, 22], 'South Station': [10, 22], 'West End': [-10, 5, 'end'] }
 const RUTAS = [[0, 6], [2, 7], [4, 3], [1, 8], [5, 11], [3, 10], [0, 9], [2, 6], [4, 0], [7, 11], [1, 3]]
-function MapaRutas({ scale = 1.05, w = 720, h = 560 }) {
+function MapaRutas({ scale = 1.05, w = 720, h = 560, fit = false }) {
   const LON0 = -71.114, LAT1 = 42.3705, KX = 9000 * scale, KY = 12180 * scale
-  const pts = ZONAS.map((z) => ({ ...z, x: (z.lon - LON0) * KX, y: (LAT1 - z.lat) * KY }))
+  let pts = ZONAS.map((z) => ({ ...z, x: (z.lon - LON0) * KX, y: (LAT1 - z.lat) * KY }))
+  if (fit) {
+    // Encaja el mapa en la caja (dejando lugar a la derecha para las etiquetas)
+    const pad = { l: 16, r: 140, t: 40, b: 40 }
+    const xs = pts.map((p) => p.x), ys = pts.map((p) => p.y)
+    const x0 = Math.min(...xs), y0 = Math.min(...ys)
+    const bw = Math.max(...xs) - x0, bh = Math.max(...ys) - y0
+    const s = Math.min((w - pad.l - pad.r) / bw, (h - pad.t - pad.b) / bh)
+    const ox = pad.l + (w - pad.l - pad.r - bw * s) / 2, oy = pad.t + (h - pad.t - pad.b - bh * s) / 2
+    pts = pts.map((p) => ({ ...p, x: ox + (p.x - x0) * s, y: oy + (p.y - y0) * s }))
+  }
   return (
     <svg width={w} height={h} aria-hidden>
       <defs><radialGradient id="glow"><stop offset="0" stopColor="var(--accent)" stopOpacity=".5" /><stop offset="1" stopColor="var(--accent)" stopOpacity="0" /></radialGradient></defs>
@@ -43,7 +55,7 @@ function MapaRutas({ scale = 1.05, w = 720, h = 560 }) {
         <g key={p.zona} className="pop" style={{ '--d': i }}>
           <circle cx={p.x} cy={p.y} r={12 + p.tasa * 160} fill="url(#glow)" />
           <circle cx={p.x} cy={p.y} r={5} fill="var(--accent)" />
-          <text x={p.x + 10} y={p.y - 10} className="val-muted" style={{ fontSize: 13, fontFamily: 'var(--sans)' }}>{p.zona}</text>
+          <text x={p.x + (LBL[p.zona]?.[0] ?? 10)} y={p.y + (LBL[p.zona]?.[1] ?? -10)} textAnchor={LBL[p.zona]?.[2] || 'start'} className="val-muted" style={{ fontSize: 13, fontFamily: 'var(--sans)' }}>{p.zona}</text>
         </g>
       ))}
       <style>{`@keyframes flow { to { stroke-dashoffset: -140; } }`}</style>
@@ -52,26 +64,30 @@ function MapaRutas({ scale = 1.05, w = 720, h = 560 }) {
 }
 function Portada() {
   return (
-    <div className="slide free" style={{ padding: '88px 88px 96px' }}>
-      <div style={{ position: 'absolute', right: 60, top: 150 }}><MapaRutas /></div>
-      <div className="kicker rv">Trabajo Práctico Integrador · Entrega 4 · Data storytelling</div>
-      <h1 className="rv" style={{ '--d': 1, fontFamily: 'var(--serif)', fontWeight: 400, fontSize: 108, lineHeight: 0.98, margin: '34px 0 0', maxWidth: 1000, letterSpacing: '-0.02em' }}>
-        El precio es una fórmula.<br />El <em style={{ color: 'var(--accent)' }}>recargo</em>, un misterio.
-      </h1>
-      <p className="lede rv" style={{ '--d': 3, maxWidth: 760, fontSize: 25, marginTop: 30 }}>
-        Uber y Lyft en Boston: lo que aprendimos de <B><Num value={DATASET.crudo} /></B> cotizaciones a lo largo de cuatro entregas.
-      </p>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 22, marginTop: 34 }}>
-        <Brand name="Uber" size={46} d={6} />
-        <span className="muted pop-in" style={{ '--d': 8, fontFamily: 'var(--serif)', fontStyle: 'italic', fontSize: 30 }}>vs</span>
-        <Brand name="Lyft" size={46} d={10} />
-      </div>
-      <div style={{ marginTop: 'auto', display: 'flex', gap: 48, alignItems: 'flex-end' }} className="rv">
+    <div className="slide free" style={{ padding: '64px 88px 56px' }}>
+      <div style={{ flex: 1, display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 620px', alignItems: 'center', gap: 24 }}>
         <div>
-          <div className="label">Ciencia de Datos · UTN FRC · 5K1</div>
-          <div style={{ fontSize: 34, fontWeight: 600, marginTop: 8 }}>Grupo 11</div>
+          <div className="kicker rv">Trabajo Práctico Integrador · Entrega 4 · Data storytelling</div>
+          <h1 className="rv" style={{ '--d': 1, fontFamily: 'var(--serif)', fontWeight: 400, fontSize: 100, lineHeight: 0.98, margin: '28px 0 0', letterSpacing: '-0.02em', whiteSpace: 'nowrap' }}>
+            El precio es una fórmula.<br />El <em style={{ color: 'var(--accent)' }}>recargo</em>, un misterio.
+          </h1>
+          <p className="lede rv" style={{ '--d': 3, maxWidth: 680, fontSize: 25, marginTop: 28 }}>
+            Uber y Lyft en Boston: lo que aprendimos de <B><Num value={DATASET.crudo} /></B> cotizaciones a lo largo de cuatro entregas.
+          </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 22, marginTop: 30 }}>
+            <Brand name="Uber" size={46} d={6} />
+            <span className="muted pop-in" style={{ '--d': 8, fontFamily: 'var(--serif)', fontStyle: 'italic', fontSize: 30 }}>vs</span>
+            <Brand name="Lyft" size={46} d={10} />
+          </div>
         </div>
-        <div className="t2" style={{ fontSize: 17, lineHeight: 1.7, maxWidth: 640 }}>{EQUIPO.join(' · ')}</div>
+        <div className="rv" style={{ '--d': 2, justifySelf: 'end' }}><MapaRutas fit w={620} h={540} /></div>
+      </div>
+      <div className="rv" style={{ '--d': 6, display: 'flex', gap: 48, alignItems: 'center', borderTop: '1px solid var(--line)', paddingTop: 24 }}>
+        <div style={{ flex: 'none' }}>
+          <div className="label">Ciencia de Datos · UTN FRC · 5K1</div>
+          <div style={{ fontSize: 32, fontWeight: 600, marginTop: 6 }}>Grupo 11</div>
+        </div>
+        <div className="t2" style={{ fontSize: 18, lineHeight: 1.6 }}>{EQUIPO.join(' · ')}</div>
       </div>
     </div>
   )
@@ -96,7 +112,7 @@ function Recorrido() {
           </div>
         ))}
       </div>
-      <div className="rv" style={{ '--d': 4, margin: '14px 0 10px' }}><ForkLine width={1424} height={230} /></div>
+      <div className="rv" style={{ '--d': 4, margin: '18px 0 22px' }}><ForkLine width={1424} height={320} /></div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)' }}>
         {PASOS.map((p, i) => (
           <div key={p.n} className="rv" style={{ '--d': 8 + i, paddingRight: 30 }}>
@@ -114,20 +130,26 @@ function Dominio() {
   return (
     <div className="slide">
       <Head ent={E(1)} eje="Introducción del dominio" title={<>Un dataset de <em>cotizaciones</em>, no de viajes</>} />
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 30 }}>
-        {[[<Num value={DATASET.crudo} />, <>cotizaciones de <Brand name="Uber" size={22} d={6} /> y <Brand name="Lyft" size={22} d={8} /></>], ['24 días', 'del 25/11 al 18/12/2018'], ['57', 'columnas, con el clima de cada hora']].map(([n, t], i) => (
-          <div key={i} className="rv" style={{ '--d': 2 + i }}>
-            <div className="num" style={{ fontSize: 70, lineHeight: 1 }}>{n}</div>
-            <div className="t2" style={{ fontSize: 21, marginTop: 10 }}>{t}</div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'max-content max-content minmax(0, 1fr)', alignItems: 'center', marginTop: 6 }}>
+        {[[<Num value={DATASET.crudo} />, <>cotizaciones de <Brand name="Uber" size={22} d={6} /> y <Brand name="Lyft" size={22} d={8} /></>], ['57', 'columnas, con el clima de cada hora']].map(([n, t], i) => (
+          <div key={i} className="rv" style={{ '--d': 2 + i, padding: i ? '0 56px' : '0 56px 0 0', borderLeft: i ? '1px solid var(--line-2)' : 'none' }}>
+            <div className="num" style={{ fontSize: 72, lineHeight: 1 }}>{n}</div>
+            <div className="t2" style={{ fontSize: 21, marginTop: 12 }}>{t}</div>
           </div>
         ))}
+        <div className="rv" style={{ '--d': 4, paddingLeft: 56, borderLeft: '1px solid var(--line-2)' }}>
+          <div className="label">Cada fila responde</div>
+          <div style={{ fontFamily: 'var(--serif)', fontStyle: 'italic', fontSize: 34, lineHeight: 1.15, marginTop: 10 }}>
+            “¿Cuánto cobra <span className="acc">este producto</span>, en <span className="acc">esta ruta</span>, en <span className="acc">este momento</span>?”
+          </div>
+        </div>
       </div>
-      <div className="card rv" style={{ '--d': 5, marginTop: 44, padding: '30px 34px' }}>
+      <div className="card rv" style={{ '--d': 5, marginTop: 40, padding: '28px 34px 30px', flex: 'none' }}>
         <h3>Las 57 columnas originales, por bloque</h3>
         <p className="sub">Más de dos tercios son clima: la primera pista de que había mucho para limpiar</p>
         <div style={{ marginTop: 20 }}><ColumnBlocks blocks={COLUMNAS} width={1350} /></div>
       </div>
-      <Say d={8} style={{ marginTop: 30 }}>Cada fila responde: <B>¿cuánto cobra este producto, en esta ruta, en este momento?</B> Datos públicos de Kaggle, tomados de las APIs de precios de ambas apps.</Say>
+      <p className="muted fade" style={{ '--d': 8, fontSize: 17, marginTop: 18 }}>Fuente: datos públicos de Kaggle, tomados de las APIs de precios de ambas apps (Boston, 25/11 al 18/12/2018).</p>
     </div>
   )
 }
@@ -164,9 +186,9 @@ function Problema() {
       <Head ent={E(1)} eje="Introducción del dominio · el problema" track="recargo" title={<>El mismo viaje puede costar <em>hasta 67% más</em></>} />
       <div className="grid" style={{ gridTemplateColumns: '1.35fr 1fr', gap: 40 }}>
         <div className="card rv" style={{ '--d': 2 }}>
-          <h3>Precio mediano de cada producto de <Brand name="Lyft" size={23} d={4} />, sin y con recargo</h3>
-          <p className="sub">El recargo (“surge”) multiplica el precio cuando hay más pedidos que conductores</p>
-          <Dumbbell width={780} rowH={76} />
+          <h3>Cuánto cuesta cada producto de <Brand name="Lyft" size={23} d={4} />, sin y con recargo</h3>
+          <p className="sub">Precio mediano de un mismo viaje. El tramo naranja es lo que se agrega cuando hay más pedidos que conductores (“surge”)</p>
+          <Dumbbell width={740} rowH={78} />
         </div>
         <Side gap={40}>
           <div><Big c="var(--recargo)" size={74}>1 de cada 12</Big><Say size={21} style={{ marginTop: 10 }}>cotizaciones de <Brand name="Lyft" size={21} /> tiene recargo</Say></div>
@@ -183,8 +205,8 @@ function UberEsconde() {
   return (
     <div className="slide">
       <Head ent={E(1)} eje="Introducción del dominio · primer descubrimiento" track="recargo" title={<><Brand name="Uber" size={60} d={1} /> <em>esconde</em> su recargo. <Brand name="Lyft" size={60} d={3} /> lo muestra.</>} />
-      <div className="grid" style={{ gridTemplateColumns: '520px 1fr', gap: 44, alignItems: 'center' }}>
-        <div style={{ display: 'flex', gap: 26 }}>
+      <div className="grid" style={{ gridTemplateColumns: '650px 1fr', gap: 48, alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 26, zoom: 1.27 }}>
           <Phone d={2}>
             <div className="ph-app uber">Uber<span className="ph-route">Back Bay → Fenway</span></div>
             <div className="ph-row"><span>UberX</span><span className="muted">4 asientos</span></div>
@@ -242,11 +264,9 @@ function PrimerasPistas() {
       <Head ent={E(1)} eje="Introducción del dominio · primeras pistas" track="recargo" title={<>Las <em>primeras pistas</em> que vimos en la Entrega 1</>} />
       <div className="grid" style={{ gridTemplateColumns: '1.45fr 1fr', gap: 44, alignItems: 'center' }}>
         <div className="rv" style={{ '--d': 2 }}>
-          <div className="stepper-frame" onClick={() => openImage(findImg(PISTAS[step].img.replace('.png', '')))} title="Clic para ampliar este gráfico">
-            {PISTAS.map((p, i) => (
-              <img key={p.img} src={`${import.meta.env.BASE_URL}graficos/${p.img}`} alt={p.t}
-                className={'stepper-img' + (i === step ? ' on' : i < step ? ' past' : '')} />
-            ))}
+          <div className="pista-frame">
+            <PistaPanel step={step} />
+            <button className="pista-orig" onClick={() => openImage(findImg(PISTAS[step].img.replace('.png', '')))} title="Ver el gráfico original de la Entrega 1">ver original</button>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 16 }}>
             <span className="fig-tag">Entrega 1</span>
@@ -278,23 +298,47 @@ function PrimerasPistas() {
 }
 
 /* ═════════════ E2 · Dos variables ═════════════ */
+/* Mini-visualizaciones de "Una pregunta, dos variables" */
+const TAXI = ['9,50', '13,50', '16,50', '22,50', '32,50', '7,00']
+function Taximetro() {
+  return (
+    <div className="mini-viz fade" style={{ '--d': 6 }}>
+      <div className="taxi"><span className="taxi-usd">USD</span><span className="taxi-win"><span className="taxi-roll">{[...TAXI, TAXI[0]].map((v, i) => <span key={i}>{v}</span>)}</span></span></div>
+      <div className="mini-cap">un número en dólares</div>
+    </div>
+  )
+}
+const CON_RECARGO = new Set([6, 19, 27, 44, 58, 63, 81, 96])
+function Grilla100() {
+  let k = 0
+  return (
+    <div className="mini-viz fade" style={{ '--d': 7 }}>
+      <div className="g100">{Array.from({ length: 100 }, (_, i) => <i key={i} className={CON_RECARGO.has(i) ? 'on' : undefined} style={CON_RECARGO.has(i) ? { animationDelay: `${1.5 + (k++) * 0.35}s` } : undefined} />)}</div>
+      <div className="mini-cap">sí o no · solo 8 de cada 100</div>
+    </div>
+  )
+}
 function DosVariables() {
   const rows = [
     ['La pregunta', '¿Cuánto me va a costar?', '¿Me van a cobrar recargo?'],
-    ['Qué parte del precio', 'Estructural: producto y distancia', 'Dinámica: cuándo y dónde se paga de más'],
     ['Tipo de problema', 'Regresión: un número en USD', 'Clasificación: sí o no'],
     ['Datos', <>{fInt(DATASET.limpio)} cotizaciones · <Brand name="Uber" size={20} /> y <Brand name="Lyft" size={20} /></>, <>{fInt(RECARGO.filas)} cotizaciones · solo <Brand name="Lyft" size={20} /> sin Shared</>],
     ['Variable objetivo', 'price → log(price)', 'has_surge = 1 si surge_multiplier > 1'],
     ['Dificultad', 'Precios asimétricos (pocos muy caros)', 'Solo 8,2% tiene recargo'],
-    ['Cómo se mide', 'Error en USD y R²', 'PR-AUC, recall y USD ganados'],
   ]
   return (
     <div className="slide">
       <Head ent={E(2)} eje="Qué predecimos" track="ambas" title={<>Una pregunta, <em>dos variables</em></>} />
-      <div className="cmp">
+      <div className="cmp cmp-lg">
         <div className="cc rl" style={{ borderTop: 'none' }} />
-        <div className="cc cp hd rv" style={{ '--d': 2 }}><span className="track precio" style={{ padding: '6px 12px' }}><i />Variable A</span><span style={{ fontFamily: 'var(--serif)', fontSize: 44, lineHeight: 1 }}>Precio</span></div>
-        <div className="cc cr hd rv" style={{ '--d': 3, marginLeft: 14 }}><span className="track recargo" style={{ padding: '6px 12px' }}><i />Variable B</span><span style={{ fontFamily: 'var(--serif)', fontSize: 44, lineHeight: 1 }}>Recargo</span></div>
+        <div className="cc cp hd rv" style={{ '--d': 2 }}>
+          <div className="hd-txt"><span className="track precio" style={{ padding: '6px 12px' }}><i />Variable A</span><span style={{ fontFamily: 'var(--serif)', fontSize: 48, lineHeight: 1 }}>Precio</span></div>
+          <Taximetro />
+        </div>
+        <div className="cc cr hd rv" style={{ '--d': 3, marginLeft: 14 }}>
+          <div className="hd-txt"><span className="track recargo" style={{ padding: '6px 12px' }}><i />Variable B</span><span style={{ fontFamily: 'var(--serif)', fontSize: 48, lineHeight: 1 }}>Recargo</span></div>
+          <Grilla100 />
+        </div>
         {rows.map(([k, a, b], i) => (
           <div key={k} style={{ display: 'contents' }}>
             <div className="cc rl rv" style={{ '--d': 4 + i }}>{k}</div>
@@ -314,14 +358,12 @@ function Limpieza() {
     <div className="slide">
       <Head ent={E(2)} eje="Algo importante del ETL" track="ambas" title={<>Limpiar con <em>criterio de dominio</em></>} />
       <div className="grid" style={{ gridTemplateColumns: '1.6fr 1fr', gap: 40 }}>
-        <div className="card rv" style={{ '--d': 2 }}>
-          <h3>De {fInt(DATASET.crudo)} a {fInt(DATASET.limpio)} cotizaciones: se conserva el 91,8%</h3>
-          <p className="sub">Cada fila eliminada tiene un motivo concreto</p>
-          <div style={{ marginTop: 18 }}><Waterfall width={840} /></div>
+        <div className="card rv" style={{ '--d': 2, padding: '30px 34px' }}>
+          <LimpiezaFlow width={790} />
         </div>
         <Side>
           <Big c="var(--bad)" size={70}>55.095</Big>
-          <Say size={21}>cotizaciones de <B>Taxi sin precio</B>. No las imputamos: en Boston cobran por taxímetro y no hay ninguna referencia. Eran el 100% de los nulos.</Say>
+          <Say size={21}>de las filas eliminadas son <B>Taxi sin precio</B>. No las imputamos: en Boston cobran por taxímetro y no hay ninguna referencia. Eran el 100% de los nulos.</Say>
         </Side>
       </div>
     </div>
@@ -333,7 +375,9 @@ function Columnas() {
   return (
     <div className="slide">
       <Head ent={E(2)} eje="Algo importante del ETL" title={<>De 57 a 27 columnas: <em>menos es más</em></>} />
-      <Figura id="03_columnas_antes_despues" h={440} />
+      <div className="card rv" style={{ '--d': 2, padding: '30px 32px 20px', flex: 'none' }}>
+        <ColumnasFlow width={1360} />
+      </div>
       <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: 50, marginTop: 26 }}>
         <Say d={5}>Eliminamos <B>41 columnas</B>: 31 de clima repetido o sin relación, 6 de tiempo en UTC, 2 coordenadas y 2 copias.</Say>
         <Say d={7}>Creamos <B>11 nuevas</B>: hora local, franja horaria, nivel de servicio, distancia en línea recta, has_surge…</Say>
@@ -366,26 +410,24 @@ function Tratamiento() {
         <section className="card precio-card tratamiento-col rv" style={{ '--d': 2, '--variable': 'var(--precio)' }}>
           <Track v="precio" />
           <h2>El mismo error pesa distinto</h2>
-          <div className="tratamiento-grafico">
-            <Figura id="13_precio_distribucion" h={180} d={3} caption="Los precios, antes y después de ajustar la escala" />
+          <div className="tratamiento-grafico" style={{ paddingTop: 14 }}>
+            <ErrorRelativo width={620} />
           </div>
-          <div className="tratamiento-ejemplos" aria-label="Ejemplos ilustrativos con un error de dos dólares">
-            <span className="tratamiento-ejemplo-label">USD 2<br />de error</span>
-            <div><span className="num tratamiento-cifra">20%</span><span>en un viaje de USD 10</span></div>
-            <div><span className="num tratamiento-cifra">5%</span><span>en un viaje de USD 40</span></div>
+          <div className="tratamiento-paso">
+            <span className="num">precio</span><span className="tp-arrow">→</span><span className="num">log(precio)</span><span className="tp-arrow">→</span><span className="num">predicción en USD</span>
           </div>
-          <p className="tratamiento-idea">Ajustamos la escala para aprender de los <B>errores en proporción al precio</B>.</p>
+          <p className="tratamiento-idea">Con el logaritmo el modelo aprende de los <B>errores en proporción al precio</B>, no en dólares sueltos.</p>
         </section>
         <section className="card recargo-card tratamiento-col rv" style={{ '--d': 3, '--variable': 'var(--recargo)' }}>
           <Track v="recargo" />
           <h2>Simplificamos a “sí” o “no”</h2>
           <div className="tratamiento-grafico tratamiento-grafico-recargo">
-            <p className="tratamiento-contexto">Cotizaciones según el aumento aplicado</p>
-            <SurgeCollapse width={604} />
+            <p className="tratamiento-contexto">Cotizaciones de Lyft según el aumento aplicado: <B>todas pasan a ser “sí”</B></p>
+            <RecargoSiNo width={620} />
           </div>
           <div className="tratamiento-ejemplos tratamiento-clases">
-            <div><span>Sin aumento</span><strong>No</strong></div>
-            <div><span>Cualquier aumento</span><strong>Sí</strong></div>
+            <div><span>Sin aumento<br /><span className="num" style={{ fontSize: 15 }}>{fInt(RECARGO.filas - RECARGO.positivos)}</span></span><strong>No</strong></div>
+            <div><span>Cualquier aumento<br /><span className="num" style={{ fontSize: 15 }}>{fInt(RECARGO.positivos)} · {fDec(RECARGO.tasa * 100, 1)} %</span></span><strong>Sí</strong></div>
           </div>
           <p className="tratamiento-idea">Anticipamos <B>si habrá recargo</B>. Usamos solo Lyft, sin el servicio Shared.</p>
         </section>
@@ -407,12 +449,19 @@ function HallazgoFormula() {
         <div className="card rv" style={{ '--d': 2 }}>
           <h3>Qué parte de la variación del precio explica cada variable</h3>
           <p className="sub">Cada una por sí sola, sobre las {fInt(DATASET.limpio)} cotizaciones</p>
-          <HBar rows={rows} width={820} rowH={52} labelW={270} barH={22} max={100} tip={(r) => <><b>{r.label}</b><br />explica el {r.text} de la variación del precio</>} />
+          <HBar rows={rows} width={820} rowH={54} labelW={270} barH={26} max={100} tip={(r) => <><b>{r.label}</b><br />explica el {r.text} de la variación del precio</>} />
         </div>
-        <Side gap={34}>
-          <Say d={5}>Lo que el pasajero <B>elige</B> y lo que <B>recorre</B> definen casi todo el precio.</Say>
-          <Say d={6}>La <B>hora</B> y el <B>clima</B> explican <B>0%</B>.</Say>
-          <p className="t2 rv" style={{ '--d': 7, fontSize: 19 }}>Hipótesis H1 <span className="good" style={{ fontWeight: 600 }}>✓ confirmada</span></p>
+        <Side gap={30}>
+          <div className="rv formula-eq" style={{ '--d': 3 }}>
+            <span>precio ≈</span><span className="fx-chip">producto</span><span>+</span><span className="fx-chip">distancia</span>
+          </div>
+          <div className="rv" style={{ '--d': 4, display: 'flex', gap: 22, justifyContent: 'space-between' }}>
+            <Gauge value={77.4} label="Producto elegido" d={5} />
+            <Gauge value={11.9} label="Distancia" color="color-mix(in srgb, var(--precio) 65%, var(--card))" d={8} />
+            <Gauge value={0} label="Hora y clima" muted d={11} />
+          </div>
+          <Say d={7} size={21}>Cada variable por sí sola: lo que el pasajero <B>elige</B> y lo que <B>recorre</B> definen casi todo el precio. La <B>hora</B> y el <B>clima</B>, nada.</Say>
+          <p className="rv h-pill good-pill" style={{ '--d': 9 }}>Hipótesis H1 · ✓ confirmada</p>
         </Side>
       </div>
     </div>
@@ -437,39 +486,39 @@ function HallazgoApps() {
           </div>
           <p className="sub">Elegí el nivel y pasá el mouse por el gráfico</p>
           <div style={{ display: 'flex', gap: 22 }}>
-            <FareCompare nivel={nivel} dist={dist} setDist={setDist} width={620} height={420} />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16, minWidth: 170, paddingTop: 26 }}>
-              <div className="label">A {fDec(dist, 1)} millas</div>
-              <div key={'u' + ni}><div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}><Brand name="Uber" size={22} d={0} /><span className="small t2">{nivel.uber}</span></div><div className="num" style={{ fontSize: 30, marginTop: 4 }}>{fUsd(pu)}</div></div>
-              <div key={'l' + ni}><div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}><Brand name="Lyft" size={22} d={2} /><span className="small t2">{nivel.lyft}</span></div><div className="num" style={{ fontSize: 30, marginTop: 4 }}>{fUsd(pl)}</div></div>
-              <div className="small t2" style={{ marginTop: 8 }}><Brand name={dif < 0 ? 'Lyft' : 'Uber'} size={17} /> es más barato por <b className="num" style={{ color: 'var(--text)' }}>{fDec(Math.abs(dif) * 100, 0)}%</b></div>
+            <FareCompare nivel={nivel} dist={dist} setDist={setDist} width={600} height={430} />
+            <div className="fare-read">
+              <div className="label" style={{ fontSize: 14 }}>Viaje de {fDec(dist, 1)} millas</div>
+              <div key={'u' + ni}><div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}><Brand name="Uber" size={24} d={0} /><span className="t2" style={{ fontSize: 16 }}>{nivel.uber}</span></div><div className="num" style={{ fontSize: 38, marginTop: 4 }}>{fUsd(pu)}</div></div>
+              <div key={'l' + ni}><div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}><Brand name="Lyft" size={24} d={2} /><span className="t2" style={{ fontSize: 16 }}>{nivel.lyft}</span></div><div className="num" style={{ fontSize: 38, marginTop: 4, color: 'var(--lyft)' }}>{fUsd(pl)}</div></div>
+              <div className="fare-win" key={'w' + ni + dist} style={{ '--c': dif < 0 ? 'var(--lyft)' : 'var(--uber)' }}><Brand name={dif < 0 ? 'Lyft' : 'Uber'} size={19} /> más barato por <b className="num">{fDec(Math.abs(dif) * 100, 0)} %</b></div>
             </div>
           </div>
         </div>
         <div className="card rv" style={{ '--d': 3 }}>
           <h3><Brand name="Lyft" size={23} d={5} /> frente a <Brand name="Uber" size={23} d={7} />, por nivel</h3>
           <p className="sub">Diferencia promedio a igual distancia</p>
-          <div style={{ display: 'grid', gap: 6, marginTop: 20 }}>
+          <div className="lvu-head fade" style={{ '--d': 4 }}>
+            <span style={{ color: 'var(--lyft)' }}>← <Brand name="Lyft" size={16} /> más barato</span>
+            <span><Brand name="Uber" size={16} /> más barato →</span>
+          </div>
+          <div style={{ display: 'grid', gap: 4 }}>
             {NIVELES.map((n, i) => {
-              const w = (Math.abs(n.dif) / 0.3) * 34
+              const w = (Math.abs(n.dif) / 0.3) * 44
               const lyftCheaper = n.dif < 0
               return (
-                <div key={n.nivel} onClick={() => setNi(i)} style={{ display: 'grid', gridTemplateColumns: '110px 1fr', alignItems: 'center', gap: 10, height: 54, cursor: 'pointer', opacity: i === ni ? 1 : 0.7 }}>
-                  <span style={{ fontSize: 18, fontWeight: i === ni ? 600 : 400 }}>{n.nivel}</span>
-                  <div style={{ position: 'relative', height: 22 }}>
-                    <div style={{ position: 'absolute', left: '50%', top: -10, bottom: -10, width: 1, background: 'var(--line-2)' }} />
-                    <div className="growx" style={{ '--d': i, position: 'absolute', top: 1, height: 20, borderRadius: 4, width: `${w}%`, background: lyftCheaper ? 'var(--lyft)' : 'var(--uber)', ...(lyftCheaper ? { right: '50%', transformOrigin: 'right center' } : { left: '50%' }) }} />
-                    <span className="num" style={{ position: 'absolute', top: 0, fontSize: 16, ...(lyftCheaper ? { right: `calc(50% + ${w}% + 8px)` } : { left: `calc(50% + ${w}% + 8px)` }) }}>{n.dif > 0 ? '+' : '−'}{fDec(Math.abs(n.dif) * 100, 0)}%</span>
+                <div key={n.nivel} className={'lvu-row' + (i === ni ? ' on' : '')} onClick={() => setNi(i)}>
+                  <span className="lvu-n">{n.nivel}</span>
+                  <div style={{ position: 'relative', height: 30 }}>
+                    <div style={{ position: 'absolute', left: '50%', top: -14, bottom: -14, width: 2, background: 'var(--line-2)' }} />
+                    <div className="growx lvu-bar" style={{ '--d': i + 4, width: `${w}%`, background: lyftCheaper ? 'var(--lyft)' : 'var(--uber)', ...(lyftCheaper ? { right: '50%', transformOrigin: 'right center' } : { left: '50%' }) }} />
+                    <span className="num lvu-v" style={w > 25 ? { color: '#fff', right: `calc(50% + ${w}% - 70px)` } : { color: lyftCheaper ? 'var(--lyft)' : 'var(--text)', ...(lyftCheaper ? { right: `calc(50% + ${w}% + 10px)` } : { left: `calc(50% + ${w}% + 10px)` }) }}>{n.dif > 0 ? '+' : '−'}{fDec(Math.abs(n.dif) * 100, 0)} %</span>
                   </div>
                 </div>
               )
             })}
           </div>
-          <div className="legend" style={{ marginTop: 18, justifyContent: 'space-between' }}>
-            <span><i className="sq" style={{ background: 'var(--lyft)' }} /><Brand name="Lyft" size={16} /> más barato</span>
-            <span><i className="sq" style={{ background: 'var(--uber)' }} /><Brand name="Uber" size={16} /> más barato</span>
-          </div>
-          <p className="t2 small" style={{ marginTop: 20 }}>Hipótesis H2 <span className="good" style={{ fontWeight: 600 }}>✓ confirmada</span></p>
+          <p className="rv h-pill good-pill" style={{ '--d': 10, marginTop: 22 }}>Hipótesis H2 · ✓ confirmada</p>
         </div>
       </div>
     </div>
@@ -489,19 +538,14 @@ function MitoClima() {
         <div className="card rv" style={{ '--d': 2 }}>
           <h3>Correlación de cada variable climática con el precio</h3>
           <p className="sub">La distancia, como referencia de lo que sí importa</p>
-          <HBar rows={rows} width={800} rowH={50} labelW={240} barH={22} max={0.4} />
+          <HBar rows={rows} width={800} rowH={54} labelW={240} barH={26} max={0.4} />
+          <p className="rv" style={{ '--d': 9, fontSize: 17, color: 'var(--text-2)', margin: '10px 0 0' }}>Las 7 variables de clima quedan en <b>≈ 0</b>; la distancia, en <b style={{ color: 'var(--precio)' }}>0,345</b>.</p>
         </div>
-        <Side gap={36}>
-          <div className="rv" style={{ '--d': 5 }}>
-            <div className="label">Recargo con lluvia vs sin lluvia</div>
-            <div style={{ display: 'flex', gap: 24, alignItems: 'baseline', marginTop: 10 }}>
-              <span className="num" style={{ fontSize: 56 }}>{fPct(RECARGO.lluvia, 1)}</span>
-              <span className="muted" style={{ fontSize: 22 }}>vs</span>
-              <span className="num" style={{ fontSize: 56 }}>{fPct(RECARGO.seco, 1)}</span>
-            </div>
-            <Say d={6} size={20} style={{ marginTop: 8 }}>Con lluvia hay incluso <B>un poco menos</B> de recargo.</Say>
-          </div>
-          <p className="t2 rv" style={{ '--d': 7, fontSize: 19 }}>Hipótesis H5: “el mal clima encarece los viajes” <span className="bad" style={{ fontWeight: 600 }}>✗ rechazada</span></p>
+        <Side gap={26}>
+          <div className="label rv" style={{ '--d': 3 }}>¿Hay más recargo cuando llueve?</div>
+          <LluviaVsSeco lluvia={RECARGO.lluvia} seco={RECARGO.seco} />
+          <Say d={10} size={21}>Prácticamente igual: con lluvia hay incluso <B>un poco menos</B> de recargo.</Say>
+          <p className="rv h-pill bad-pill" style={{ '--d': 11 }}>Hipótesis H5 “el mal clima encarece los viajes” · ✗ rechazada</p>
         </Side>
       </div>
     </div>
@@ -519,10 +563,19 @@ function HallazgoZonas() {
           <h3>% de cotizaciones con recargo según la zona de origen</h3>
           <ZoneMap width={780} height={510} />
         </div>
-        <Side>
+        <Side gap={26}>
           <Big c="var(--recargo)" size={110}><Num value={max / min} format={(v) => fDec(v, 1) + '×'} /></Big>
-          <Say size={22}>más recargo saliendo de <B>Back Bay (13,4%)</B> que de <B>North End (1,8%)</B>.</Say>
-          <Say d={7} size={21}>Las zonas calientes: universidades, Fenway, Back Bay y Theatre District.</Say>
+          <Say size={22} style={{ marginTop: -10 }}>más recargo saliendo de <B>Back Bay</B> que de <B>North End</B>.</Say>
+          <div className="zcmp rv" style={{ '--d': 6 }}>
+            {[[ZONAS[0].zona, max, 'var(--recargo)'], [ZONAS[ZONAS.length - 1].zona, min, 'var(--neutral)']].map(([z, v, c], i) => (
+              <div key={z} className="zcmp-row">
+                <span className="zcmp-n">{z}</span>
+                <div className="zcmp-track"><div className="growx" style={{ '--d': 8 + i * 3, width: `${(v / max) * 100}%`, background: c }} /></div>
+                <span className="num zcmp-v" style={{ color: i ? 'var(--muted)' : 'var(--recargo)' }}>{fPct(v)}</span>
+              </div>
+            ))}
+          </div>
+          <Say d={9} size={20}>Las zonas calientes: <B>universidades, Fenway, Back Bay y Theatre District</B>. Las del norte casi no tienen recargo.</Say>
         </Side>
       </div>
     </div>
@@ -534,51 +587,94 @@ function HallazgoHora() {
   return (
     <div className="slide">
       <Head ent={E(2)} eje="Qué hallazgos encontramos" track="recargo" title={<>…y casi nada de <em>la hora</em></>} />
-      <Figura id="18_recargo_por_hora" h={440} />
-      <div style={{ display: 'flex', gap: 30, alignItems: 'baseline', marginTop: 24 }}>
-        <div style={{ whiteSpace: 'nowrap' }}><Big size={52}>7,0 – 9,6%</Big></div>
-        <Say>es todo lo que se mueve el recargo según la hora. Hipótesis H3 <span className="bad" style={{ fontWeight: 600 }}>✗ no se confirma</span></Say>
+      <div className="grid" style={{ gridTemplateColumns: '1fr 440px', gap: 28 }}>
+        <div className="card rv" style={{ '--d': 2 }}>
+          <h3>% de cotizaciones de Lyft con recargo, hora por hora</h3>
+          <p className="sub">Hora local de Boston · Lyft sin Shared · promedio general 8,2 %</p>
+          <HoraLinea width={860} height={400} />
+        </div>
+        <div className="card rv" style={{ '--d': 4, display: 'flex', flexDirection: 'column' }}>
+          <h3>¿Qué mueve más el recargo?</h3>
+          <p className="sub">Diferencia entre el valor más bajo y el más alto de recargo</p>
+          <div style={{ flex: 1, display: 'grid', placeItems: 'center' }}><RangoCompare width={380} /></div>
+          <p className="rv" style={{ '--d': 16, fontSize: 18, color: 'var(--text-2)', margin: '0 0 14px' }}>La zona mueve el recargo <B>casi 4 veces más</B> que la hora.</p>
+          <p className="rv h-pill bad-pill" style={{ '--d': 12, alignSelf: 'stretch', textAlign: 'center' }}>Hipótesis H3 “hay patrones por hora” · ✗ no se confirma</p>
+        </div>
       </div>
     </div>
   )
 }
 
 /* ═════════════ E3 · Modelo de precio ═════════════ */
+/* Filas de comparación de modelos: qué hace cada uno, barra, valor y sello de elegido */
+function ModelRows({ rows, max, color, fmt, azar, mejorMenor }) {
+  return (
+    <div className="mrows">
+      {azar != null && <div className="mrows-azar fade" style={{ '--d': 10, left: `calc(250px + 16px + (100% - 250px - 16px - 150px - 16px) * ${azar / max})` }}><span>azar ≈ {fDec(azar, 2)}</span></div>}
+      {rows.map((r, i) => (
+        <div key={r.modelo} className={'mrow rv' + (r.elegido ? ' on' : '')} style={{ '--d': 2 + i }}>
+          <div>
+            <div className="mrow-n">{r.modelo}</div>
+            <div className="mrow-d">{r.que}</div>
+          </div>
+          <div className="mrow-track">
+            <div className={'growx' + (r.elegido ? ' pbar' : '')} style={{ '--d': 3 + i * 3, position: 'relative', height: '100%', width: `${(r.v / max) * 100}%`, background: r.elegido ? color : 'var(--neutral)', borderRadius: 6, opacity: r.elegido ? 1 : 0.75 }} />
+          </div>
+          <div className="mrow-v">
+            <span className="num" style={{ color: r.elegido ? color : undefined }}>{fmt(r.v)}</span>
+            {r.elegido && <span className="mrow-badge" style={{ background: color }}>ELEGIDO</span>}
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+function Razones({ items, color }) {
+  return (
+    <ol className="razones">
+      {items.map(([t, d, n], i) => (
+        <li key={t} className="rv" style={{ '--d': 6 + i * 2 }}>
+          <span className="razon-n" style={{ background: color }}>{i + 1}</span>
+          <div><b>{t}</b><span>{d}</span></div>
+          {n && <span className="num razon-dato" style={{ color }}>{n}</span>}
+        </li>
+      ))}
+    </ol>
+  )
+}
 function ModeloPrecio() {
+  const QUE = {
+    'Línea base': 'usa el precio típico de cada producto',
+    Ridge: 'suma ponderada de las variables (en línea recta)',
+    'Árbol de decisión': 'una serie de preguntas sí / no',
+    'Random forest': 'promedia cientos de árboles distintos',
+  }
+  const rf = REGRESION.find((r) => r.elegido), base = REGRESION[0], ridge = REGRESION[1]
+  const rows = REGRESION.map((r) => ({ modelo: r.modelo, que: QUE[r.modelo], v: r.mae, elegido: r.elegido }))
   return (
     <div className="slide">
       <Head ent={E(3)} eje="Qué modelos usamos" track="precio" title={<>El precio se predice con <em>un dólar de error</em></>} />
-      <div className="grid" style={{ gridTemplateColumns: '1.45fr 1fr', gap: 40 }}>
+      <div className="grid" style={{ gridTemplateColumns: '1.3fr 1fr', gap: 32 }}>
         <div className="card rv" style={{ '--d': 2 }}>
-          <h3>Error al estimar el precio · menos es mejor</h3>
-          <p className="sub">Prueba final: {fInt(148494)} cotizaciones que el modelo nunca vio</p>
-          <div style={{ display: 'grid', gap: 22, marginTop: 26 }}>
-            {REGRESION.map((r, i) => (
-              <div key={r.modelo} style={{ display: 'grid', gridTemplateColumns: '220px 1fr 130px', alignItems: 'center', gap: 16 }}>
-                <div><div style={{ fontSize: 20, fontWeight: r.elegido ? 600 : 400 }}>{r.modelo}</div><div className="small muted">{r.detalle === 'con surge' ? 'con recargo' : r.detalle}</div></div>
-                <div style={{ height: 30, background: 'var(--card-2)', borderRadius: 6 }}>
-                  <div className="growx" style={{ '--d': 2 + i * 3, height: '100%', width: `${(r.mae / 3.1) * 100}%`, background: r.elegido ? 'var(--precio)' : 'var(--neutral)', borderRadius: 6 }} />
-                </div>
-                <div className="num" style={{ fontSize: 23, fontWeight: r.elegido ? 600 : 400 }}>{fUsd(r.mae)}</div>
-              </div>
-            ))}
-          </div>
-          <p className="muted small" style={{ marginTop: 22 }}>Elegimos el modelo con menor error en validación y luego lo evaluamos en fechas nuevas.</p>
+          <h3>¿Cuántos dólares se equivoca cada modelo, en promedio?</h3>
+          <p className="sub">Prueba final: {fInt(REGRESION_DATOS.test)} cotizaciones de fechas que el modelo nunca vio · <b>menos es mejor</b></p>
+          <ModelRows rows={rows} max={3.2} color="var(--precio)" fmt={(v) => fUsd(v)} />
+          <p className="modelo-nota">El árbol y random forest casi empatan. Ganó random forest porque tuvo el menor error en validación, antes de mirar la prueba.</p>
         </div>
-        <div className="card precio-card modelo-eleccion rv" style={{ '--d': 4, '--modelo-color': 'var(--precio)' }}>
+        <div className="card precio-card modelo-eleccion modelo-col rv" style={{ '--d': 4, '--modelo-color': 'var(--precio)' }}>
           <div className="label">Elegido para el precio</div>
           <h2>Random forest</h2>
-          <div className="modelo-metrica num"><Num value={REGRESION.find((r) => r.elegido).mae} format={(v) => fUsd(v)} /></div>
-          <p className="modelo-metrica-texto">de error medio en la prueba final</p>
-          <div className="modelo-motivos">
-            <p><B>Combina muchos árboles</B> para captar cómo cambia la tarifa según el producto y la distancia.</p>
-            <p>Tuvo el <B>menor error en validación</B>. La ventaja frente a un solo árbol fue pequeña.</p>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 14 }}>
+            <span className="modelo-metrica num"><Num value={rf.mae} format={(v) => fUsd(v)} /></span>
+            <span className="modelo-metrica-texto" style={{ margin: 0 }}>de error medio<br />por cotización</span>
           </div>
-          <div className="modelo-acierto">
-            <div><B>3 de cada 4</B> cotizaciones con menos del 10% de error</div>
-            <div className="modelo-acierto-barra" role="img" aria-label="El 75% de las cotizaciones tuvo menos del 10% de error"><div className="growx" style={{ '--d': 6, width: `${REGRESION.find((r) => r.elegido).dentro10 * 100}%` }} /></div>
-          </div>
-          <p className="modelo-nota">Sin conocer el recargo, el error medio fue USD {fDec(REGRESION_SIN_SURGE.mae, 2)}.</p>
+          <div className="label" style={{ marginTop: 18 }}>Por qué este modelo</div>
+          <Razones color="var(--precio)" items={[
+            ['Es el que menos se equivoca', `${fDec((1 - rf.mae / base.mae) * 100, 0)} % menos error que usar el precio típico`, `−${fDec((1 - rf.mae / base.mae) * 100, 0)}%`],
+            ['Capta combinaciones', `producto × distancia no crece en línea recta: Ridge erra ${fUsd(ridge.mae)}`, null],
+            ['Funciona en fechas nuevas', `${fDec(rf.dentro10 * 100, 0)} % de las cotizaciones con menos de 10 % de error`, '3 de 4'],
+          ]} />
+          <p className="modelo-nota" style={{ marginTop: 'auto', paddingTop: 16, borderTop: '1px solid var(--line)' }}>Sin conocer el recargo, el error medio sube a USD {fDec(REGRESION_SIN_SURGE.mae, 2)}.</p>
         </div>
       </div>
     </div>
@@ -633,14 +729,21 @@ function ModeloDesbalance() {
         <div className="card rv" style={{ '--d': 2 }}>
           <h3>Lo que ve el modelo al entrenar, según la técnica</h3>
           <p className="sub">Filas por clase · a la derecha, PR-AUC en validación (gradient boosting)</p>
-          <div style={{ marginTop: 14 }}><Balanceo width={760} /></div>
+          <div style={{ marginTop: 18 }}><Balanceo width={760} /></div>
         </div>
-        <Side gap={22}>
-          <Say d={4} size={21}>Sin hacer nada, el modelo dice <B>siempre “no”</B>: acierta el <B c="var(--bad)">{fPct(SIEMPRE_NO.accuracy)}</B> y no detecta ningún recargo.</Say>
-          {[['✗', 'Submuestreo', 'tira el 91% de los datos'], ['✗', 'SMOTE', 'inventa cotizaciones “0,37 de Back Bay”'], ['✓', 'Pesos de clase', 'datos reales; errar un recargo pesa ×11']].map(([ok, t, d], i) => (
-            <div key={t} className="rv" style={{ '--d': 6 + i * 2, display: 'grid', gridTemplateColumns: '36px 1fr', gap: 8, alignItems: 'baseline' }}>
-              <span style={{ fontSize: 26, color: ok === '✓' ? 'var(--good)' : 'var(--bad)' }}>{ok}</span>
-              <span style={{ fontSize: 21 }}><B>{t}</B> <span className="t2">— {d}</span></span>
+        <Side gap={16}>
+          <div className="trap rv" style={{ '--d': 3 }}>
+            <div className="label" style={{ color: 'var(--bad)' }}>La trampa</div>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, marginTop: 6 }}>
+              <span className="num" style={{ fontSize: 54, color: 'var(--bad)' }}>{fPct(SIEMPRE_NO.accuracy)}</span>
+              <span style={{ fontSize: 18 }}>de aciertos diciendo <B>siempre “no”</B></span>
+            </div>
+            <div className="t2" style={{ fontSize: 17, marginTop: 4 }}>…y <B>0</B> recargos detectados. Por eso no medimos con exactitud.</div>
+          </div>
+          {[['✗', 'Submuestreo', 'tira el 91 % de los datos'], ['✗', 'SMOTE', 'inventa cotizaciones “0,37 de Back Bay”'], ['✓', 'Pesos de clase', 'datos reales; errar un recargo pesa ×11']].map(([ok, t, d], i) => (
+            <div key={t} className={'tech rv' + (ok === '✓' ? ' ok' : '')} style={{ '--d': 6 + i * 2 }}>
+              <span className="tech-i">{ok}</span>
+              <span><B>{t}</B><span className="t2" style={{ display: 'block', fontSize: 17 }}>{d}</span></span>
             </div>
           ))}
         </Side>
@@ -653,42 +756,47 @@ function ModeloDesbalance() {
 function ModelosRecargo() {
   const [tipo, setTipo] = useState('val')
   const enValidacion = tipo === 'val'
-  const modelos = enValidacion ? CLASIFICACION.filter((c) => c.val != null) : CLASIFICACION
-  const rows = modelos.map((c) => ({
-    label: c.modelo, value: enValidacion ? c.val : c.prauc, text: fDec(enValidacion ? c.val : c.prauc, 3), strong: !!c.elegido,
-    color: c.elegido ? 'var(--recargo)' : c.tipo === 'base' ? 'var(--line-2)' : 'var(--neutral)', c,
-  }))
+  const QUE = {
+    'Regresión logística': 'una fórmula de probabilidad en línea recta',
+    'Árbol de decisión': 'una serie de preguntas sí / no',
+    'Random forest': 'promedia cientos de árboles distintos',
+    'Gradient boosting': 'cada árbol corrige los errores del anterior',
+  }
+  const gb = CLASIFICACION.find((c) => c.elegido), rf = CLASIFICACION.find((c) => c.modelo === 'Random forest'), azar = CLASIFICACION[0].prauc
+  const rows = CLASIFICACION.filter((c) => c.val != null).map((c) => ({ modelo: c.modelo, que: QUE[c.modelo], v: enValidacion ? c.val : c.prauc, elegido: c.elegido }))
   return (
     <div className="slide">
       <Head ent={E(3)} eje="Qué modelos usamos" track="recargo" title={<>Para el recargo elegimos <em>gradient boosting</em></>} />
-      <div className="grid" style={{ gridTemplateColumns: '1.35fr 1fr', gap: 36 }}>
+      <div className="grid" style={{ gridTemplateColumns: '1.3fr 1fr', gap: 32 }}>
         <div className="card rv" style={{ '--d': 2 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
-            <h3>{tipo === 'pr' ? 'Curvas de la prueba final' : 'Qué tan bien distingue el riesgo'}</h3>
+            <h3>¿Qué modelo encuentra mejor los recargos?</h3>
             <div className="seg-ctrl" style={{ flexShrink: 0 }}>
               {[['val', 'Validación'], ['test', 'Prueba'], ['pr', 'Curvas']].map(([v, label]) => <button key={v} className={tipo === v ? 'on' : ''} onClick={() => setTipo(v)}>{label}</button>)}
             </div>
           </div>
-          <p className="sub">{enValidacion ? 'Con esta comparación elegimos · PR-AUC: más alto es mejor' : 'Prueba final del 15 al 18/12 · el azar vale 0,083 de PR-AUC'}</p>
+          <p className="sub">PR-AUC: qué tan bien pone primero las cotizaciones que sí tienen recargo · <b>más es mejor</b> · {enValidacion ? 'con estos datos elegimos' : tipo === 'test' ? 'prueba final, después de elegir' : 'prueba final'}</p>
           {tipo !== 'pr'
-            ? <div key={tipo} style={{ marginTop: 18, minHeight: 350 }}><HBar rows={rows} width={780} rowH={enValidacion ? 78 : 58} labelW={250} barH={26} max={0.16} tip={(r) => <><b>{r.label}</b><br />PR-AUC en {enValidacion ? 'validación' : 'prueba'}: {fDec(r.value, 3)}</>} /></div>
-            : <Curvas tipo="pr" width={780} height={320} />}
-          <p className="modelo-nota">{enValidacion ? 'Gradient boosting obtuvo el mejor puntaje antes de abrir la prueba final.' : 'La prueba evalúa la elección previa. Random forest y gradient boosting quedaron muy cerca.'}</p>
+            ? <div key={tipo}><ModelRows rows={rows} max={0.16} color="var(--recargo)" fmt={(v) => fDec(v, 3)} azar={azar} /></div>
+            : <Curvas tipo="pr" width={780} height={330} />}
+          <p className="modelo-nota">{enValidacion ? 'Gradient boosting tuvo el mejor puntaje en validación: por eso lo elegimos.' : 'En la prueba, random forest quedó apenas arriba (0,142 vs 0,140): prácticamente un empate. No cambiamos la elección después de ver la prueba.'}</p>
         </div>
         <div className="modelo-recargo-lateral">
           <div className="card recargo-card modelo-eleccion rv" style={{ '--d': 4, '--modelo-color': 'var(--recargo)' }}>
             <div className="label">Elegido para anticipar el recargo</div>
             <h2>Gradient boosting</h2>
-            <div className="modelo-motivos">
-              <p>Agrega árboles que <B>corrigen los errores anteriores</B> y captan combinaciones de ruta y distancia.</p>
-              <p>Logró el <B>mejor resultado en validación</B>: distinguió mejor las cotizaciones con recargo, que son pocas.</p>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 14 }}>
+              <span className="modelo-metrica num"><Num value={gb.val} format={(v) => fDec(v, 3)} /></span>
+              <span className="modelo-metrica-texto" style={{ margin: 0 }}>PR-AUC en validación<br />el azar da ≈ {fDec(azar, 3)}</span>
             </div>
-            <div className="modelo-validacion rv" style={{ '--d': 6 }}>
-              <span className="num">{fDec(CLASIFICACION.find((c) => c.elegido).val, 3)}</span>
-              <span>PR-AUC en validación<br />frente a {fDec(CLASIFICACION.find((c) => c.modelo === 'Random forest').val, 3)} de random forest</span>
-            </div>
+            <div className="label" style={{ marginTop: 18 }}>Por qué este modelo</div>
+            <Razones color="var(--recargo)" items={[
+              ['El mejor en validación', `superó a random forest (${fDec(rf.val, 3)}), el segundo`, `+${fDec((gb.val / rf.val - 1) * 100, 0)}%`],
+              ['Mucho mejor que el azar', 'ordena el riesgo: los avisos caen donde hay recargo', `${fDec(gb.val / azar, 1)}×`],
+              ['Aprende de sus errores', 'cada árbol nuevo se enfoca en los recargos que el anterior no vio', null],
+            ]} />
           </div>
-          <p className="modelo-limite rv" style={{ '--d': 7 }}>En la prueba, los modelos rindieron parecido. Para mejorar falta información de <B>pedidos y conductores en tiempo real</B>.</p>
+          <p className="modelo-limite rv" style={{ '--d': 9 }}>Ningún modelo pasa mucho de 0,14: para mejorar falta información de <B>pedidos y conductores en tiempo real</B>.</p>
         </div>
       </div>
     </div>
@@ -704,15 +812,21 @@ function QueMira() {
   return (
     <div className="slide">
       <Head ent={E(3)} eje="Qué modelos usamos" track="recargo" title={<>Lo que mira el modelo: <em>la ruta</em></>} />
-      <div className="grid" style={{ gridTemplateColumns: '1fr 1.15fr', gap: 36, alignItems: 'center' }}>
+      <div className="grid" style={{ gridTemplateColumns: '620px 1fr', gap: 30 }}>
         <div className="card rv" style={{ '--d': 2 }}>
           <h3>Cuánto empeora si se desordena cada grupo</h3>
           <p className="sub">Importancia por permutación (caída de PR-AUC)</p>
-          <HBar rows={imp} width={620} rowH={54} labelW={220} barH={22} max={0.05} />
+          <HBar rows={imp} width={560} rowH={58} labelW={190} barH={24} max={0.05} />
+          <p className="t2" style={{ fontSize: 16, marginTop: 10 }}>Si se mezcla al azar la ruta, el modelo pierde casi todo; si se mezclan clima u hora, no cambia nada.</p>
         </div>
-        <div>
-          <Figura id="fig09_recargo_arbol_reglas" h={300} d={4} />
-          <Say d={7} size={20} style={{ marginTop: 18 }}>El árbol lo confirma: su primera pregunta es <B>“¿qué tan seguido hubo recargo en esta ruta?”</B>. Clima y hora: casi nada.</Say>
+        <div className="card rv" style={{ '--d': 4 }}>
+          <h3>Las primeras preguntas que hace el árbol de decisión</h3>
+          <p className="sub">“Ruta &gt; 6,3 %” = en esa ruta hubo recargo en más del 6,3 % de las cotizaciones de entrenamiento · el % de cada caja es la parte de las filas que llega ahí</p>
+          <div style={{ marginTop: 14 }}><ArbolReglas width={700} /></div>
+          <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginTop: 16, flexWrap: 'wrap' }}>
+            <span className="h-pill" style={{ color: 'var(--recargo)', background: 'var(--accent-soft)' }}>5 de 7 preguntas son sobre la ruta</span>
+            <span className="t2" style={{ fontSize: 16 }}>2 sobre la distancia · ninguna sobre clima u hora</span>
+          </div>
         </div>
       </div>
     </div>
@@ -807,7 +921,7 @@ function Umbral() {
       <ol className="umbral-pasos rv" style={{ '--d': 2 }}>
         <li><span className="umbral-paso-num">1</span><div><h2>Probamos distintos límites</h2><p>Más bajo: más avisos.<br />Más alto: menos avisos.</p></div></li>
         <li><span className="umbral-paso-num">2</span><div><h2>Calculamos el ahorro neto</h2><p>Un acierto suma <B c="var(--good)">≈USD 7,73</B>.<br />Una falsa alarma resta <B c="var(--bad)">USD 1</B>.</p></div></li>
-        <li><span className="umbral-paso-num">3</span><div><h2>Elegimos en validación</h2><p>El mejor límite fue <B>0,57</B>.<br />Lo probamos en fechas nuevas, sin cambiarlo.</p></div></li>
+        <li><span className="umbral-paso-num">3</span><div><h2>Elegimos el máximo</h2><p>En validación, el mayor ahorro fue con <B>0,57</B>.<br />Lo probamos en fechas nuevas, sin cambiarlo.</p></div></li>
       </ol>
       <div className="umbral-paneles">
         <section className="card recargo-card umbral-explorar rv" style={{ '--d': 3 }}>
@@ -817,10 +931,13 @@ function Umbral() {
             <input type="range" min={0.2} max={0.8} step={0.0001} value={t} style={{ '--p': pct + '%' }} onChange={(e) => setT(+e.target.value)} aria-label="Límite del puntaje de riesgo para avisar" aria-valuetext={fDec(cur.t, 4)} />
             <div className="umbral-presets">{presets.map(([v, l]) => <button key={v} className="chip btn" style={Math.abs(cur.t - v) < 0.0001 ? { borderColor: 'var(--accent)', background: 'var(--accent-soft)', color: 'var(--text)' } : null} onClick={() => setT(v)}>{l}</button>)}</div>
           </div>
-          <div className="umbral-chart-label"><span>Ahorro neto cada 1.000 cotizaciones de prueba</span><strong className="num" style={{ color: beneficio >= 0 ? 'var(--good)' : 'var(--bad)' }}>{beneficio >= 0 ? '+' : '−'}USD {fDec(Math.abs(beneficio), 2)}</strong></div>
-          <BeneficioCurva t={cur.t} elegido={FINAL.umbral} width={748} height={172} />
-          <div className="umbral-extremos"><span>Más avisos y más falsas alarmas</span><span>Menos avisos y menos recargos detectados</span></div>
-          <p className="umbral-aclaracion">La curva muestra la <B>prueba final</B>. El límite se eligió antes, con los datos de validación.</p>
+          <div className="umbral-chart-label"><span>Ahorro neto según el límite</span></div>
+          <BeneficioCurva t={cur.t} elegido={FINAL.umbral} width={748} height={190} />
+          <p className="cuenta-porque">
+            {cur.t < FINAL.umbral - 0.02 ? <>Con un límite más bajo avisamos más, pero <B c="var(--bad)">las falsas alarmas crecen más rápido</B> que los aciertos.</>
+              : cur.t > FINAL.umbral + 0.02 ? <>Con un límite más alto casi no hay falsas alarmas, pero <B c="var(--bad)">se escapan muchos recargos</B> y se ahorra menos.</>
+              : <><B>0,57 es el punto de equilibrio</B>: el límite con mayor ahorro neto en validación. La curva (prueba final) confirma que queda cerca del máximo.</>}
+          </p>
         </section>
         <section className="card umbral-cliente rv" style={{ '--d': 4 }}>
           <div className="label">El valor de un aviso correcto</div>
@@ -856,6 +973,11 @@ function Umbral() {
 
 /* ═════════════ E4 · Recomendaciones ═════════════ */
 function Recomendaciones() {
+  const DATO = {
+    Pasajero: ['hasta 7×', 'más recargo según la zona de salida'],
+    Conductor: ['13,4 % vs 1,8 %', 'Back Bay frente a North End'],
+    Plataforma: ['USD 1,08', 'de error al estimar la tarifa'],
+  }
   const recs = [
     ['Pasajero', [
       ['recargo', 'Si salís de Back Bay, Fenway, Theatre District o las universidades, compará con la otra app.'],
@@ -876,19 +998,23 @@ function Recomendaciones() {
       <Head ent={E(4)} eje="Qué valor ofrecemos" track="ambas" title={<>Qué puede hacer <em>cada actor</em> con esto</>} />
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 26 }}>
         {recs.map(([who, items], i) => (
-          <div key={who} className="card rv" style={{ '--d': 2 + i * 2, padding: '30px 30px' }}>
+          <div key={who} className="card rv actor-card" style={{ '--d': 2 + i * 2, padding: '30px 30px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 16, color: 'var(--accent)' }}>
-              <ActorIcon who={who} size={60} />
+              <span className="actor-ico" style={{ animationDelay: `${i * 0.6}s` }}><ActorIcon who={who} size={60} /></span>
               <span style={{ fontFamily: 'var(--serif)', fontSize: 42, color: 'var(--text)' }}>{who}</span>
             </div>
             <ul className="clean" style={{ display: 'grid', gap: 18, marginTop: 24 }}>
               {items.map(([tr, t], j) => (
-                <li key={j} className="rv" style={{ '--d': 3 + i * 2 + j, display: 'grid', gridTemplateColumns: '14px 1fr', gap: 12, fontSize: 20, lineHeight: 1.45, color: 'var(--text-2)' }}>
+                <li key={j} className="rv" style={{ '--d': 3 + i * 2 + j, display: 'grid', gridTemplateColumns: '14px 1fr', gap: 12, fontSize: 21, lineHeight: 1.45, color: 'var(--text-2)' }}>
                   <i className="dot" style={{ marginTop: 10, background: tr === 'precio' ? 'var(--precio)' : 'var(--recargo)' }} />
                   <span style={{ minWidth: 0 }}>{t}</span>
                 </li>
               ))}
             </ul>
+            <div className="actor-dato rv" style={{ '--d': 8 + i }}>
+              <span className="num">{DATO[who][0]}</span>
+              <span>{DATO[who][1]}</span>
+            </div>
           </div>
         ))}
       </div>
@@ -903,24 +1029,24 @@ function Recomendaciones() {
 /* ═════════════ E4 · Hipótesis ═════════════ */
 function Hipotesis() {
   const hs = [
-    ['H1', 'Producto y distancia definen el precio', true],
-    ['H2', 'Uber y Lyft difieren según el nivel', true],
-    ['H3', 'Hay patrones por hora y día', false],
-    ['H4', 'Hay recorridos más caros por milla', true],
-    ['H5', 'El mal clima encarece los viajes', false],
-    ['H6', 'Los productos forman grupos tarifarios', true],
+    ['H1', 'Producto y distancia definen el precio', true, 'Producto explica el 77 % y distancia el 12 %'],
+    ['H2', 'Uber y Lyft difieren según el nivel', true, 'Compartido: Lyft 29 % más barato · Black: Uber 8 % más barato'],
+    ['H3', 'Hay patrones por hora y día', false, 'Según la hora, el recargo solo va de 7,0 % a 9,6 %'],
+    ['H4', 'Hay recorridos más caros por milla', true, 'Rutas cortas: hasta USD 17,95 por milla, por la tarifa base'],
+    ['H5', 'El mal clima encarece los viajes', false, 'Recargo con lluvia 7,9 % vs 8,3 % sin lluvia'],
+    ['H6', 'Los productos forman grupos tarifarios', true, '3 familias de tarifa: económico, intermedio y premium'],
   ]
   return (
     <div className="slide">
       <Head ent={E(4)} eje="Qué hallazgos encontramos · balance final" track="ambas" title={<>Lo que creíamos en la Entrega 1, <em>y lo que encontramos</em></>} />
       <div className="grid" style={{ gridTemplateColumns: '320px 1fr', gap: 50, alignItems: 'center' }}>
         <div className="rv" style={{ '--d': 2 }}><Donut ok={4} total={6} size={300} /></div>
-        <div style={{ display: 'grid', gap: 12 }}>
-          {hs.map(([k, h, ok], i) => (
-            <div key={k} className="card rv" style={{ '--d': 3 + i, display: 'grid', gridTemplateColumns: '60px 1fr 170px', alignItems: 'center', gap: 18, padding: '18px 26px' }}>
+        <div style={{ display: 'grid', gap: 10 }}>
+          {hs.map(([k, h, ok, ev], i) => (
+            <div key={k} className="card rv hyp-row" style={{ '--d': 3 + i, borderLeft: `4px solid ${ok ? 'var(--good)' : 'var(--bad)'}` }}>
               <span className="num muted" style={{ fontSize: 20 }}>{k}</span>
-              <span style={{ fontSize: 23 }}>{h}</span>
-              <span style={{ fontWeight: 600, fontSize: 19, color: ok ? 'var(--good)' : 'var(--bad)', textAlign: 'right' }}>{ok ? '✓ Confirmada' : '✗ No se cumple'}</span>
+              <span><span style={{ fontSize: 22, display: 'block' }}>{h}</span><span className="t2" style={{ fontSize: 16 }}>{ev}</span></span>
+              <span className={'hyp-stamp ' + (ok ? 'ok' : 'no')} style={{ animationDelay: `${1.2 + i * 0.35}s` }}>{ok ? '✓ Confirmada' : '✗ No se cumple'}</span>
             </div>
           ))}
         </div>
@@ -934,7 +1060,7 @@ function Cierre() {
   return (
     <div className="slide free" style={{ padding: '64px 88px 96px' }}>
       <div className="kicker rv">Conclusión · el recorrido completo</div>
-      <div className="rv" style={{ '--d': 1, marginTop: 10 }}><ForkLine width={1424} height={170} /></div>
+      <div className="rv" style={{ '--d': 1, marginTop: 10 }}><ForkLine width={1424} height={200} /></div>
       <div className="grid rv" style={{ '--d': 6, gridTemplateColumns: '1fr 1fr', gap: 26, marginTop: 10 }}>
         <div className="card precio-card" style={{ padding: '30px 36px' }}>
           <Track v="precio" />

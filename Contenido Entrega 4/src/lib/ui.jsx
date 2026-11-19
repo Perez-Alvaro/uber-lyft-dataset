@@ -47,7 +47,9 @@ export function Num({ value, format = fInt, duration = 1300, delay = 250, classN
       if (p < 1) raf = requestAnimationFrame(tick)
     }
     raf = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(raf)
+    // respaldo: si el navegador frena requestAnimationFrame (pestaña en segundo plano), igual termina en el valor final
+    const done = setTimeout(() => setV(value), delay + duration + 120)
+    return () => { cancelAnimationFrame(raf); clearTimeout(done) }
   }, [value, duration, delay])
   return <span className={'num ' + className}>{format(v)}</span>
 }

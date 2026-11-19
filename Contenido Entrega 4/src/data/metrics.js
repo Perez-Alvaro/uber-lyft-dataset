@@ -241,3 +241,29 @@ export const CLIMA_CORR = [
 export const COLUMNAS = [
   ['Identificación y tiempo', 7], ['Viaje y servicio', 8], ['Ubicación', 2], ['Clima', 40],
 ]
+
+// Entrega 1 · primeras pistas sobre el recargo de Lyft (paneles de surge_active_insights.png)
+export const PISTA_PRODUCTO = [
+  ['Lyft', 8.2], ['Lyft XL', 8.2], ['Lux', 8.2], ['Lux Black', 8.2], ['Lux Black XL', 8.2], ['Shared', 0],
+]
+export const PISTA_ZONA = [
+  ['Back Bay', 11.2], ['Northeastern University', 10.4], ['Fenway', 10.3], ['Boston University', 9.6],
+  ['Theatre District', 9.6], ['Beacon Hill', 8.1], ['South Station', 6.6], ['Financial District', 5.7],
+  ['West End', 3.9], ['North Station', 3.3], ['Haymarket Square', 1.6], ['North End', 1.5],
+]
+export const PISTA_CORR = [
+  ['Índice UV', -0.0061], ['Sensación térmica', -0.0048], ['Nubosidad', -0.0045], ['Prob. de lluvia', -0.0041],
+  ['Temperatura', -0.0037], ['Presión', -0.0032], ['Humedad', -0.0029], ['Viento', 0.0026], ['Visibilidad', 0.0026],
+  ['Día de la semana', -0.0022], ['Ráfagas de viento', 0.0021], ['Intensidad de lluvia', -0.0015], ['Hora del día', -0.0011],
+]
+export const PISTA_AUC = [
+  { t: 'Solo clima + hora', s: 'sin ruta ni producto', v: 0.50 },
+  { t: 'Ruta + producto', s: 'tabla histórica', v: 0.70 },
+  { t: 'Modelo completo', s: 'ruta + producto + clima + hora', v: 0.71 },
+]
+
+// % de cotizaciones de Lyft (sin Shared) con recargo, por hora local (leído del gráfico 18 de la Entrega 2; ±0,05 pp)
+export const RECARGO_HORA = [
+  8.10, 8.17, 7.50, 8.48, 8.02, 8.02, 8.06, 8.34, 9.60, 8.06, 7.87, 7.00,
+  8.02, 8.13, 7.68, 8.93, 8.42, 8.44, 7.92, 8.50, 8.15, 8.46, 8.42, 8.08,
+]
