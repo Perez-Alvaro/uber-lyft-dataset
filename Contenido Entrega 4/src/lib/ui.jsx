@@ -38,7 +38,9 @@ export function Num({ value, format = fInt, duration = 1300, delay = 250, classN
     const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches || document.documentElement.classList.contains('estatico')
     if (reduce) { setV(value); return }
     const start = performance.now() + delay
+    let fin = false
     const tick = (now) => {
+      if (fin) return
       if (now < start) { raf = requestAnimationFrame(tick); return }
       t0 ??= now
       const p = Math.min(1, (now - t0) / duration)
@@ -48,7 +50,7 @@ export function Num({ value, format = fInt, duration = 1300, delay = 250, classN
     }
     raf = requestAnimationFrame(tick)
     // respaldo: si el navegador frena requestAnimationFrame (pestaña en segundo plano), igual termina en el valor final
-    const done = setTimeout(() => setV(value), delay + duration + 120)
+    const done = setTimeout(() => { fin = true; cancelAnimationFrame(raf); setV(value) }, delay + duration + 120)
     return () => { cancelAnimationFrame(raf); clearTimeout(done) }
   }, [value, duration, delay])
   return <span className={'num ' + className}>{format(v)}</span>

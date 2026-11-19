@@ -57,7 +57,7 @@ Sugerencia para el día de la defensa: proyectar la ventana principal en pantall
 Todos los números vienen del repositorio. No hay valores inventados.
 
 - `src/data/metrics.js`: métricas de `Contenido Entrega 3/6_Resultados/metricas.json`, de los CSV de esa carpeta y de los gráficos de la Entrega 2. Las cifras corregidas siguen la sección 11 de `Contexto.md`.
-- `src/data/curvas.json`: curvas ROC/PR y beneficio por umbral, calculados a partir de `recargo_predicciones_test.csv` con `scripts/generar_curvas.py`. En el umbral 0,5722 reproduce exactamente VP 2.534, FP 16.265 y +USD 56,11.
+- `src/data/curvas.json`: curvas ROC/PR y beneficio por umbral, calculados a partir de `recargo_predicciones_test.csv` con `scripts/generar_curvas.py`. El costo de cada umbral se recalcula en `charts.jsx` con la matriz corregida (FN = −USD 8,73). El umbral final (0,35) y la matriz antes/después salen de `Contenido Entrega 3/8_Pruebas_critica_FN/resultados`.
 - `src/data/tarifas.json`: `precio_curvas_tarifa.csv` (tarifa predicha sin recargo por producto y distancia).
 - `public/graficos/`: copias de los PNG de `Contenido Entrega 1`, `Contenido Entrega 2/graficos` y `Contenido Entrega 3/5_Graficos`.
 - Las posiciones de las zonas en el mapa son aproximadas (centros de OpenStreetMap).

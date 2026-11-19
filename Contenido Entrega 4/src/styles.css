@@ -835,3 +835,42 @@ html.estatico .peak-ring { animation: none; }
 .sens th { text-align: left; font-family: var(--mono); font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 400; padding: 4px 8px; border-bottom: 1px solid var(--line-2); }
 .sens td { padding: 5px 8px; border-bottom: 1px solid var(--line); font-family: var(--mono); color: var(--text-2); }
 .sens tr.on td { color: var(--text); font-weight: 700; background: var(--accent-soft); }
+.actor-dato .num { font-size: 40px; }
+.actor-dato span:last-child { font-size: 17px; }
+.actor-card ul.clean { margin-bottom: 40px; }
+
+/* ───────────── Matriz de confusión antes / después (costo del falso negativo) ───────────── */
+.mfn { display: flex; flex-direction: column; gap: 10px; }
+.mfn-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.mfn-umbral { font-size: 20px; color: var(--recargo); font-weight: 700; }
+.mfn-cols { display: grid; grid-template-columns: 150px 1fr 1fr; font-family: var(--mono); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.mfn-cols span:first-child { grid-column: 2; }
+.mfn-row { display: grid; grid-template-columns: 150px 1fr; gap: 0; align-items: stretch; }
+.mfn-real { display: flex; flex-direction: column; justify-content: center; font-size: 16px; font-weight: 600; padding-right: 12px; }
+.mfn-real .num { font-size: 13px; color: var(--muted); font-weight: 400; margin-top: 2px; }
+.mfn-cells { display: flex; gap: 6px; height: 150px; }
+.mfn-cell { flex-basis: 0; min-width: 132px; border-radius: 14px; padding: 14px 16px; display: flex; flex-direction: column; justify-content: center; gap: 4px; overflow: hidden; transition: flex-grow 1.1s cubic-bezier(.6,0,.25,1), background .6s; }
+.mfn-t { font-size: 15px; font-weight: 600; }
+.mfn-p { font-size: 34px; line-height: 1; font-weight: 700; transition: color .6s; }
+.mfn-v { font-size: 13px; color: var(--text-2); white-space: nowrap; }
+.mfn-cell.vn { background: var(--card-2); }
+.mfn-cell.fp { background: color-mix(in srgb, var(--recargo) 16%, var(--card)); }
+.mfn-cell.fp .mfn-p { color: var(--recargo); }
+.mfn-cell.fn { background: var(--bad-soft); box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--bad) 55%, transparent); animation: fnPulse 2.4s ease-in-out infinite; }
+.mfn-cell.fn .mfn-p, .mfn-cell.fn .mfn-t { color: var(--bad); }
+.mfn-cell.vp { background: var(--good-soft); }
+.mfn-cell.vp .mfn-p { color: var(--good); }
+@keyframes fnPulse { 50% { box-shadow: inset 0 0 0 2px var(--bad), 0 0 18px color-mix(in srgb, var(--bad) 35%, transparent); } }
+.fn-costo { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px 20px; display: flex; flex-direction: column; gap: 8px; }
+.fn-swap { display: flex; align-items: center; gap: 12px; }
+.fn-swap .num { font-size: 30px; }
+.fn-stat { display: grid; grid-template-columns: 1fr auto auto auto; gap: 12px; align-items: baseline; padding: 10px 4px; border-bottom: 1px solid var(--line); }
+.fn-stat-t { font-size: 18px; }
+.fn-stat-a { font-size: 20px; color: var(--muted); }
+.fn-stat-b { font-size: 30px; font-weight: 700; }
+@media (prefers-reduced-motion: reduce) { .mfn-cell { transition: none; } .mfn-cell.fn { animation: none; } }
+html.estatico .mfn-cell { transition: none; }
+html.estatico .mfn-cell.fn { animation: none; }
+.mfn-cell { min-width: 150px; }
+.mfn-cell.fn { min-width: 172px; }
+.mfn-p { white-space: nowrap; font-size: 32px; }

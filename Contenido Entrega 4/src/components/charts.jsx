@@ -1,8 +1,8 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { fInt, fDec, fPct, fUsd, Tip, Num } from '../lib/ui.jsx'
 import {
   PISTA_PRODUCTO, PISTA_ZONA, PISTA_CORR, PISTA_AUC, RECARGO_HORA,
-  PRECIO_RECARGO, ETL_PASOS, CALENDARIO, PARTICION, ZONAS, KMEANS, DECILES, RECARGO, BALANCEO, FINAL,
+  PRECIO_RECARGO, ETL_PASOS, CALENDARIO, PARTICION, ZONAS, KMEANS, DECILES, RECARGO, BALANCEO, FINAL, MATRIZ_FN,
 } from '../data/metrics.js'
 import CURVAS from '../data/curvas.json'
 import TARIFAS from '../data/tarifas.json'
@@ -535,42 +535,42 @@ export function Deciles({ width = 620, height = 320 }) {
 }
 
 /* ───────────────── Laboratorio de umbral ───────────────── */
-export const UMBRALES = [...CURVAS.umbral, {
-  t: FINAL.umbral, tp: FINAL.tp, fp: FINAL.fp, fn: FINAL.fn, tn: FINAL.tn, b: FINAL.beneficio,
-}].sort((a, b) => a.t - b.t)
+// Resultado de cada límite con la matriz corregida: +7,73 por acierto, −1 por falsa alarma, −8,73 por recargo sin aviso
+export const UMBRALES = CURVAS.umbral.map((p) => ({
+  ...p, b: (p.tp * FINAL.vp - p.fp * FINAL.costoFalsa - p.fn * FINAL.costoFN) / CURVAS.n * 1000,
+})).sort((a, b) => a.t - b.t)
 export const N_TEST = CURVAS.n
-export function BeneficioCurva({ t, width = 560, height = 230, elegido }) {
-  const pad = { l: 64, r: 14, t: 14, b: 34 }
+export function BeneficioCurva({ t, width = 560, height = 230, elegido, antes }) {
+  const pad = { l: 64, r: 14, t: 18, b: 34 }
   const xs = UMBRALES
   const x = (v) => pad.l + ((v - 0.2) / 0.6) * (width - pad.l - pad.r)
-  const ymin = -160, ymax = 95
+  const ymin = -780, ymax = -40
   const y = (v) => pad.t + (1 - (v - ymin) / (ymax - ymin)) * (height - pad.t - pad.b)
   const path = xs.map((p, i) => `${i ? 'L' : 'M'}${x(p.t).toFixed(1)},${y(p.b).toFixed(1)}`).join(' ')
   const cur = xs.reduce((a, p) => (Math.abs(p.t - t) < Math.abs(a.t - t) ? p : a), xs[0])
+  const pk = xs.reduce((a, p) => (p.b > a.b ? p : a), xs[0])
+  const sinModelo = xs[xs.length - 1].b
   return (
-    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Ahorro neto en la prueba final según el límite de riesgo. El límite 0,57 se fijó previamente en validación.">
-      <line x1={pad.l} x2={width - pad.r} y1={y(0)} y2={y(0)} stroke="var(--line-2)" />
-      <text x={pad.l - 8} y={y(0)} dy=".35em" textAnchor="end" className="tick">0</text>
-      <text x={pad.l - 8} y={pad.t + 6} textAnchor="end" className="tick" style={{ fontSize: 12 }}>más</text>
-      <text x={pad.l - 8} y={pad.t + 20} textAnchor="end" className="tick" style={{ fontSize: 12 }}>ahorro ↑</text>
+    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Costo total en la prueba final según el límite de riesgo. El límite 0,35 se fijó previamente en validación.">
+      <line x1={pad.l} x2={width - pad.r} y1={y(sinModelo)} y2={y(sinModelo)} stroke="var(--bad)" strokeDasharray="4 5" opacity=".6" />
+      <text x={pad.l + 6} y={y(sinModelo) - 6} className="lbl" style={{ fontSize: 12, fill: 'var(--bad)' }}>sin avisos: todos los recargos por sorpresa</text>
+      <text x={pad.l - 8} y={pad.t + 6} textAnchor="end" className="tick" style={{ fontSize: 12 }}>menos</text>
+      <text x={pad.l - 8} y={pad.t + 20} textAnchor="end" className="tick" style={{ fontSize: 12 }}>costo ↑</text>
       {[0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8].map((v) => <text key={v} x={x(v)} y={height - 12} textAnchor="middle" className="tick">{fDec(v, 1)}</text>)}
-      <path d={`${path} L${x(0.8)},${y(0)} L${x(0.2)},${y(0)} Z`} fill="var(--accent-soft)" opacity={0.6} />
+      <path d={`${path} L${x(0.8)},${y(ymin)} L${x(0.2)},${y(ymin)} Z`} fill="var(--accent-soft)" opacity={0.6} />
       <path className="draw" pathLength="1" d={path} fill="none" stroke="var(--accent)" strokeWidth={2.5} />
+      {antes != null && <>
+        <line x1={x(antes)} x2={x(antes)} y1={pad.t} y2={height - pad.b} stroke="var(--muted)" strokeDasharray="2 5" />
+        <text x={x(antes) + 6} y={pad.t + 10} className="val-muted" style={{ fontSize: 12 }}>antes: {fDec(antes, 2)}</text>
+      </>}
       <line x1={x(elegido)} x2={x(elegido)} y1={pad.t} y2={height - pad.b} stroke="var(--text-2)" strokeDasharray="3 4" />
-      <text x={x(elegido) + 6} y={height - pad.b - 6} className="val-muted" style={{ fontSize: 12 }}>límite elegido: 0,57</text>
-      {(() => {
-        const pk = xs.reduce((a, p) => (p.b > a.b ? p : a), xs[0])
-        return (
-          <g>
-            <circle className="anim-loop peak-ring" cx={x(pk.t)} cy={y(pk.b)} r={10} fill="none" stroke="var(--good)" strokeWidth={2} />
-            <text x={x(pk.t)} y={y(pk.b) - 16} textAnchor="middle" className="lbl-strong" style={{ fontSize: 12, fill: 'var(--good)' }}>máximo ahorro</text>
-          </g>
-        )
-      })()}
-      <text x={x(0.24)} y={y(-120)} className="lbl" style={{ fontSize: 12, fill: 'var(--bad)' }}>las falsas alarmas</text>
-      <text x={x(0.24)} y={y(-120) + 15} className="lbl" style={{ fontSize: 12, fill: 'var(--bad)' }}>se comen el ahorro</text>
-      <text x={x(0.79)} y={y(-40)} textAnchor="end" className="lbl" style={{ fontSize: 12, fill: 'var(--muted)' }}>se escapan recargos:</text>
-      <text x={x(0.79)} y={y(-40) + 15} textAnchor="end" className="lbl" style={{ fontSize: 12, fill: 'var(--muted)' }}>el ahorro cae a cero</text>
+      <text x={x(elegido) - 6} y={pad.t + 10} textAnchor="end" className="val-muted" style={{ fontSize: 12, fill: 'var(--text)' }}>elegido: {fDec(elegido, 2)}</text>
+      <circle className="anim-loop peak-ring" cx={x(pk.t)} cy={y(pk.b)} r={10} fill="none" stroke="var(--good)" strokeWidth={2} />
+      <text x={x(pk.t)} y={y(pk.b) - 16} textAnchor="middle" className="lbl-strong" style={{ fontSize: 12, fill: 'var(--good)' }}>menor costo</text>
+      <text x={x(0.22)} y={y(-330)} className="lbl" style={{ fontSize: 12, fill: 'var(--bad)' }}>demasiadas</text>
+      <text x={x(0.22)} y={y(-330) + 15} className="lbl" style={{ fontSize: 12, fill: 'var(--bad)' }}>falsas alarmas</text>
+      <text x={x(0.79)} y={y(-430)} textAnchor="end" className="lbl" style={{ fontSize: 12, fill: 'var(--bad)' }}>se escapan recargos:</text>
+      <text x={x(0.79)} y={y(-430) + 15} textAnchor="end" className="lbl" style={{ fontSize: 12, fill: 'var(--bad)' }}>el costo se dispara</text>
       <circle cx={x(cur.t)} cy={y(cur.b)} r={7} fill="var(--text)" stroke="var(--accent)" strokeWidth={3} />
     </svg>
   )
@@ -648,7 +648,7 @@ export function ForkLine({ width = 1424, height = 300 }) {
         <text x={xs[1] + 26} y={yA - ot} className="lbl-strong" style={{ fontSize: fs, fill: 'var(--precio)' }}>PRECIO · parte estructural · regresión</text>
         <text x={xs[1] + 26} y={yB + ob} className="lbl-strong" style={{ fontSize: fs, fill: 'var(--recargo)' }}>RECARGO · parte dinámica · clasificación</text>
         <text x={end} y={yA - ot} textAnchor="end" className="val" style={{ fontSize: fv, fontWeight: 600, fill: 'var(--precio)' }}>USD 1,08 de error</text>
-        <text x={end} y={yB + ob} textAnchor="end" className="val" style={{ fontSize: fv, fontWeight: 600, fill: 'var(--recargo)' }}>+USD 56 cada 1.000 cotiz.</text>
+        <text x={end} y={yB + ob} textAnchor="end" className="val" style={{ fontSize: fv, fontWeight: 600, fill: 'var(--recargo)' }}>90 % de los recargos anticipados</text>
       </g>
     </svg>
   )
@@ -791,7 +791,7 @@ function PistaProducto() {
   const max = 10
   return (
     <div className="pz">
-      <PanelHead t="% de cotizaciones con recargo, por producto" s="De cada 100 pedidos de cada producto, ¿cuántos vinieron con recargo?" />
+      <PanelHead t="% de cotizaciones con recargo, por producto" s="De cada 100 cotizaciones, ¿cuántas con recargo?" />
       <div className="pz-body" style={{ '--lw': '140px', '--vw': '140px', gap: 16 }}>
         <div className="prow" style={{ marginBottom: -6 }}>
           <span />
@@ -825,7 +825,7 @@ function PistaZona() {
   const last = PISTA_ZONA.length - 1
   return (
     <div className="pz">
-      <PanelHead t="% de cotizaciones con recargo, según la zona de origen" s="El barrio donde empieza el viaje cambia mucho la chance de recargo" />
+      <PanelHead t="% de cotizaciones con recargo, según la zona de origen" s="El barrio de salida cambia mucho la chance" />
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 150px', gap: 18, flex: 1, minHeight: 0 }}>
         <div className="pz-body" style={{ '--lw': '178px', '--vw': '64px', gap: 7 }}>
           {PISTA_ZONA.map(([n, v], i) => {
@@ -862,7 +862,7 @@ function PistaClima() {
   const cx = x(0.006) - 2
   return (
     <div className="pz">
-      <PanelHead t="¿Cuánto se relacionan el clima y la hora con el recargo?" s="Correlación de cada variable con tener recargo, en una escala de 0 (ninguna relación) a 1 (relación total)" />
+      <PanelHead t="¿Cuánto se relacionan el clima y la hora con el recargo?" s="Correlación con tener recargo: 0 = ninguna, 1 = total" />
       <svg width={W} height={300} style={{ overflow: 'visible', marginTop: 8 }}>
         {bands.map(([a, b, n], i) => (
           <g key={n} className="fade" style={{ '--d': 2 + i }}>
@@ -883,7 +883,7 @@ function PistaClima() {
         <g className="fade" style={{ '--d': 18 }}>
           <path d={`M${cx + 30},${axisY - 110} C${cx + 60},${axisY - 110} ${cx + 70},${axisY - 130} ${cx + 96},${axisY - 130}`} fill="none" stroke="var(--recargo)" strokeWidth={1.6} />
           <text x={cx + 104} y={axisY - 136} className="lbl-strong" style={{ fontSize: 20 }}>Las 13 variables de clima y hora están acá</text>
-          <text x={cx + 104} y={axisY - 110} className="lbl" style={{ fontSize: 17 }}>Ninguna supera |r| = 0,006: es como si no existieran</text>
+          <text x={cx + 104} y={axisY - 110} className="lbl" style={{ fontSize: 17 }}>Ninguna supera |r| = 0,006</text>
         </g>
       </svg>
       <div className="pchips fade" style={{ '--d': 20 }}>{PISTA_CORR.map(([n]) => n).join(' · ')}</div>
@@ -897,7 +897,7 @@ function PistaAuc() {
   const w = (v) => `${((v - lo) / (hi - lo)) * 100}%`
   return (
     <div className="pz">
-      <PanelHead t="¿Qué tan bien se puede anticipar el recargo con cada grupo de variables?" s="ROC-AUC: 0,50 es lo mismo que tirar una moneda; 1 sería acertar siempre" />
+      <PanelHead t="¿Qué variables anticipan el recargo?" s="ROC-AUC: 0,50 = azar · 1 = perfecto" />
       <div className="pz-body" style={{ '--lw': '250px', '--vw': '76px', gap: 34, paddingTop: 10 }}>
         {PISTA_AUC.map((r, i) => {
           const azar = r.v <= lo
@@ -1298,5 +1298,59 @@ export function ArbolReglas({ width = 760 }) {
         )
       })}
     </svg>
+  )
+}
+
+/* ───────────────── Matriz de confusión: antes y después de darle costo al falso negativo ───────────────── */
+export function MatrizFN({ width = 760 }) {
+  const [k, setK] = useState('antes')
+  const [auto, setAuto] = useState(true)
+  useEffect(() => {
+    if (!auto) return
+    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches || document.documentElement.classList.contains('estatico')
+    if (reduce) return
+    const first = setTimeout(() => setK('despues'), 2600)
+    const id = setInterval(() => setK((v) => (v === 'antes' ? 'despues' : 'antes')), 4800)
+    return () => { clearTimeout(first); clearInterval(id) }
+  }, [auto])
+  const m = MATRIZ_FN[k]
+  const sinR = m.tn + m.fp, conR = m.fn + m.tp
+  const pct = (a, b) => (a / b) * 100
+  const filas = [
+    { real: 'Real: sin recargo', n: sinR, celdas: [
+      { id: 'vn', t: 'Acierto', s: 'dijo “sin recargo”', v: m.tn, p: pct(m.tn, sinR) },
+      { id: 'fp', t: 'Falsa alarma', s: `−USD ${fDec(FINAL.costoFalsa, 0)} c/u`, v: m.fp, p: pct(m.fp, sinR) },
+    ] },
+    { real: 'Real: con recargo', n: conR, celdas: [
+      { id: 'fn', t: 'Se escapó', s: m.costoFN ? `−USD ${fDec(m.costoFN, 2)} c/u` : 'costo USD 0', v: m.fn, p: pct(m.fn, conR) },
+      { id: 'vp', t: 'Avisado', s: `+USD ${fDec(FINAL.vp, 2)} c/u`, v: m.tp, p: pct(m.tp, conR) },
+    ] },
+  ]
+  const pick = (v) => { setAuto(false); setK(v) }
+  return (
+    <div className="mfn" style={{ width }}>
+      <div className="mfn-top">
+        <div className="seg-ctrl">
+          <button className={k === 'antes' ? 'on' : ''} onClick={() => pick('antes')}>Antes · FN = USD 0</button>
+          <button className={k === 'despues' ? 'on' : ''} onClick={() => pick('despues')}>Después · FN = −USD 8,73</button>
+        </div>
+        <span className="mfn-umbral num">umbral {fDec(m.umbral, 2)}</span>
+      </div>
+      <div className="mfn-cols"><span>La app dice “sin recargo”</span><span>La app avisa “posible recargo”</span></div>
+      {filas.map((f) => (
+        <div key={f.real} className="mfn-row">
+          <div className="mfn-real">{f.real}<span className="num">{fInt(f.n)}</span></div>
+          <div className="mfn-cells">
+            {f.celdas.map((c) => (
+              <div key={c.id} className={'mfn-cell ' + c.id} style={{ flexGrow: c.p }}>
+                <span className="mfn-t">{c.t}</span>
+                <span className="num mfn-p">{fDec(c.p, 1)} %</span>
+                <span className="mfn-v">{fInt(c.v)} · {c.s}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
   )
 }

@@ -17,9 +17,9 @@ export const DATASET = {
 
 export const ETL_PASOS = [
   { label: 'Dataset crudo (Kaggle)', valor: 693071, tipo: 'total' },
-  { label: 'Taxi sin precio', valor: -55095, nota: 'Cobra por taxímetro: no hay tarifa que imputar' },
-  { label: 'Copias de una misma cotización', valor: -1060, nota: 'Duplicados exactos' },
-  { label: 'Distancias imposibles', valor: -348, nota: 'Uber informaba ~0 millas en rutas reales' },
+  { label: 'Taxi sin precio', valor: -55095, nota: 'cobran por taxímetro' },
+  { label: 'Copias de una misma cotización', valor: -1060, nota: 'duplicados exactos' },
+  { label: 'Distancias imposibles', valor: -348, nota: '~0 millas en rutas reales' },
   { label: 'Dataset limpio', valor: 636568, tipo: 'total' },
 ]
 
@@ -142,23 +142,38 @@ export const PARTICION = [
 ]
 export const CV_MEZCLADA_RF = { mezclada: 0.31169729003439006, temporal: 0.1261972885938512 }
 
+// Umbral final con la matriz corregida (FN = −USD 8,73), crítica de la docente.
+// Fuente: Contenido Entrega 3/8_Pruebas_critica_FN/resultados (gradient boosting, prueba 15 al 18/12).
 export const FINAL = {
-  umbral: 0.5722009525552081,
-  accuracy: 0.6858489771866318,
-  accBal: 0.607791680992828,
-  precision: 0.13479440395765732,
-  recall: 0.5142045454545454,
-  f1: 0.21359632486197158,
-  roc: 0.67636241421888,
-  prauc: 0.14007849575537804,
-  alertas: 0.31650812357942587,
-  beneficio: 56.10659146707544,
-  ic: [35.03535904032873, 78.29458375165072],
-  tn: 38202, fp: 16265, fn: 2394, tp: 2534,
+  umbral: 0.34636786437024575,
+  umbralAntes: 0.5702445188921351,
+  accuracy: 0.3733479249095042,
+  accBal: 0.6130151706746537,
+  precision: 0.10778312199387845,
+  recall: 0.9003652597402597,
+  npv: 0.9730648965933403,
+  roc: 0.6766092946127991,
+  prauc: 0.14012180991604922,
+  alertas: 0.6930886438252378,
+  beneficio: -112.84489261233561,
+  tn: 17738, fp: 36729, fn: 491, tp: 4437,
   vp: 7.73380071041316,
   costoFalsa: 1,
-  precisionMinima: 0.11449768928293924,
+  costoFN: 8.73380071041316,
+  chanceMinima: 0.05724884464146962,
 }
+// Matriz de confusión antes y después de darle costo al falso negativo (mismas predicciones)
+export const MATRIZ_FN = {
+  antes: { umbral: 0.5702445188921351, costoFN: 0, tn: 37791, fp: 16676, fn: 2329, tp: 2599, escapan: 0.4726055194805195, npv: 0.9419491525423729, avisa: 0.32452226618402225 },
+  despues: { umbral: 0.34636786437024575, costoFN: 8.73380071041316, tn: 17738, fp: 36729, fn: 491, tp: 4437, escapan: 0.09963474025974026, npv: 0.9730648965933403, avisa: 0.6930886438252378 },
+}
+// Sensibilidad al costo del falso negativo (supuesto: cuánto vale la confianza rota)
+export const SENS_FN = [
+  { costo: 0, umbral: 0.5702, escapan: 0.4726, avisa: 0.3245, npv: 0.9419 },
+  { costo: 4.37, umbral: 0.4157, escapan: 0.1550, avisa: 0.6011, npv: 0.9678 },
+  { costo: 8.73, umbral: 0.3464, escapan: 0.0996, avisa: 0.6931, npv: 0.9731 },
+  { costo: 17.47, umbral: 0.1694, escapan: 0.0136, avisa: 0.8955, npv: 0.9892 },
+]
 export const SIEMPRE_NO = { accuracy: 0.9170300530347673, recall: 0, tn: 54467, fn: 4928 }
 
 // recargo_deciles_riesgo.csv
