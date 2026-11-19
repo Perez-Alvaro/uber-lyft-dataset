@@ -787,6 +787,24 @@ html.estatico .arbol-ruta { animation: none; }
 html.estatico .bal-pick, html.estatico .tech.ok .tech-i, html.estatico .actor-ico { animation: none !important; }
 
 /* ───────────── K-Means e hipótesis ───────────── */
+.valor-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 18px; }
+.valor-col { padding: 18px 36px 12px; display: flex; flex-direction: column; min-height: 510px; }
+.valor-col:first-child { padding-left: 12px; }
+.valor-col + .valor-col { border-left: 1px solid var(--line-2); }
+.valor-icon { height: 126px; display: flex; align-items: center; color: var(--valor-color); }
+.valor-col h2 { font: 400 44px/1.1 var(--serif); margin: 18px 0 22px; }
+.valor-col h3 { font-size: 27px; line-height: 1.25; margin: 0 0 12px; font-weight: 600; letter-spacing: -.02em; }
+.valor-detalle { font-size: 22px; color: var(--text-2); line-height: 1.45; max-width: 370px; }
+.valor-evidencia { margin-top: auto; padding-top: 28px; }
+.valor-evidencia > .num { font-size: 42px; color: var(--valor-color); letter-spacing: -.04em; }
+.valor-evidencia p { font-size: 17px; line-height: 1.4; color: var(--muted); margin-top: 8px; max-width: 340px; }
+.valor-cliente .valor-icon svg { animation: actorBob 3s ease-in-out infinite; }
+.valor-conductor .valor-icon svg { animation: valorDrive 4s ease-in-out infinite; }
+.valor-empresa .valor-icon svg { animation: valorPulse 3s ease-in-out infinite; }
+@keyframes valorDrive { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(36px); } }
+@keyframes valorPulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.06); opacity: .65; } }
+@media (prefers-reduced-motion: reduce) { .valor-grid .valor-icon svg { animation: none !important; } }
+html.estatico .valor-grid .valor-icon svg { animation: none !important; }
 .km-hull { animation: fade .9s ease both, kmDash 4s linear infinite; animation-delay: calc(var(--d, 0) * 85ms + 60ms), var(--kd, 0s); }
 @keyframes kmDash { to { stroke-dashoffset: -40; } }
 .hyp-row { display: grid; grid-template-columns: 54px 1fr 170px; align-items: center; gap: 16px; padding: 14px 24px; }
@@ -1000,6 +1018,10 @@ html.estatico .tm-data, html.estatico .tm-bar { transition: none; }
 .hyp-stamp { font-size: 19px; padding: 9px 16px; }
 .hyp-row { grid-template-columns: 54px 1fr 210px; }
 .hyp-stamp { white-space: nowrap; }
+.hip-balance .hyp-row { grid-template-columns: 38px minmax(0, 1fr) 100px 184px; gap: 18px; padding: 20px 24px; }
+.hip-balance .hyp-icon { display: flex; justify-content: center; align-items: center; }
+.hip-balance .hip-ico { width: 100px; height: 68px; }
+.hip-balance .hyp-stamp { font-size: 18px; padding: 9px 13px; }
 
 /* ───────────── Portada ───────────── */
 .portada { padding: 64px 88px 56px; align-items: center; justify-content: center; }

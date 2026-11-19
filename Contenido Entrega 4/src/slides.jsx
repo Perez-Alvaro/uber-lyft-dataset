@@ -1037,56 +1037,41 @@ function Umbral() {
   )
 }
 
-/* ═════════════ E4 · Recomendaciones ═════════════ */
-function Recomendaciones() {
-  const DATO = {
-    Pasajero: ['hasta 7×', 'más recargo según la zona de salida'],
-    Conductor: ['13,4 % vs 1,8 %', 'Back Bay frente a North End'],
-    Plataforma: ['USD 1,08', 'de error al estimar la tarifa'],
-  }
-  const recs = [
-    ['Pasajero', [
-      ['recargo', 'Saliendo de zonas calientes, compará con la otra app.'],
-      ['precio', <>Económicos: <Brand name="Lyft" size={25} />. Black: <Brand name="Uber" size={25} />.</>],
-      ['precio', 'La lluvia no encarece el viaje.'],
-    ]],
-    ['Conductor', [
-      ['recargo', 'Las zonas con recargo son estables.'],
-      ['recargo', 'La hora no garantiza recargo.'],
-    ]],
-    ['Plataforma', [
-      ['precio', 'La tarifa base es predecible: comunicarla.'],
-      ['recargo', 'Cuidar el “sin recargo”: hoy acierta el 97 %.'],
-    ]],
+/* ═════════════ E4 · Valor para cada actor ═════════════ */
+function ValorActores() {
+  const actores = [
+    {
+      id: 'cliente', titulo: 'Cliente', icono: 'Pasajero', color: 'var(--precio)',
+      valor: 'Evitar sobreprecios', detalle: 'Comparar apps o esperar cuando anticipamos recargo.',
+      dato: fUsd(RECARGO.sobreprecioMedio), evidencia: 'de recargo medio que podría evitar',
+    },
+    {
+      id: 'conductor', titulo: 'Conductor', icono: 'Conductor', color: 'var(--recargo)',
+      valor: 'Elegir dónde posicionarse', detalle: 'Priorizar zonas con mayor frecuencia de recargo.',
+      dato: fDec(ZONAS[0].tasa / ZONAS[ZONAS.length - 1].tasa, 1) + '×', evidencia: 'de diferencia en la frecuencia de recargo entre zonas',
+    },
+    {
+      id: 'empresa', titulo: 'Empresa', icono: 'Plataforma', color: 'var(--eco)',
+      valor: 'Cotizar y avisar mejor', detalle: 'Estimar tarifas y reducir recargos sin aviso.',
+      dato: fUsd(REGRESION.find((r) => r.elegido).mae), evidencia: 'de error medio al estimar el precio',
+    },
   ]
   return (
-    <div className="slide">
-      <Head ent={E(4)} eje="Qué valor ofrecemos" track="ambas" title={<>Qué puede hacer <em>cada actor</em> con esto</>} />
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 26 }}>
-        {recs.map(([who, items], i) => (
-          <div key={who} className="card rv actor-card" style={{ '--d': 2 + i * 2, padding: '36px 34px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 16, color: 'var(--accent)' }}>
-              <span className="actor-ico" style={{ animationDelay: `${i * 0.6}s` }}><ActorIcon who={who} size={60} /></span>
-              <span style={{ fontFamily: 'var(--serif)', fontSize: 42, color: 'var(--text)' }}>{who}</span>
+    <div className="slide valor-slide">
+      <Head ent={E(4)} eje="Valor que aportamos" track="ambas" title={<>Qué valor aportamos <em>con este trabajo</em></>} />
+      <div className="valor-grid">
+        {actores.map((actor, i) => (
+          <section key={actor.id} className={'valor-col valor-' + actor.id + ' rv'} style={{ '--d': 2 + i * 2, '--valor-color': actor.color }}>
+            <div className="valor-icon" aria-hidden="true"><ActorIcon who={actor.icono} size={112} /></div>
+            <h2>{actor.titulo}</h2>
+            <h3>{actor.valor}</h3>
+            <p className="valor-detalle">{actor.detalle}</p>
+            <div className="valor-evidencia rv" style={{ '--d': 8 + i * 2 }}>
+              <span className="num">{actor.dato}</span>
+              <p>{actor.evidencia}</p>
             </div>
-            <ul className="clean" style={{ display: 'grid', gap: 22, marginTop: 30 }}>
-              {items.map(([tr, t], j) => (
-                <li key={j} className="rv" style={{ '--d': 3 + i * 2 + j, display: 'grid', gridTemplateColumns: '14px 1fr', gap: 12, fontSize: 25, lineHeight: 1.45, color: 'var(--text-2)' }}>
-                  <i className="dot" style={{ marginTop: 10, background: tr === 'precio' ? 'var(--precio)' : 'var(--recargo)' }} />
-                  <span style={{ minWidth: 0 }}>{t}</span>
-                </li>
-              ))}
-            </ul>
-            <div className="actor-dato rv" style={{ '--d': 8 + i }}>
-              <span className="num">{DATO[who][0]}</span>
-              <span>{DATO[who][1]}</span>
-            </div>
-          </div>
+          </section>
         ))}
-      </div>
-      <div className="legend rv" style={{ '--d': 10, marginTop: 20 }}>
-        <span><i className="dot" style={{ background: 'var(--precio)' }} />Viene del análisis del precio</span>
-        <span><i className="dot" style={{ background: 'var(--recargo)' }} />Viene del análisis del recargo</span>
       </div>
     </div>
   )
@@ -1101,7 +1086,7 @@ function Hipotesis() {
     ['H4', 'Los productos forman grupos tarifarios', true, '3 familias de tarifa: económico, intermedio y premium'],
   ]
   return (
-    <div className="slide">
+    <div className="slide hip-balance">
       <Head ent={E(4)} eje="Hipótesis · balance" track="ambas" title={<>Lo que creíamos al empezar, <em>y lo que encontramos</em></>} />
       <div className="grid" style={{ gridTemplateColumns: '320px 1fr', gap: 50, alignItems: 'center' }}>
         <div className="rv" style={{ '--d': 2 }}><Donut ok={2} total={4} size={300} /></div>
@@ -1110,6 +1095,7 @@ function Hipotesis() {
             <div key={k} className="card rv hyp-row" style={{ '--d': 3 + i, borderLeft: `4px solid ${ok ? 'var(--good)' : 'var(--bad)'}` }}>
               <span className="num muted" style={{ fontSize: 20 }}>{k}</span>
               <span><span style={{ fontSize: 22, display: 'block' }}>{h}</span><span className="t2" style={{ fontSize: 16 }}>{ev}</span></span>
+              <span className="hyp-icon" style={{ color: k === 'H1' ? 'var(--recargo)' : k === 'H3' ? 'var(--muted)' : 'var(--precio)' }} aria-hidden="true"><HipIcon k={k} /></span>
               <span className={'hyp-stamp ' + (ok ? 'ok' : 'no')} style={{ animationDelay: `${1.2 + i * 0.35}s` }}>{ok ? '✓ Confirmada' : '✗ No se cumple'}</span>
             </div>
           ))}
@@ -1279,10 +1265,15 @@ export const SLIDES = [
   S('hipotesis', 4, 'Hipótesis · balance', 'Lo que creíamos y lo que encontramos', '6:55', '7:10', Hipotesis, [
     'De las 4 hipótesis, **2 se confirmaron**: la categoría del servicio y la distancia definen el precio, y los productos forman grupos. **2 no**: ni la hora ni el clima.',
   ]),
-  S('cierre', 4, 'Conclusión', 'Conclusión', '7:10', '7:30', Cierre, [
+  S('valor-actores', 4, 'Valor para cada actor', 'Valor para el cliente, el conductor y la empresa', '7:10', '7:35', ValorActores, [
+    '**Cliente**: puede comparar apps o esperar para evitar un recargo, que promedia **USD 8,73**.',
+    '**Conductor**: puede elegir dónde posicionarse según la frecuencia de recargo. Entre zonas, la diferencia es de **7,3 veces**.',
+    '**Empresa**: puede estimar tarifas con **USD 1,08 de error medio** y mejorar los avisos para reducir los recargos sin advertencia.',
+  ]),
+  S('cierre', 4, 'Conclusión', 'Conclusión', '7:35', '7:55', Cierre, [
     'En resumen: el **precio** es una fórmula y se predice con un dólar de error. El **recargo** se anticipa: **9 de cada 10**, y cuando la app dice “sin recargo” acierta el 97 %.',
   ]),
-  S('gracias', 4, 'Gracias', '¡Gracias!', '7:30', '7:35', Gracias, [
+  S('gracias', 4, 'Gracias', '¡Gracias!', '7:55', '8:00', Gracias, [
     'Muchas gracias. ¿Preguntas?',
   ]),
 ]
