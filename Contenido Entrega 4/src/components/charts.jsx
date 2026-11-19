@@ -765,7 +765,7 @@ export function SurgeCollapse({ width = 600 }) {
 export function ColumnBlocks({ blocks, width = 1300 }) {
   const total = blocks.reduce((a, b) => a + b[1], 0)
   const colors = ['var(--mid)', 'var(--eco)', 'var(--prem)', 'var(--neutral)']
-  const gap = 4, H = 104, TOP = 66
+  const gap = 4, H = 88, TOP = 64
   const cw = (width - (total - 1) * gap) / total
   // Llave sobre el último bloque (clima), el que domina el dataset
   const last = blocks[blocks.length - 1]
@@ -790,12 +790,12 @@ export function ColumnBlocks({ blocks, width = 1300 }) {
           )
         }))}
       </svg>
-      <div style={{ display: 'flex', gap: 52, marginTop: 18 }}>
+      <div className="column-blocks-legend">
         {blocks.map(([name, n], bi) => (
-          <div key={name} className="fade" style={{ '--d': 10 + bi, display: 'flex', gap: 12, alignItems: 'baseline' }}>
+          <div key={name} className="fade" style={{ '--d': 10 + bi }}>
             <i className="sq" style={{ background: colors[bi], opacity: bi === 3 ? 0.55 : 0.92, width: 16, height: 16 }} />
             <span className="num" style={{ fontSize: 32 }}>{n}</span>
-            <span className="t2" style={{ fontSize: 20 }}>{name}</span>
+            <span className="t2" style={{ fontSize: 18 }}>{name}</span>
           </div>
         ))}
       </div>

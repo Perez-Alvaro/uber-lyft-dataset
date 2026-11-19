@@ -113,27 +113,29 @@ function Recorrido() {
 /* ═════════════ E1 · Dominio ═════════════ */
 function Dominio() {
   return (
-    <div className="slide">
+    <div className="slide dominio-slide">
       <Head ent={E(1)} eje="El dataset" title={<>Cotizaciones de Uber y Lyft en Boston, <em>nov – dic 2018</em></>} />
-      <div style={{ display: 'grid', gridTemplateColumns: 'max-content max-content minmax(0, 1fr)', alignItems: 'center', marginTop: 6 }}>
-        {[[<Num value={DATASET.crudo} />, <>cotizaciones de <Brand name="Uber" size={22} d={6} /> y <Brand name="Lyft" size={22} d={8} /></>], ['57', 'columnas, con el clima de cada hora']].map(([n, t], i) => (
-          <div key={i} className="rv" style={{ '--d': 2 + i, padding: i ? '0 56px' : '0 56px 0 0', borderLeft: i ? '1px solid var(--line-2)' : 'none' }}>
-            <div className="num" style={{ fontSize: 72, lineHeight: 1 }}>{n}</div>
-            <div className="t2" style={{ fontSize: 21, marginTop: 12 }}>{t}</div>
-          </div>
-        ))}
-        <div className="rv" style={{ '--d': 4, paddingLeft: 56, borderLeft: '1px solid var(--line-2)' }}>
+      <div className="dominio-resumen">
+        <div className="dominio-stat rv" style={{ '--d': 2 }}>
+          <div className="label">Cotizaciones</div>
+          <div className="num dominio-cifra"><Num value={DATASET.crudo} /></div>
+          <div className="dominio-caption">de <Brand name="Uber" size={21} d={5} /> y <Brand name="Lyft" size={21} d={6} /></div>
+        </div>
+        <div className="dominio-stat rv" style={{ '--d': 3 }}>
+          <div className="label">Variables</div>
+          <div className="num dominio-cifra">{DATASET.columnasCrudo}</div>
+          <div className="dominio-caption">columnas originales</div>
+        </div>
+        <div className="dominio-pregunta rv" style={{ '--d': 4 }}>
           <div className="label">Cada fila responde</div>
-          <div style={{ fontFamily: 'var(--serif)', fontStyle: 'italic', fontSize: 34, lineHeight: 1.15, marginTop: 10 }}>
-            “¿Cuánto cobra <span className="acc">este producto</span>, en <span className="acc">esta ruta</span>, en <span className="acc">este momento</span>?”
-          </div>
+          <blockquote>“¿Cuánto cuesta <em>este servicio</em>, en <em>esta ruta</em> y a <em>esta hora</em>?”</blockquote>
         </div>
       </div>
-      <div className="card rv" style={{ '--d': 5, marginTop: 40, padding: '28px 34px 30px', flex: 'none' }}>
-        <h3>Las 57 columnas originales, por bloque</h3>
-        <div style={{ marginTop: 20 }}><ColumnBlocks blocks={COLUMNAS} width={1350} /></div>
+      <div className="card dominio-columnas rv" style={{ '--d': 5 }}>
+        <div className="dominio-grafico-head"><h3>Qué contienen las 57 columnas</h3><span>Una barra por columna</span></div>
+        <div style={{ marginTop: 18 }}><ColumnBlocks blocks={COLUMNAS} width={1356} /></div>
       </div>
-      <p className="muted fade" style={{ '--d': 8, fontSize: 17, marginTop: 18 }}>Fuente: Kaggle · APIs de precios de Uber y Lyft · Boston, 25/11 al 18/12/2018</p>
+      <p className="dominio-fuente fade" style={{ '--d': 8 }}>Fuente: Kaggle · APIs de precios de Uber y Lyft · Boston, 25/11 al 18/12/2018</p>
     </div>
   )
 }
@@ -447,15 +449,20 @@ function Limpieza() {
   return (
     <div className="slide">
       <Head ent={E(2)} eje="Limpieza" track="ambas" title={<>Cómo <em>limpiamos el dataset</em></>} />
-      <div className="grid" style={{ gridTemplateColumns: '1.6fr 1fr', gap: 40 }}>
+      <div className="grid limpieza-layout" style={{ gridTemplateColumns: '1.6fr 1fr', gap: 40 }}>
         <div className="card rv" style={{ '--d': 2, padding: '30px 34px' }}>
           <LimpiezaFlow width={790} />
         </div>
-        <Side gap={14}>
-          <div className="label rv" style={{ '--d': 4, color: 'var(--bad)' }}>Cotizaciones de taxi eliminadas</div>
-          <Big c="var(--bad)" size={128} d={5}><Num value={55095} delay={600} /></Big>
-          <Say d={7} size={24} style={{ marginTop: 6 }}>Borramos los <B>taxis</B>: venían con el <B>precio vacío</B>.</Say>
-        </Side>
+        <section className="limpieza-focus rv" style={{ '--d': 4 }}>
+          <div className="label">El principal descarte</div>
+          <h2>Taxis sin precio</h2>
+          <div className="num limpieza-count"><Num value={55095} delay={600} /></div>
+          <p className="limpieza-caption">cotizaciones eliminadas</p>
+          <div className="limpieza-motivo rv" style={{ '--d': 7 }}>
+            <p>El precio venía <B>vacío</B>.</p>
+            <p>Cobran por taxímetro, así que no había una referencia para imputarlo.</p>
+          </div>
+        </section>
       </div>
     </div>
   )
