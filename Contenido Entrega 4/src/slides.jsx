@@ -881,8 +881,11 @@ function Asimetria() {
           </Phone>
           <div>
             <div className="label">Error 2 · avisa y no había recargo</div>
-            <div className="num" style={{ fontSize: 64, lineHeight: 1, marginTop: 14, color: 'var(--text-2)' }}>−USD 1</div>
-            <p className="say" style={{ fontSize: 20, marginTop: 14 }}>Perdió un minuto comparando, <B>y no hacía falta</B>. Una molestia.</p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 14 }}>
+              <div className="num" style={{ fontSize: 64, lineHeight: 1, color: 'var(--text-2)' }}>−USD 1</div>
+              <span className="supuesto-tag">supuesto</span>
+            </div>
+            <p className="say" style={{ fontSize: 20, marginTop: 14 }}>Perdió unos 5 minutos comparando, <B>y no hacía falta</B>. Una molestia.</p>
           </div>
         </div>
       </div>
@@ -920,7 +923,7 @@ function Umbral() {
       <Head ent={E(4)} eje="Qué valor ofrecemos" track="recargo" title={<>¿Cuándo conviene avisar? <em>Buscamos el mayor ahorro</em></>} />
       <ol className="umbral-pasos rv" style={{ '--d': 2 }}>
         <li><span className="umbral-paso-num">1</span><div><h2>Probamos distintos límites</h2><p>Más bajo: más avisos.<br />Más alto: menos avisos.</p></div></li>
-        <li><span className="umbral-paso-num">2</span><div><h2>Calculamos el ahorro neto</h2><p>Un acierto suma <B c="var(--good)">≈USD 7,73</B>.<br />Una falsa alarma resta <B c="var(--bad)">USD 1</B>.</p></div></li>
+        <li><span className="umbral-paso-num">2</span><div><h2>Calculamos el ahorro neto</h2><p>Un acierto suma <B c="var(--good)">≈USD 7,73</B>.<br />Una falsa alarma resta <B c="var(--bad)">USD 1</B> <span className="muted">(supuesto)</span>.</p></div></li>
         <li><span className="umbral-paso-num">3</span><div><h2>Elegimos el máximo</h2><p>En validación, el mayor ahorro fue con <B>0,57</B>.<br />Lo probamos en fechas nuevas, sin cambiarlo.</p></div></li>
       </ol>
       <div className="umbral-paneles">
@@ -1089,12 +1092,13 @@ function AnexoPreguntas() {
     ['¿Por qué 68,6% de exactitud es mejor que 91,7%?', 'El 91,7% es decir siempre “no” y no detecta recargos. El modelo detecta el 51%, con exactitud balanceada 60,8% (azar = 50%) y +USD 56 cada 1.000 cotizaciones.'],
     ['¿Por qué no separar al azar?', 'En el 95,7% de los grupos ruta–minuto los productos comparten el recargo. Al azar, las gemelas quedan en train y test y el PR-AUC se infla hasta +147%.'],
     ['¿Por qué SMOTE no sirvió?', 'Interpola variables 0/1 y crea cotizaciones imposibles; tuvo el peor PR-AUC en validación.'],
-    ['¿De dónde sale el umbral 0,57?', 'De maximizar el beneficio en la validación temporal (VP +7,73, FP −1). Se aplicó tal cual a la prueba.'],
+    ['¿De dónde sale el umbral 0,57?', 'De maximizar el beneficio en la validación temporal (VP +7,73, FP −1 supuesto). Se aplicó tal cual a la prueba.'],
     ['¿Por qué el recargo no supera ~0,68 de ROC-AUC?', 'Depende de pedidos y conductores en tiempo real, que no están en los datos. Los cuatro algoritmos topan igual.'],
     ['¿Es legítimo usar el surge para predecir el precio?', 'Sí: la app lo muestra al cotizar. Sin él: MAE USD 1,32 en vez de 1,08.'],
     ['¿Por qué log(precio)?', 'La asimetría pasa de 1,05 a −0,10 y los errores pasan a ser relativos.'],
     ['¿Por qué solo Lyft para el recargo?', 'En Uber el multiplicador vale siempre 1 (precio cerrado). Inferirlo por precio por milla acertaba solo el 61%.'],
   ]
+  const SENS = [['USD 0,50', '0,32', '74 %', 'USD 301'], ['USD 1,00', '0,57', '31,7 %', 'USD 56'], ['USD 1,50', '0,72', '0,6 %', 'USD 2'], ['USD 2,00 o más', 'no avisar', '0 %', 'USD 0']]
   return (
     <div className="slide">
       <Head eje="Anexo · para la defensa" title={<>Preguntas <em>probables</em></>} />
@@ -1105,6 +1109,16 @@ function AnexoPreguntas() {
             <p className="t2" style={{ fontSize: 16, marginTop: 6, lineHeight: 1.45 }}>{a}</p>
           </div>
         ))}
+        <div className="card rv" style={{ '--d': 7, padding: '16px 20px', gridColumn: '1 / -1', display: 'grid', gridTemplateColumns: '1fr 1.1fr', gap: 24, alignItems: 'center' }}>
+          <div>
+            <div style={{ fontWeight: 600, fontSize: 18 }}>¿De dónde sale el USD 1 de una falsa alarma? <span className="supuesto-tag" style={{ marginLeft: 6 }}>supuesto</span></div>
+            <p className="t2" style={{ fontSize: 16, marginTop: 6, lineHeight: 1.45 }}>No sale de los datos: es un supuesto del equipo. Valora en USD 1 los ~5 minutos que pierde el pasajero comparando o esperando sin necesidad. Por eso medimos cómo cambia el resultado si ese costo es otro.</p>
+          </div>
+          <table className="sens">
+            <thead><tr><th>Costo falsa alarma</th><th>Umbral</th><th>Avisa en</th><th>Ahorro / 1.000</th></tr></thead>
+            <tbody>{SENS.map((r) => <tr key={r[0]} className={r[0] === 'USD 1,00' ? 'on' : undefined}>{r.map((c, j) => <td key={j}>{c}</td>)}</tr>)}</tbody>
+          </table>
+        </div>
       </div>
     </div>
   )
@@ -1189,7 +1203,7 @@ export const SLIDES = [
   ]),
   S('v-asimetria', 4, 'Qué valor ofrecemos', 'No todos los errores cuestan lo mismo', '7:10', '7:27', Asimetria, [
     'El valor. Pensemos en un aviso de “posible recargo” en la app. **Error 1**: no avisa y hay recargo → el pasajero paga **USD 8,73** de sorpresa.',
-    '**Error 2**: avisa y no había → perdió un minuto comparando, lo valuamos en **USD 1**.',
+    '**Error 2**: avisa y no había → perdió unos 5 minutos comparando. Lo valuamos en **USD 1**: es un **supuesto nuestro**, no sale de los datos (en el anexo está qué pasa si cuesta más).',
     'En la balanza: **un recargo sorpresa pesa como 8,7 falsas alarmas**. Por eso avisar conviene aunque acierte 1 de cada 8,7 avisos.',
   ]),
   S('v-umbral', 4, 'Qué valor ofrecemos', '¿Cuándo conviene avisar?', '7:27', '7:57', Umbral, [

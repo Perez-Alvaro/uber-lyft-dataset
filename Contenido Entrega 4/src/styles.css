@@ -828,3 +828,10 @@ html.estatico .peak-ring { animation: none; }
 .modelo-col .razones b { font-size: 20px; }
 .modelo-col .razones li span:not(.razon-n):not(.razon-dato) { font-size: 16.5px; }
 .actor-card ul.clean { margin-bottom: 30px; }
+
+/* Marca de supuesto y tabla de sensibilidad */
+.supuesto-tag { display: inline-block; font-family: var(--mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; font-weight: 400; color: var(--accent); border: 1px dashed var(--accent); border-radius: 999px; padding: 3px 10px; vertical-align: middle; }
+.sens { width: 100%; border-collapse: collapse; font-size: 15px; }
+.sens th { text-align: left; font-family: var(--mono); font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 400; padding: 4px 8px; border-bottom: 1px solid var(--line-2); }
+.sens td { padding: 5px 8px; border-bottom: 1px solid var(--line); font-family: var(--mono); color: var(--text-2); }
+.sens tr.on td { color: var(--text); font-weight: 700; background: var(--accent-soft); }
