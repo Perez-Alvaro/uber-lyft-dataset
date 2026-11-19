@@ -163,7 +163,7 @@ export default function App() {
           <div className="overview">
             {SLIDES.map((s, i) => (
               <button key={s.id} className={'ov-card' + (i === idx ? ' on' : '')} onClick={() => { setIdx(i); setPanel(null) }}>
-                <span className="label">{String(i + 1).padStart(2, '0')} · {s.ent >= 1 && s.ent <= 4 ? `E${s.ent} · ` : ''}{s.eje}</span>
+                <span className="label">{String(i + 1).padStart(2, '0')} · {ENTREGAS[s.ent]} · {s.eje}</span>
                 <span className="t">{s.titulo}</span>
                 <span className="label" style={{ marginTop: 'auto' }}>{s.inicio !== '—' ? `${s.inicio} – ${s.fin}` : 'Respaldo'}</span>
               </button>

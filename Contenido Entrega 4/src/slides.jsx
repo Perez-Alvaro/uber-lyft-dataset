@@ -4,23 +4,23 @@ import { findImg } from './data/gallery.js'
 import {
   HBar, Dumbbell, Waterfall, ZoneMap, FareCompare, tarifaEn, Balanceo,
   KMeansScatter, Curvas, BeneficioCurva, UMBRALES, N_TEST, ForkLine, SurgeCollapse,
-  ColumnBlocks, UtcBig, AsymBars, Donut, ActorIcon, PistaPanel, LimpiezaFlow, MatrizFN, ColumnasFlow, ErrorRelativo, RecargoSiNo, Gauge, LluviaVsSeco, HoraLinea, RangoCompare, ArbolReglas,
+  ColumnBlocks, UtcBig, AsymBars, Donut, ActorIcon, PistaPanel, PistaClima, LimpiezaFlow, MatrizFN, TablaModelos, ColumnasFlow, ErrorRelativo, RecargoSiNo, Gauge, LluviaVsSeco, HoraLinea, RangoCompare, ArbolReglas,
 } from './components/charts.jsx'
 import {
   DATASET, PLATAFORMAS, RECARGO, ZONAS, PESO_FACTORES, REGRESION, REGRESION_SIN_SURGE, REGRESION_DATOS, IMPORTANCIA_RECARGO,
   CLASIFICACION, FINAL, SIEMPRE_NO, NIVELES, EQUIPO, PRECIO_PRODUCTO, CLIMA_CORR, COLUMNAS, MATRIZ_FN, SENS_FN,
 } from './data/metrics.js'
 
-// Secciones de la barra de progreso: el recorrido por las entregas
+// Secciones de la barra de progreso
 export const ENTREGAS = {
-  0: 'Inicio',
-  1: 'E1 · Dominio',
-  2: 'E2 · ETL y exploración',
-  3: 'E3 · Modelado',
-  4: 'E4 · Valor y cierre',
+  0: 'Intro',
+  1: 'Dominio',
+  2: 'ETL',
+  3: 'Modelado',
+  4: 'Conclusión',
   5: 'Anexo',
 }
-const E = (n) => `Entrega ${n}`
+const E = (n) => ENTREGAS[n]
 const B = ({ children, c }) => <b style={{ color: c || 'var(--text)', fontWeight: 600 }}>{children}</b>
 const Big = ({ children, c, size = 80, d = 4 }) => <div className="num rv" style={{ '--d': d, fontSize: size, lineHeight: 1, color: c }}>{children}</div>
 const Side = ({ children, gap = 30 }) => <div style={{ display: 'flex', flexDirection: 'column', gap, justifyContent: 'center' }}>{children}</div>
@@ -128,7 +128,7 @@ function Recorrido() {
 function Dominio() {
   return (
     <div className="slide">
-      <Head ent={E(1)} eje="Introducción del dominio" title={<>Un dataset de <em>cotizaciones</em>, no de viajes</>} />
+      <Head ent={E(1)} eje="El dataset" title={<>Un dataset de <em>cotizaciones</em>, no de viajes</>} />
       <div style={{ display: 'grid', gridTemplateColumns: 'max-content max-content minmax(0, 1fr)', alignItems: 'center', marginTop: 6 }}>
         {[[<Num value={DATASET.crudo} />, <>cotizaciones de <Brand name="Uber" size={22} d={6} /> y <Brand name="Lyft" size={22} d={8} /></>], ['57', 'columnas, con el clima de cada hora']].map(([n, t], i) => (
           <div key={i} className="rv" style={{ '--d': 2 + i, padding: i ? '0 56px' : '0 56px 0 0', borderLeft: i ? '1px solid var(--line-2)' : 'none' }}>
@@ -157,7 +157,7 @@ function ZonasProductos() {
   const rows = PRECIO_PRODUCTO.map((p) => ({ label: p.producto, value: p.precio, text: fUsd(p.precio, 1), color: p.plataforma === 'Uber' ? 'var(--uber)' : 'var(--lyft)' }))
   return (
     <div className="slide">
-      <Head ent={E(1)} eje="Introducción del dominio" title={<>12 zonas de Boston, <em>12 productos</em></>} />
+      <Head ent={E(1)} eje="Zonas y productos" title={<>12 zonas de Boston, <em>12 productos</em></>} />
       <div className="grid" style={{ gridTemplateColumns: '1fr 1.1fr', gap: 40 }}>
         <div className="card rv" style={{ '--d': 2 }}>
           <h3>Las 12 zonas de origen y destino</h3>
@@ -175,11 +175,67 @@ function ZonasProductos() {
   )
 }
 
+/* ═════════════ Modelado · tabla comparativa ═════════════ */
+function TablaComparativa() {
+  return (
+    <div className="slide">
+      <Head ent={E(3)} eje="Modelos · comparación" title={<>Todos los modelos, <em>lado a lado</em></>} />
+      <div className="card rv" style={{ '--d': 2, padding: '24px 28px', flex: 'none' }}><TablaModelos width={1366} /></div>
+      <p className="muted rv" style={{ '--d': 8, fontSize: 16, marginTop: 14 }}>Prueba final (fechas que el modelo nunca vio) · recargo con la matriz corregida · elegimos con validación, no con la prueba.</p>
+    </div>
+  )
+}
+
+/* ═════════════ Dominio · hipótesis iniciales ═════════════ */
+const HIPOTESIS_INI = [
+  ['H1', 'Hay patrones por hora y día', 'recargo', '¿El recargo sube en ciertas horas?'],
+  ['H2', 'Producto y distancia definen el precio', 'precio', '¿Qué explica cuánto se paga?'],
+  ['H3', 'El mal clima encarece los viajes', 'ambas', '¿La lluvia sube el precio?'],
+  ['H4', 'Los productos forman grupos tarifarios', 'precio', '¿Los 12 productos se agrupan?'],
+]
+function HipotesisIniciales() {
+  return (
+    <div className="slide">
+      <Head ent={E(1)} eje="Hipótesis iniciales" title={<>Lo que <em>creíamos</em> al empezar</>} />
+      <div className="hip-grid">
+        {HIPOTESIS_INI.map(([k, t, v, q], i) => (
+          <div key={k} className={'card hip-card rv hip-' + v} style={{ '--d': 2 + i * 2 }}>
+            <span className="hip-k">{k}</span>
+            <div>
+              <div className="hip-t">{t}</div>
+              <div className="hip-q">{q}</div>
+            </div>
+            <span className="hip-mark" style={{ animationDelay: `${1.5 + i * 0.4}s` }}>?</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+/* ═════════════ ETL · clima y hora no mueven el recargo ═════════════ */
+function ClimaHoraRecargo() {
+  return (
+    <div className="slide">
+      <Head ent={E(2)} eje="Recargo · clima y hora" track="recargo" title={<>Clima y hora <em>no mueven el recargo</em></>} />
+      <div className="grid" style={{ gridTemplateColumns: '1fr 440px', gap: 28 }}>
+        <div className="card rv" style={{ '--d': 2, height: 470 }}><PistaClima /></div>
+        <div className="card rv" style={{ '--d': 4, display: 'flex', flexDirection: 'column' }}>
+          <h3>¿Qué mueve más el recargo?</h3>
+          <div style={{ flex: 1, display: 'grid', placeItems: 'center' }}><RangoCompare width={380} /></div>
+          <p className="rv" style={{ '--d': 16, fontSize: 18, color: 'var(--text-2)', margin: '0 0 14px' }}>La zona lo mueve <B>casi 4 veces más</B> que la hora.</p>
+          <p className="rv h-pill bad-pill" style={{ '--d': 12, alignSelf: 'stretch', textAlign: 'center' }}>Hipótesis H1 · ✗ no se confirma</p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 /* ═════════════ E1 · Problema ═════════════ */
 function Problema() {
   return (
     <div className="slide">
-      <Head ent={E(1)} eje="Introducción del dominio · el problema" track="recargo" title={<>El mismo viaje puede costar <em>hasta 67% más</em></>} />
+      <Head ent={E(0)} eje="El problema" track="recargo" title={<>El mismo viaje puede costar <em>hasta 67% más</em></>} />
       <div className="grid" style={{ gridTemplateColumns: '1.35fr 1fr', gap: 40 }}>
         <div className="card rv" style={{ '--d': 2 }}>
           <h3>Cuánto cuesta cada producto de <Brand name="Lyft" size={23} d={4} />, sin y con recargo</h3>
@@ -200,7 +256,7 @@ function UberEsconde() {
   const rows = [['Uber', PLATAFORMAS.uber, 'var(--uber)'], ['Lyft', PLATAFORMAS.lyft, 'var(--lyft)']]
   return (
     <div className="slide">
-      <Head ent={E(1)} eje="Introducción del dominio · primer descubrimiento" track="recargo" title={<><Brand name="Uber" size={60} d={1} /> <em>esconde</em> su recargo. <Brand name="Lyft" size={60} d={3} /> lo muestra.</>} />
+      <Head ent={E(2)} eje="Recargo · Uber vs Lyft" track="recargo" title={<><Brand name="Uber" size={60} d={1} /> <em>esconde</em> su recargo. <Brand name="Lyft" size={60} d={3} /> lo muestra.</>} />
       <div className="grid" style={{ gridTemplateColumns: '650px 1fr', gap: 48, alignItems: 'center' }}>
         <div style={{ display: 'flex', gap: 26, zoom: 1.27 }}>
           <Phone d={2}>
@@ -348,7 +404,7 @@ function DosVariables() {
 function Limpieza() {
   return (
     <div className="slide">
-      <Head ent={E(2)} eje="Algo importante del ETL" track="ambas" title={<>Limpiar con <em>criterio de dominio</em></>} />
+      <Head ent={E(2)} eje="Limpieza" track="ambas" title={<>Limpiar con <em>criterio de dominio</em></>} />
       <div className="grid" style={{ gridTemplateColumns: '1.6fr 1fr', gap: 40 }}>
         <div className="card rv" style={{ '--d': 2, padding: '30px 34px' }}>
           <LimpiezaFlow width={790} />
@@ -366,7 +422,7 @@ function Limpieza() {
 function Columnas() {
   return (
     <div className="slide">
-      <Head ent={E(2)} eje="Algo importante del ETL" title={<>De 57 a 27 columnas: <em>menos es más</em></>} />
+      <Head ent={E(2)} eje="Resultado del ETL" title={<>De 57 a 27 columnas: <em>menos es más</em></>} />
       <div className="card rv" style={{ '--d': 2, padding: '30px 32px 20px', flex: 'none' }}>
         <ColumnasFlow width={1360} />
       </div>
@@ -382,7 +438,7 @@ function Columnas() {
 function HoraUTC() {
   return (
     <div className="slide">
-      <Head ent={E(2)} eje="Algo importante del ETL" title={<>La hora decía Boston, pero <em>estaba en UTC</em></>} />
+      <Head ent={E(2)} eje="Limpieza · horario" title={<>La hora decía Boston, pero <em>estaba en UTC</em></>} />
       <div className="card rv" style={{ '--d': 2, padding: '34px 30px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between' }}><span className="label">Hora en el dataset</span><span className="label bad">Coincidía con UTC en el 100% de las filas</span></div>
         <div style={{ margin: '14px 0' }}><UtcBig width={1360} /></div>
@@ -397,7 +453,7 @@ function HoraUTC() {
 function Tratamiento() {
   return (
     <div className="slide">
-      <Head ent={E(2)} eje="Algo importante del ETL" track="ambas" title={<>Cómo preparamos <em>el precio y el recargo</em></>} />
+      <Head ent={E(2)} eje="Recargo · de multiplicador a sí / no" track="ambas" title={<>Cómo preparamos <em>el precio y el recargo</em></>} />
       <div className="tratamiento-grid">
         <section className="card precio-card tratamiento-col rv" style={{ '--d': 2, '--variable': 'var(--precio)' }}>
           <Track v="precio" />
@@ -436,7 +492,7 @@ function HallazgoFormula() {
   }))
   return (
     <div className="slide">
-      <Head ent={E(2)} eje="Qué hallazgos encontramos" track="precio" title={<>El precio es una fórmula: <em>producto + distancia</em></>} />
+      <Head ent={E(2)} eje="Precio · qué lo define" track="precio" title={<>El precio es una fórmula: <em>producto + distancia</em></>} />
       <div className="grid" style={{ gridTemplateColumns: '1.45fr 1fr', gap: 40 }}>
         <div className="card rv" style={{ '--d': 2 }}>
           <h3>Qué parte de la variación del precio explica cada variable</h3>
@@ -453,7 +509,7 @@ function HallazgoFormula() {
             <Gauge value={0} label="Hora y clima" muted d={11} />
           </div>
           <Say d={7} size={21}>Lo que el pasajero <B>elige</B> y lo que <B>recorre</B> definen el precio.</Say>
-          <p className="rv h-pill good-pill" style={{ '--d': 9 }}>Hipótesis H1 · ✓ confirmada</p>
+          <p className="rv h-pill good-pill" style={{ '--d': 9 }}>Hipótesis H2 · ✓ confirmada</p>
         </Side>
       </div>
     </div>
@@ -525,7 +581,7 @@ function MitoClima() {
   }))
   return (
     <div className="slide">
-      <Head ent={E(2)} eje="Qué hallazgos encontramos · mito derribado" track="ambas" title={<>“Cuando llueve, el viaje sale más caro.” <em>No.</em></>} />
+      <Head ent={E(4)} eje="Mito derribado" track="ambas" title={<>“Cuando llueve, el viaje sale más caro.” <em>No.</em></>} />
       <div className="grid" style={{ gridTemplateColumns: '1.4fr 1fr', gap: 40 }}>
         <div className="card rv" style={{ '--d': 2 }}>
           <h3>Correlación de cada variable climática con el precio</h3>
@@ -536,7 +592,7 @@ function MitoClima() {
           <div className="label rv" style={{ '--d': 3 }}>¿Hay más recargo cuando llueve?</div>
           <LluviaVsSeco lluvia={RECARGO.lluvia} seco={RECARGO.seco} />
           <Say d={10} size={21}>Con lluvia hay incluso <B>un poco menos</B>.</Say>
-          <p className="rv h-pill bad-pill" style={{ '--d': 11 }}>Hipótesis H5 · ✗ rechazada</p>
+          <p className="rv h-pill bad-pill" style={{ '--d': 11 }}>Hipótesis H3 · ✗ rechazada</p>
         </Side>
       </div>
     </div>
@@ -548,7 +604,7 @@ function HallazgoZonas() {
   const max = ZONAS[0].tasa, min = ZONAS[ZONAS.length - 1].tasa
   return (
     <div className="slide">
-      <Head ent={E(2)} eje="Qué hallazgos encontramos" track="recargo" title={<>El recargo depende del <em>lugar</em></>} />
+      <Head ent={E(2)} eje="Recargo · la zona" track="recargo" title={<>El recargo depende del <em>lugar</em></>} />
       <div className="grid" style={{ gridTemplateColumns: '1.3fr 1fr', gap: 40 }}>
         <div className="card rv" style={{ '--d': 2 }}>
           <h3>% de cotizaciones con recargo según la zona de origen</h3>
@@ -642,7 +698,7 @@ function ModeloPrecio() {
   const rows = REGRESION.map((r) => ({ modelo: r.modelo, que: QUE[r.modelo], v: r.mae, elegido: r.elegido }))
   return (
     <div className="slide">
-      <Head ent={E(3)} eje="Qué modelos usamos" track="precio" title={<>El precio se predice con <em>un dólar de error</em></>} />
+      <Head ent={E(3)} eje="Modelos · precio" track="precio" title={<>El precio se predice con <em>un dólar de error</em></>} />
       <div className="grid" style={{ gridTemplateColumns: '1.3fr 1fr', gap: 32 }}>
         <div className="card rv" style={{ '--d': 2 }}>
           <h3>¿Cuántos dólares se equivoca cada modelo, en promedio?</h3>
@@ -678,7 +734,7 @@ function ModeloKMeans() {
   ]
   return (
     <div className="slide">
-      <Head ent={E(3)} eje="Qué modelos usamos · no supervisado" track="precio" title={<>Los 12 productos forman <em>3 familias de tarifa</em></>} />
+      <Head ent={E(3)} eje="Modelos · no supervisado" track="precio" title={<>Los 12 productos forman <em>3 familias de tarifa</em></>} />
       <div className="grid" style={{ gridTemplateColumns: '1.15fr 1fr', gap: 34 }}>
         <div className="card rv" style={{ '--d': 2 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
@@ -701,7 +757,7 @@ function ModeloKMeans() {
               <div className="t2" style={{ fontSize: 17, marginTop: 6 }}>{l}</div>
             </div>
           ))}
-          <Say d={11} size={20}><Brand name="Uber" size={20} /> y <Brand name="Lyft" size={20} /> <B>compiten en espejo</B>. Hipótesis H6 <span className="good" style={{ fontWeight: 600 }}>✓</span></Say>
+          <Say d={11} size={20}><Brand name="Uber" size={20} /> y <Brand name="Lyft" size={20} /> <B>compiten en espejo</B>. Hipótesis H4 <span className="good" style={{ fontWeight: 600 }}>✓</span></Say>
         </Side>
       </div>
     </div>
@@ -712,7 +768,7 @@ function ModeloKMeans() {
 function ModeloDesbalance() {
   return (
     <div className="slide">
-      <Head ent={E(3)} eje="Qué modelos usamos · cómo entrenamos" track="recargo" title={<>Con solo 8% de recargos, <em>¿cómo se aprende?</em></>} />
+      <Head ent={E(3)} eje="Balanceo de datos" track="recargo" title={<>Con solo 8% de recargos, <em>¿cómo se aprende?</em></>} />
       <div className="grid" style={{ gridTemplateColumns: '1.3fr 1fr', gap: 40 }}>
         <div className="card rv" style={{ '--d': 2 }}>
           <h3>Lo que ve el modelo al entrenar, según la técnica</h3>
@@ -754,7 +810,7 @@ function ModelosRecargo() {
   const rows = CLASIFICACION.filter((c) => c.val != null).map((c) => ({ modelo: c.modelo, que: QUE[c.modelo], v: enValidacion ? c.val : c.prauc, elegido: c.elegido }))
   return (
     <div className="slide">
-      <Head ent={E(3)} eje="Qué modelos usamos" track="recargo" title={<>Para el recargo elegimos <em>gradient boosting</em></>} />
+      <Head ent={E(3)} eje="Modelos · recargo" track="recargo" title={<>Para el recargo elegimos <em>gradient boosting</em></>} />
       <div className="grid" style={{ gridTemplateColumns: '1.3fr 1fr', gap: 32 }}>
         <div className="card rv" style={{ '--d': 2 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
@@ -833,7 +889,7 @@ function Phone({ children, d = 0 }) {
 function Asimetria() {
   return (
     <div className="slide">
-      <Head ent={E(4)} eje="Qué valor ofrecemos" track="recargo" title={<>No todos los errores <em>cuestan lo mismo</em></>} />
+      <Head ent={E(4)} eje="El costo de equivocarse" track="recargo" title={<>No todos los errores <em>cuestan lo mismo</em></>} />
       <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: 28 }}>
         {/* Error 1: no avisa y hay recargo */}
         <div className="card rv" style={{ '--d': 2, display: 'grid', gridTemplateColumns: '236px 1fr', gap: 28, alignItems: 'center', borderColor: 'color-mix(in srgb, var(--bad) 40%, transparent)', background: 'linear-gradient(180deg, var(--bad-soft), transparent 75%), var(--card)' }}>
@@ -908,29 +964,19 @@ function FalsoNegativo() {
   ]
   return (
     <div className="slide">
-      <Head ent={E(4)} eje="Qué valor ofrecemos · corrección" track="recargo" title={<>Lo peor es decir “sin recargo” <em>y que haya</em></>} />
-      <div className="grid" style={{ gridTemplateColumns: '1.45fr 1fr', gap: 30 }}>
-        <div className="card rv" style={{ '--d': 2 }}>
-          <h3>Matriz de confusión del recargo, antes y después</h3>
-          <p className="sub">Gradient boosting · prueba final · % de cada fila</p>
-          <div style={{ marginTop: 14 }}><MatrizFN width={790} /></div>
+      <Head ent={E(4)} eje="Matriz de confusión" track="recargo" title={<>Lo peor es decir “sin recargo” <em>y que haya</em></>} />
+      <div className="card rv" style={{ '--d': 2, padding: '20px 28px', flex: 'none' }}><MatrizFN width={1366} /></div>
+      <div className="fn-strip rv" style={{ '--d': 5 }}>
+        <div className="fn-strip-costo">
+          <span className="label">Costo de no avisar un recargo</span>
+          <span className="fn-swap"><span className="num muted">USD 0</span><span className="tp-arrow">→</span><span className="num" style={{ color: 'var(--bad)' }}>−USD 8,73</span><span className="supuesto-tag">supuesto</span></span>
         </div>
-        <Side gap={20}>
-          <div className="rv fn-costo" style={{ '--d': 4 }}>
-            <div className="label">Costo de no avisar un recargo</div>
-            <div className="fn-swap"><span className="num muted">USD 0</span><span className="tp-arrow">→</span><span className="num" style={{ color: 'var(--bad)' }}>−USD 8,73</span><span className="supuesto-tag">supuesto</span></div>
-            <div className="t2" style={{ fontSize: 16 }}>La confianza rota vale un recargo medio</div>
+        {stats.map(([t, a, b, c]) => (
+          <div key={t} className="fn-strip-stat">
+            <span className="label">{t}</span>
+            <span><span className="num fn-stat-a">{fDec(a * 100, 1)} %</span><span className="tp-arrow"> → </span><span className="num fn-stat-b" style={{ color: c }}>{fDec(b * 100, 1)} %</span></span>
           </div>
-          {stats.map(([t, a, b, c], i) => (
-            <div key={t} className="fn-stat rv" style={{ '--d': 6 + i * 2 }}>
-              <span className="fn-stat-t">{t}</span>
-              <span className="num fn-stat-a">{fDec(a * 100, 1)} %</span>
-              <span className="tp-arrow">→</span>
-              <span className="num fn-stat-b" style={{ color: c }}>{fDec(b * 100, 1)} %</span>
-            </div>
-          ))}
-          <p className="rv h-pill" style={{ '--d': 12, color: 'var(--recargo)', background: 'var(--accent-soft)' }}>Umbral {fDec(antes.umbral, 2)} → {fDec(despues.umbral, 2)}</p>
-        </Side>
+        ))}
       </div>
     </div>
   )
@@ -943,7 +989,7 @@ function Umbral() {
   const presets = [[0.22, 'Más avisos'], [FINAL.umbral, `Elegido: ${fDec(FINAL.umbral, 2)}`], [FINAL.umbralAntes, `Antes: ${fDec(FINAL.umbralAntes, 2)}`], [0.75, 'Menos avisos']]
   return (
     <div className="slide free umbral-slide">
-      <Head ent={E(4)} eje="Qué valor ofrecemos" track="recargo" title={<>¿Cuándo conviene avisar? <em>Buscamos el menor costo</em></>} />
+      <Head ent={E(4)} eje="Umbral de aviso" track="recargo" title={<>¿Cuándo conviene avisar? <em>Buscamos el menor costo</em></>} />
       <ol className="umbral-pasos rv" style={{ '--d': 2 }}>
         <li><span className="umbral-paso-num">1</span><div><h2>Probamos límites</h2><p>Más bajo = más avisos</p></div></li>
         <li><span className="umbral-paso-num">2</span><div><h2>Le damos costo a cada error</h2><p><B c="var(--good)">+7,73</B> acierto · <B c="var(--bad)">−1</B> falsa alarma · <B c="var(--bad)">−8,73</B> recargo sin aviso</p></div></li>
@@ -1056,18 +1102,16 @@ function Recomendaciones() {
 /* ═════════════ E4 · Hipótesis ═════════════ */
 function Hipotesis() {
   const hs = [
-    ['H1', 'Producto y distancia definen el precio', true, 'Producto explica el 77 % y distancia el 12 %'],
-    ['H2', 'Uber y Lyft difieren según el nivel', true, 'Compartido: Lyft 29 % más barato · Black: Uber 8 % más barato'],
-    ['H3', 'Hay patrones por hora y día', false, 'Según la hora, el recargo solo va de 7,0 % a 9,6 %'],
-    ['H4', 'Hay recorridos más caros por milla', true, 'Rutas cortas: hasta USD 17,95 por milla, por la tarifa base'],
-    ['H5', 'El mal clima encarece los viajes', false, 'Recargo con lluvia 7,9 % vs 8,3 % sin lluvia'],
-    ['H6', 'Los productos forman grupos tarifarios', true, '3 familias de tarifa: económico, intermedio y premium'],
+    ['H1', 'Hay patrones por hora y día', false, 'Según la hora, el recargo solo va de 7,0 % a 9,6 %'],
+    ['H2', 'Producto y distancia definen el precio', true, 'Producto explica el 77 % y distancia el 12 %'],
+    ['H3', 'El mal clima encarece los viajes', false, 'Recargo con lluvia 7,9 % vs 8,3 % sin lluvia'],
+    ['H4', 'Los productos forman grupos tarifarios', true, '3 familias de tarifa: económico, intermedio y premium'],
   ]
   return (
     <div className="slide">
-      <Head ent={E(4)} eje="Qué hallazgos encontramos · balance final" track="ambas" title={<>Lo que creíamos en la Entrega 1, <em>y lo que encontramos</em></>} />
+      <Head ent={E(4)} eje="Hipótesis · balance" track="ambas" title={<>Lo que creíamos al empezar, <em>y lo que encontramos</em></>} />
       <div className="grid" style={{ gridTemplateColumns: '320px 1fr', gap: 50, alignItems: 'center' }}>
-        <div className="rv" style={{ '--d': 2 }}><Donut ok={4} total={6} size={300} /></div>
+        <div className="rv" style={{ '--d': 2 }}><Donut ok={2} total={4} size={300} /></div>
         <div style={{ display: 'grid', gap: 10 }}>
           {hs.map(([k, h, ok, ev], i) => (
             <div key={k} className="card rv hyp-row" style={{ '--d': 3 + i, borderLeft: `4px solid ${ok ? 'var(--good)' : 'var(--bad)'}` }}>
@@ -1151,103 +1195,90 @@ function AnexoPreguntas() {
 /* ═════════════ Índice + guion ═════════════ */
 const S = (id, ent, eje, titulo, inicio, fin, C, notas) => ({ id, ent, eje, titulo, inicio, fin, C, notas })
 export const SLIDES = [
-  S('portada', 0, 'Portada', 'Portada', '0:00', '0:22', Portada, [
-    'Buenas. Somos el Grupo 11. Les vamos a contar lo que aprendimos de casi **700 mil cotizaciones** de Uber y Lyft en Boston, a lo largo de las cuatro entregas.',
+  // ── Intro
+  S('portada', 0, 'Portada', 'Portada', '0:00', '0:20', Portada, [
+    'Buenas. Somos el Grupo 11. Analizamos casi **700 mil cotizaciones** de Uber y Lyft en Boston para entender **cómo se forma el precio** y **cuándo aparece el recargo**.',
   ]),
-  S('recorrido', 0, 'Nuestro recorrido', 'Cuatro entregas, una pregunta que fue cambiando', '0:22', '1:04', Recorrido, [
-    'Este es el hilo de la presentación. En la **Entrega 1** la pregunta era una sola: qué influye en el precio y si se puede predecir.',
-    'En la **Entrega 2** la pregunta **se partió en dos**: la parte estructural del precio y la parte dinámica, el recargo. Desde ahí cada variable tiene su color: **verde para precio, ámbar para recargo**.',
-    'En la **3** modelamos cada una, y hoy les contamos **qué valor tiene**.',
-  ]),
-  S('dominio', 1, 'Introducción del dominio', 'Un dataset de cotizaciones', '1:04', '1:29', Dominio, [
-    'El dominio: plataformas de viaje en Boston, fines de 2018. Cada fila es una **cotización**, lo que la app ofrecía cobrar, no un viaje hecho.',
-    'Vean que **más de dos tercios de las columnas eran clima**: la primera pista de que había mucho para limpiar.',
-  ]),
-  S('zonas-productos', 1, 'Introducción del dominio', '12 zonas, 12 productos', '1:29', '1:45', ZonasProductos, [
-    '12 zonas de Boston, del centro histórico a las universidades, y 12 productos: desde un viaje compartido de **USD 7** hasta un Black XL de **USD 30**.',
-  ]),
-  S('problema', 1, 'Introducción del dominio · el problema', 'El mismo viaje puede costar hasta 67% más', '1:45', '2:05', Problema, [
+  S('problema', 0, 'El problema', 'El mismo viaje puede costar hasta 67% más', '0:20', '0:45', Problema, [
     'El problema: con recargo, **el mismo producto cuesta entre 36% y 67% más**. Pasa en **1 de cada 12** cotizaciones y el sobreprecio medio es **USD 8,73**. El pasajero no sabe cuándo le va a tocar.',
   ]),
-  S('uber-esconde', 1, 'Introducción del dominio · primer descubrimiento', 'Uber esconde su recargo', '2:05', '2:22', UberEsconde, [
-    'Primer descubrimiento: **Uber nunca muestra su multiplicador**, porque cobra precio cerrado. Lyft sí. Intentamos deducirlo y acertábamos solo el 61%, así que el recargo se estudia **solo con Lyft**.',
+  // ── Dominio
+  S('dominio', 1, 'El dataset', 'Un dataset de cotizaciones', '0:45', '1:10', Dominio, [
+    'El dataset: plataformas de viaje en Boston, fines de 2018. Cada fila es una **cotización**, lo que la app ofrecía cobrar, no un viaje hecho.',
+    'Arrancamos con **57 columnas**, y **más de dos tercios eran clima**: había mucho para limpiar.',
   ]),
-  S('pistas', 1, 'Introducción del dominio · primeras pistas', 'Las primeras pistas', '2:22', '3:13', PrimerasPistas, [
-    'Esta slide tiene **4 pasos**: cada flecha muestra el siguiente panel del gráfico de la Entrega 1; después de la cuarta, pasa a la slide siguiente.',
-    '1) **Shared nunca tiene recargo**. 2) **La zona** lo cambia hasta 7 veces. 3) **Clima y hora**: correlación nula. 4) Lo que predice es **la ruta**: el clima solo da 0,50, como el azar.',
-    'Eran pistas; en las entregas siguientes las verificamos.',
+  S('zonas-productos', 1, 'Zonas y productos', '12 zonas, 12 productos', '1:10', '1:25', ZonasProductos, [
+    '12 zonas de Boston y 12 productos: desde un viaje compartido de **USD 7** hasta un Black XL de **USD 30**.',
   ]),
-  S('dos-variables', 2, 'Qué predecimos', 'Una pregunta, dos variables', '3:13', '3:42', DosVariables, [
-    'Qué predecimos. **Variable A, el precio**: regresión con las 636 mil cotizaciones. **Variable B, el recargo**: clasificación sí o no, solo con Lyft, donde **solo 8 de cada 100** tienen recargo.',
-    'Como son problemas distintos, se miden distinto: el precio en dólares de error; el recargo en capacidad de detectarlo y en dólares ganados.',
+  S('hipotesis-ini', 1, 'Hipótesis iniciales', 'Lo que creíamos al empezar', '1:25', '1:50', HipotesisIniciales, [
+    'Arrancamos con **cuatro hipótesis**: que hay patrones por hora y día, que producto y distancia definen el precio, que el mal clima encarece los viajes y que los productos forman grupos tarifarios.',
+    'Al final volvemos a ellas.',
   ]),
-  S('limpieza', 2, 'Algo importante del ETL', 'Limpiar con criterio de dominio', '3:42', '3:56', Limpieza, [
+  // ── ETL
+  S('limpieza', 2, 'Limpieza', 'Limpiar con criterio de dominio', '1:50', '2:10', Limpieza, [
     'ETL. Conservamos el **91,8%**. Lo más grande: **55 mil Taxis sin precio**. No los imputamos, porque cobran por taxímetro y no hay referencia.',
   ]),
-  S('columnas', 2, 'Algo importante del ETL', 'De 57 a 27 columnas', '3:56', '4:10', Columnas, [
-    'De 57 columnas quedaron **27**: eliminamos clima repetido y columnas en UTC, y creamos 11 nuevas, como la hora local y has_surge.',
+  S('utc', 2, 'Limpieza · horario', 'La hora estaba en UTC', '2:10', '2:25', HoraUTC, [
+    'La hora decía Boston pero **estaba en UTC**. La pasamos a **UTC − 5**: sin corregirlo, el pico de las 8 aparecía a las 13 y todos los patrones horarios quedaban corridos.',
   ]),
-  S('utc', 2, 'Algo importante del ETL', 'La hora estaba en UTC', '4:10', '4:24', HoraUTC, [
-    'Encontramos que la hora decía Boston pero **estaba en UTC**. Sin corregirlo, el pico de las 8 aparecía a las 13.',
+  S('uber-esconde', 2, 'Recargo · Uber vs Lyft', 'Uber esconde su recargo', '2:25', '2:45', UberEsconde, [
+    'Sobre el **recargo**: **Uber es una caja negra**, cobra precio cerrado y nunca muestra el multiplicador. Lyft sí. Deducirlo acertaba solo el 61%, así que el recargo se estudia **solo con Lyft**.',
   ]),
-  S('tratamiento', 2, 'Algo importante del ETL', 'Cómo preparamos el precio y el recargo', '4:24', '4:45', Tratamiento, [
-    'En el **precio**, errar dos dólares pesa más en un viaje de diez que en uno de cuarenta. Ajustamos la escala para aprender de los **errores proporcionales**.',
-    'Para el **recargo**, agrupamos todos los aumentos en un **sí o no**, solo con Lyft sin Shared. Para anticiparlo, dejamos fuera el precio final y el multiplicador: ya revelan la respuesta.',
-    'Si preguntan por el ajuste del precio: usamos el logaritmo y luego convertimos la predicción a dólares.',
+  S('tratamiento', 2, 'Recargo · de multiplicador a sí / no', 'Cómo preparamos el precio y el recargo', '2:45', '3:10', Tratamiento, [
+    'El recargo venía en **varios multiplicadores**: 1,25, 1,5, 1,75, 2… y cada uno era muy poco frecuente. Los unimos en una variable **sí / no**: así sale que **8,2 %** de las cotizaciones tiene recargo, muy pocas frente a las que no.',
+    'En el **precio**, usamos el logaritmo: errar dos dólares pesa más en un viaje de diez que en uno de cuarenta.',
   ]),
-  S('h-formula', 2, 'Qué hallazgos encontramos', 'El precio es una fórmula', '4:45', '4:57', HallazgoFormula, [
-    'Hallazgos sobre el **precio**: el producto que elegís y la distancia lo definen casi todo. Hora y clima: nada.',
+  S('clima-hora', 2, 'Recargo · clima y hora', 'Clima y hora no mueven el recargo', '3:10', '3:35', ClimaHoraRecargo, [
+    '**Clima y hora no influyen** en el recargo: la correlación de las 13 variables es prácticamente nula.',
+    'Según la hora, el recargo apenas va de 7 a 9,6 %; según la zona, de 1,5 a 11,2 %. **H1 no se confirma.**',
   ]),
-  S('h-apps', 2, 'Qué hallazgos encontramos', 'Ninguna app es siempre la más barata', '4:57', '5:19', HallazgoApps, [
-    '**Ninguna app es siempre la más barata**. (Cambiar de nivel en vivo.) En los económicos gana Lyft; en los Black, Uber.',
+  S('h-zonas', 2, 'Recargo · la zona', 'El recargo depende del lugar', '3:35', '3:50', HallazgoZonas, [
+    'Lo que sí influye es la **zona**: saliendo de Back Bay el recargo es **7,3 veces** más frecuente que desde North End.',
   ]),
-  S('h-clima', 2, 'Qué hallazgos encontramos', 'El mito del clima', '5:19', '5:34', MitoClima, [
-    'Y un mito derribado: **la lluvia no encarece el viaje**. La correlación es cero, y con lluvia hay incluso un poco menos de recargo.',
+  S('h-formula', 2, 'Precio · qué lo define', 'El precio es una fórmula', '3:50', '4:10', HallazgoFormula, [
+    'Sobre el **precio**: la **categoría de servicio** y la **distancia** lo definen casi todo. **El horario no afecta el precio**, ni el clima. H2 se confirma.',
   ]),
-  S('h-zonas', 2, 'Qué hallazgos encontramos', 'El recargo depende del lugar', '5:34', '5:46', HallazgoZonas, [
-    'Sobre el **recargo**: depende del **lugar**. Saliendo de Back Bay es **7,3 veces** más frecuente que desde North End.',
+  S('columnas', 2, 'Resultado del ETL', 'De 57 a 27 columnas', '4:10', '4:25', Columnas, [
+    'Resultado del ETL: de **57 columnas pasamos a 27**. Sacamos clima repetido, horas en UTC, coordenadas y copias, y creamos 11 nuevas, como la hora local y has_surge.',
   ]),
-  S('h-hora', 2, 'Qué hallazgos encontramos', 'Y casi nada de la hora', '5:46', '5:55', HallazgoHora, [
-    'Y casi nada de la hora: se mueve entre 7 y 9,6%.',
+  // ── Modelado
+  S('m-desbalance', 3, 'Balanceo de datos', 'Cómo aprender con 8% de recargos', '4:25', '4:50', ModeloDesbalance, [
+    'Primero, **balanceamos**: sin hacer nada, el modelo dice siempre que no y **acierta 91,7% sin detectar nada**.',
+    'Probamos sin balanceo, submuestreo, SMOTE y **pesos de clase**. Elegimos pesos de clase: **no tira datos ni inventa cotizaciones** que no tienen sentido.',
   ]),
-  S('m-precio', 3, 'Qué modelos usamos', 'El precio se predice con un dólar de error', '5:55', '6:07', ModeloPrecio, [
-    'Para el **precio**, elegimos **random forest**: combina muchos árboles y capta las tarifas según producto y distancia. Fue el de menor error en validación, aunque mejoró poco respecto de un árbol. En la prueba: **USD 1,08 de error medio**.',
+  S('m-recargo', 3, 'Modelos · recargo', 'Por qué elegimos gradient boosting', '4:50', '5:15', ModelosRecargo, [
+    'Para el **recargo** probamos regresión logística, árbol, random forest y **gradient boosting**. Elegimos gradient boosting: cada árbol corrige los errores del anterior y fue el mejor en validación, **0,136 contra 0,126**.',
   ]),
-  S('m-kmeans', 3, 'Qué modelos usamos · no supervisado', '3 familias de tarifa', '6:07', '6:21', ModeloKMeans, [
-    'Con **K-Means** encontramos **3 familias de tarifa**. Cada producto de Uber cae junto a su par de Lyft: compiten en espejo.',
+  S('m-precio', 3, 'Modelos · precio', 'El precio se predice con un dólar de error', '5:15', '5:35', ModeloPrecio, [
+    'Para el **precio** probamos Ridge, árbol y **random forest**. Elegimos random forest: el de menor error en validación. En la prueba, **USD 1,08 de error medio**.',
   ]),
-  S('m-desbalance', 3, 'Qué modelos usamos · cómo entrenamos', 'Cómo aprender con 8% de recargos', '6:21', '6:39', ModeloDesbalance, [
-    'Para el **recargo**: sin hacer nada, el modelo dice siempre que no y **acierta 91,7% sin detectar nada**. Elegimos **pesos de clase**: datos reales, y errar un recargo pesa 11 veces más.',
+  S('m-tabla', 3, 'Modelos · comparación', 'Todos los modelos, lado a lado', '5:35', '6:00', TablaComparativa, [
+    'Todos los modelos lado a lado. (Ordenar por «Costo» y volver a «PR-AUC validación».) Elegimos con la **validación**: ahí ganó gradient boosting. En la prueba, random forest quedó apenas mejor en costo: es un empate técnico y no cambiamos la elección.',
+    '(Pasar a «Precio».) En precio, random forest tiene el menor error: **USD 1,08**.',
   ]),
-  S('m-recargo', 3, 'Qué modelos usamos', 'Por qué elegimos gradient boosting', '6:39', '6:58', ModelosRecargo, [
-    'Para el **recargo**, elegimos **gradient boosting**: cada árbol corrige errores anteriores. Ganó en validación al distinguir las cotizaciones con recargo, que son pocas: **0,136 contra 0,126 de random forest**. En la prueba quedaron cerca; falta información de pedidos y conductores en tiempo real.',
+  S('m-kmeans', 3, 'Modelos · no supervisado', '3 familias de tarifa', '6:00', '6:15', ModeloKMeans, [
+    'Con **K-Means** encontramos **3 familias de tarifa**, y cada producto de Uber cae junto a su par de Lyft. **H4 se confirma.**',
   ]),
-  S('m-mira', 3, 'Qué modelos usamos', 'Lo que mira el modelo', '6:58', '7:10', QueMira, [
-    'Y lo que más mira el modelo es la **ruta**: qué tan seguido hubo recargo en ese recorrido.',
+  // ── Conclusión
+  S('v-asimetria', 4, 'El costo de equivocarse', 'No todos los errores cuestan lo mismo', '6:15', '6:40', Asimetria, [
+    'Conclusión. **No todos los errores cuestan lo mismo**. Si la app no avisa y hay recargo, el pasajero paga **USD 8,73** de sorpresa. Si avisa y no había, perdió unos minutos: lo valuamos en **USD 1**, un supuesto.',
+    'Un recargo sin aviso pesa como **16,5 falsas alarmas**: el ahorro perdido más la confianza rota, que suponemos igual al recargo medio.',
   ]),
-  S('v-asimetria', 4, 'Qué valor ofrecemos', 'No todos los errores cuestan lo mismo', '7:10', '7:27', Asimetria, [
-    'El valor. Pensemos en un aviso de “posible recargo” en la app. **Error 1**: no avisa y hay recargo → el pasajero paga **USD 8,73** de sorpresa.',
-    '**Error 2**: avisa y no había → perdió unos minutos comparando. Lo valuamos en **USD 1**: es un **supuesto nuestro**, no sale de los datos (en el anexo está qué pasa si cuesta más).',
-    'En la balanza: **un recargo sin aviso pesa como 16,5 falsas alarmas**: el ahorro que se perdió (7,73) más la confianza rota, que suponemos igual al recargo medio (8,73). Por eso conviene avisar desde un 5,7 % de chance.',
+  S('v-fn', 4, 'Matriz de confusión', 'Lo peor es decir sin recargo y que haya', '6:40', '7:10', FalsoNegativo, [
+    'La docente nos marcó que **lo peor es decir “sin recargo” y que haya**. Antes ese error valía USD 0 y el umbral 0,57 dejaba escapar **casi la mitad** de los recargos.',
+    '(Señalar la matriz.) Mismo modelo, nuevo umbral **0,35**: los recargos que se escapan bajan del **47 % al 10 %**, y el “sin recargo” acierta el **97 %**. El costo: avisa en 7 de cada 10 cotizaciones.',
   ]),
-  S('v-fn', 4, 'Qué valor ofrecemos · corrección', 'Lo peor es decir sin recargo y que haya', '7:27', '7:45', FalsoNegativo, [
-    'La docente nos marcó que **lo peor es que la app diga “sin recargo” y después haya**. En la Entrega 3 ese error valía USD 0: el umbral 0,57 dejaba escapar **casi la mitad** de los recargos.',
-    'Le dimos costo al falso negativo: **−USD 8,73**, la confianza rota. Es un **supuesto**; en el anexo está qué pasa con otros valores.',
-    '(Señalar la matriz.) El modelo es el mismo; cambia el umbral: **0,57 → 0,35**. Los recargos que se escapan bajan del **47 % al 10 %**, y cuando dice “sin recargo” acierta el **97 %**. El costo: avisa en 7 de cada 10 cotizaciones.',
+  S('v-umbral', 4, 'Umbral de aviso', '¿Cuándo conviene avisar?', '7:10', '7:40', Umbral, [
+    'Para cada límite sumamos **USD 7,73 por acierto** y restamos **USD 1 por falsa alarma** y **USD 8,73 por recargo sin aviso**. El **0,35** dio el menor costo en validación y lo aplicamos sin cambiarlo.',
+    '(Mover a «Antes: 0,57» y volver a «Elegido».) La curva es la prueba final: el 0,35 cae en la zona plana, cerca del mínimo.',
   ]),
-  S('v-umbral', 4, 'Qué valor ofrecemos', '¿Cuándo conviene avisar?', '7:45', '8:05', Umbral, [
-    'Para cada límite del puntaje sumamos **USD 7,73 por acierto**, restamos **USD 1 por falsa alarma** y **USD 8,73 por recargo sin aviso**.',
-    'Elegimos el **0,35 porque da el menor costo total en validación**. Lo aplicamos sin cambiarlo a fechas nuevas; la curva visible es esa prueba final.',
-    '(Mover el control a «Antes: 0,57» y volver a «Elegido».) Con 0,57 se escapaba casi la mitad de los recargos. El celular muestra el valor de un aviso correcto para el pasajero.',
-    'Si preguntan por el 0,35: es un puntaje del modelo, no una probabilidad real (los pesos de clase lo inflan). Cerca de 0,35, la tasa real de recargo en validación es 5,9 %.',
+  S('h-clima', 4, 'Mito derribado', 'El mito del clima', '7:40', '7:55', MitoClima, [
+    'Y un **mito destruido**: el clima no cambia el precio. La correlación es cero, y con lluvia hay incluso un poco menos de recargo. **H3 se rechaza.**',
   ]),
-  S('v-recos', 4, 'Qué valor ofrecemos', 'Qué puede hacer cada actor', '8:05', '8:15', Recomendaciones, [
-    'Al **pasajero**: comparar si sale de zonas calientes. Al **conductor**: ubicarse ahí. A la **plataforma**: cuidar que el “sin recargo” sea confiable.',
+  S('hipotesis', 4, 'Hipótesis · balance', 'Lo que creíamos y lo que encontramos', '7:55', '8:10', Hipotesis, [
+    'De las 4 hipótesis, **2 se confirmaron**: producto y distancia definen el precio, y los productos forman grupos. **2 no**: ni la hora ni el clima.',
   ]),
-  S('hipotesis', 4, 'Qué hallazgos encontramos · balance final', 'Las hipótesis de la Entrega 1', '8:15', '8:28', Hipotesis, [
-    'Cerrando el recorrido: de las 6 hipótesis de la Entrega 1, **4 se confirmaron** y **2 no**: ni la hora ni el clima.',
-  ]),
-  S('cierre', 4, 'Conclusión', 'Conclusión', '8:28', '8:45', Cierre, [
+  S('cierre', 4, 'Conclusión', 'Conclusión', '8:10', '8:30', Cierre, [
     'En resumen: el **precio** es una fórmula y se predice con un dólar de error. El **recargo** se anticipa: **9 de cada 10**, y cuando la app dice “sin recargo” acierta el 97 %. Muchas gracias.',
   ]),
   S('anexo-qa', 5, 'Anexo', 'Preguntas probables', '—', '—', AnexoPreguntas, ['Respuestas cortas para la ronda de preguntas.']),

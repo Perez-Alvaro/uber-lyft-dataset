@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { fInt, fDec, fPct, fUsd, Tip, Num } from '../lib/ui.jsx'
 import {
   PISTA_PRODUCTO, PISTA_ZONA, PISTA_CORR, PISTA_AUC, RECARGO_HORA,
-  PRECIO_RECARGO, ETL_PASOS, CALENDARIO, PARTICION, ZONAS, KMEANS, DECILES, RECARGO, BALANCEO, FINAL, MATRIZ_FN,
+  PRECIO_RECARGO, ETL_PASOS, CALENDARIO, PARTICION, ZONAS, KMEANS, DECILES, RECARGO, BALANCEO, FINAL, MATRIZ_FN, TABLA_RECARGO, TABLA_PRECIO,
 } from '../data/metrics.js'
 import CURVAS from '../data/curvas.json'
 import TARIFAS from '../data/tarifas.json'
@@ -854,7 +854,7 @@ function PistaZona() {
 }
 
 // 3 · Correlación de clima y hora con el recargo: todas pegadas al cero
-function PistaClima() {
+export function PistaClima() {
   const W = 760, x0 = 30, x1 = W - 20, axisY = 232
   const x = (r) => x0 + r * (x1 - x0)
   const bands = [[0, 0.1, 'nula'], [0.1, 0.3, 'débil'], [0.3, 0.5, 'moderada'], [0.5, 1, 'fuerte']]
@@ -1302,55 +1302,129 @@ export function ArbolReglas({ width = 760 }) {
 }
 
 /* ───────────────── Matriz de confusión: antes y después de darle costo al falso negativo ───────────────── */
-export function MatrizFN({ width = 760 }) {
+export function MatrizFN({ width = 1424 }) {
   const [k, setK] = useState('antes')
   const [auto, setAuto] = useState(true)
   useEffect(() => {
     if (!auto) return
     const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches || document.documentElement.classList.contains('estatico')
     if (reduce) return
-    const first = setTimeout(() => setK('despues'), 2600)
-    const id = setInterval(() => setK((v) => (v === 'antes' ? 'despues' : 'antes')), 4800)
+    const first = setTimeout(() => setK('despues'), 2800)
+    const id = setInterval(() => setK((v) => (v === 'antes' ? 'despues' : 'antes')), 5200)
     return () => { clearTimeout(first); clearInterval(id) }
   }, [auto])
   const m = MATRIZ_FN[k]
   const sinR = m.tn + m.fp, conR = m.fn + m.tp
   const pct = (a, b) => (a / b) * 100
   const filas = [
-    { real: 'Real: sin recargo', n: sinR, celdas: [
-      { id: 'vn', t: 'Acierto', s: 'dijo “sin recargo”', v: m.tn, p: pct(m.tn, sinR) },
-      { id: 'fp', t: 'Falsa alarma', s: `−USD ${fDec(FINAL.costoFalsa, 0)} c/u`, v: m.fp, p: pct(m.fp, sinR) },
+    { real: 'No hubo recargo', n: sinR, celdas: [
+      { id: 'vn', t: '✓ Acierto', s: 'Dijo “sin recargo” y no hubo', v: m.tn, c: 'USD 0', p: pct(m.tn, sinR) },
+      { id: 'fp', t: '⚠ Falsa alarma', s: 'Avisó y no hubo: comparó de más', v: m.fp, c: `−USD ${fDec(FINAL.costoFalsa, 0)} c/u`, p: pct(m.fp, sinR) },
     ] },
-    { real: 'Real: con recargo', n: conR, celdas: [
-      { id: 'fn', t: 'Se escapó', s: m.costoFN ? `−USD ${fDec(m.costoFN, 2)} c/u` : 'costo USD 0', v: m.fn, p: pct(m.fn, conR) },
-      { id: 'vp', t: 'Avisado', s: `+USD ${fDec(FINAL.vp, 2)} c/u`, v: m.tp, p: pct(m.tp, conR) },
+    { real: 'Hubo recargo', n: conR, celdas: [
+      { id: 'fn', t: '✗ Se escapó', s: 'Dijo “sin recargo” y hubo: pagó por sorpresa', v: m.fn, c: m.costoFN ? `−USD ${fDec(m.costoFN, 2)} c/u` : 'costo USD 0', p: pct(m.fn, conR) },
+      { id: 'vp', t: '✓ Avisado', s: 'Avisó y hubo: pudo evitarlo', v: m.tp, c: `+USD ${fDec(FINAL.vp, 2)} c/u`, p: pct(m.tp, conR) },
     ] },
   ]
   const pick = (v) => { setAuto(false); setK(v) }
   return (
     <div className="mfn" style={{ width }}>
       <div className="mfn-top">
-        <div className="seg-ctrl">
-          <button className={k === 'antes' ? 'on' : ''} onClick={() => pick('antes')}>Antes · FN = USD 0</button>
-          <button className={k === 'despues' ? 'on' : ''} onClick={() => pick('despues')}>Después · FN = −USD 8,73</button>
+        <div className="seg-ctrl mfn-seg">
+          <button className={k === 'antes' ? 'on' : ''} onClick={() => pick('antes')}>Antes · falso negativo = USD 0 · umbral {fDec(MATRIZ_FN.antes.umbral, 2)}</button>
+          <button className={k === 'despues' ? 'on' : ''} onClick={() => pick('despues')}>Después · falso negativo = −USD 8,73 · umbral {fDec(MATRIZ_FN.despues.umbral, 2)}</button>
         </div>
-        <span className="mfn-umbral num">umbral {fDec(m.umbral, 2)}</span>
+        <span className="mfn-hint">% de cada fila · {auto ? 'alterna solo' : 'elegido a mano'}</span>
       </div>
-      <div className="mfn-cols"><span>La app dice “sin recargo”</span><span>La app avisa “posible recargo”</span></div>
+      <div className="mfn-cols"><span /><span>La app dijo <b>“sin recargo”</b></span><span>La app avisó <b>“posible recargo”</b></span></div>
       {filas.map((f) => (
         <div key={f.real} className="mfn-row">
-          <div className="mfn-real">{f.real}<span className="num">{fInt(f.n)}</span></div>
+          <div className="mfn-real"><span className="label">En realidad</span><b>{f.real}</b><span className="num">{fInt(f.n)} cotizaciones</span></div>
           <div className="mfn-cells">
             {f.celdas.map((c) => (
               <div key={c.id} className={'mfn-cell ' + c.id} style={{ flexGrow: c.p }}>
-                <span className="mfn-t">{c.t}</span>
+                <div className="mfn-head"><span className="mfn-t">{c.t}</span><span className="mfn-c">{c.c}</span></div>
                 <span className="num mfn-p">{fDec(c.p, 1)} %</span>
-                <span className="mfn-v">{fInt(c.v)} · {c.s}</span>
+                <span className="mfn-s"><b className="num">{fInt(c.v)}</b> · {c.s}</span>
               </div>
             ))}
           </div>
         </div>
       ))}
+    </div>
+  )
+}
+
+/* ───────────────── Tabla comparativa de modelos (ordenable, filas animadas) ───────────────── */
+const COLS_RECARGO = [
+  { k: 'prVal', t: 'PR-AUC validación', f: (v) => (v == null ? '—' : fDec(v, 4)), hi: true, nota: 'criterio de elección' },
+  { k: 'prauc', t: 'PR-AUC prueba', f: (v) => fDec(v, 4), hi: true },
+  { k: 'roc', t: 'ROC-AUC', f: (v) => fDec(v, 4), hi: true },
+  { k: 'umbral', t: 'Umbral', f: (v) => (v == null ? '—' : fDec(v, 2)), sort: false },
+  { k: 'recall', t: 'Recall', f: (v) => fDec(v * 100, 1) + ' %', hi: true },
+  { k: 'escapan', t: 'Se escapan', f: (v) => fDec(v * 100, 1) + ' %', hi: false },
+  { k: 'npv', t: 'Acierta “sin recargo”', f: (v) => fDec(v * 100, 1) + ' %', hi: true },
+  { k: 'precision', t: 'Precisión', f: (v) => (v == null ? '—' : fDec(v * 100, 1) + ' %'), hi: true },
+  { k: 'accuracy', t: 'Accuracy', f: (v) => fDec(v * 100, 1) + ' %', hi: true },
+  { k: 'costo', t: 'Costo USD / 1.000', f: (v) => '−' + fDec(Math.abs(v), 0), hi: true },
+]
+const COLS_PRECIO = [
+  { k: 'mae', t: 'Error medio (MAE)', f: (v) => fUsd(v), hi: false, nota: 'criterio de elección' },
+  { k: 'r2', t: 'R²', f: (v) => fDec(v, 3), hi: true },
+  { k: 'dentro10', t: 'Con error < 10 %', f: (v) => fDec(v * 100, 1) + ' %', hi: true },
+]
+const ORDEN = {
+  recargo: [['prVal', 'PR-AUC validación'], ['costo', 'Costo'], ['recall', 'Recall'], ['roc', 'ROC-AUC'], ['accuracy', 'Accuracy']],
+  precio: [['mae', 'Error medio'], ['r2', 'R²'], ['dentro10', 'Error < 10 %']],
+}
+export function TablaModelos({ width = 1424 }) {
+  const [tipo, setTipo] = useState('recargo')
+  const [sk, setSk] = useState('prVal')
+  const rows = tipo === 'recargo' ? TABLA_RECARGO : TABLA_PRECIO
+  const cols = tipo === 'recargo' ? COLS_RECARGO : COLS_PRECIO
+  const col = cols.find((c) => c.k === sk) || cols[0]
+  const sorted = [...rows].sort((a, b) => {
+    if (a[col.k] == null) return 1
+    if (b[col.k] == null) return -1
+    return col.hi ? b[col.k] - a[col.k] : a[col.k] - b[col.k]
+  })
+  const pos = Object.fromEntries(sorted.map((r, i) => [r.modelo, i]))
+  const rowH = tipo === 'recargo' ? 80 : 96
+  const nameW = tipo === 'recargo' ? 300 : 360
+  const vals = rows.map((r) => r[col.k]).filter((v) => v != null)
+  const mn = Math.min(...vals), mx = Math.max(...vals)
+  const bar = (v) => (v == null || mx === mn ? 0 : 0.15 + 0.85 * (col.hi ? (v - mn) / (mx - mn) : (mx - v) / (mx - mn)))
+  const grid = `${nameW}px 150px repeat(${cols.length}, minmax(0, 1fr))`
+  const cambiar = (t) => { setTipo(t); setSk(ORDEN[t][0][0]) }
+  return (
+    <div className="tm" style={{ width }}>
+      <div className="tm-top">
+        <div className="seg-ctrl">
+          <button className={tipo === 'recargo' ? 'on' : ''} onClick={() => cambiar('recargo')}>Recargo · clasificación</button>
+          <button className={tipo === 'precio' ? 'on' : ''} onClick={() => cambiar('precio')}>Precio · regresión</button>
+        </div>
+        <div className="tm-sort"><span>⇅ Ordenar:</span>{ORDEN[tipo].map(([k, l]) => <button key={k} className={sk === k ? 'on' : ''} onClick={() => setSk(k)}>{l}</button>)}</div>
+      </div>
+      <div className="tm-table">
+        <div className="tm-row tm-headrow" style={{ gridTemplateColumns: grid }}>
+          <span>Modelo</span><span>{tipo === 'recargo' ? 'Balanceo' : 'Variables'}</span>
+          {cols.map((c) => <span key={c.k} className={c.k === col.k ? 'on' : ''}>{c.t}{c.nota && <em>{c.nota}</em>}</span>)}
+        </div>
+        <div className="tm-body" style={{ height: rows.length * rowH }}>
+          {rows.map((r, i) => (
+            <div key={r.modelo} className={'tm-row tm-data fade' + (r.elegido ? ' on' : '') + (r.base ? ' base' : '')} style={{ '--d': 3 + i, gridTemplateColumns: grid, height: rowH, transform: `translateY(${pos[r.modelo] * rowH}px)` }}>
+              <span className="tm-name">{r.elegido && <span className="tm-badge">★ Elegido</span>}{r.modelo}</span>
+              <span className="tm-tec">{r.tecnica}</span>
+              {cols.map((c) => (
+                <span key={c.k} className={'num tm-v' + (c.k === col.k ? ' on' : '')}>
+                  {c.k === col.k && r[c.k] != null && <i className="tm-bar" style={{ width: `${bar(r[c.k]) * 100}%` }} />}
+                  <b>{c.f(r[c.k])}</b>
+                </span>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   )
 }

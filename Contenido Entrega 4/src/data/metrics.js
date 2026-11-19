@@ -282,3 +282,21 @@ export const RECARGO_HORA = [
   8.10, 8.17, 7.50, 8.48, 8.02, 8.02, 8.06, 8.34, 9.60, 8.06, 7.87, 7.00,
   8.02, 8.13, 7.68, 8.93, 8.42, 8.44, 7.92, 8.50, 8.15, 8.46, 8.42, 8.08,
 ]
+
+// Tabla comparativa de modelos de recargo · prueba final con la matriz corregida (FN = −USD 8,73)
+// Fuente: Contenido Entrega 3/8_Pruebas_critica_FN/resultados/modelos_matriz_corregida.csv
+// prVal = PR-AUC en validación temporal (con eso se eligió el modelo)
+export const TABLA_RECARGO = [
+  { modelo: 'Gradient boosting', tecnica: 'Pesos de clase', elegido: true, prVal: 0.1359, umbral: 0.3464, roc: 0.6766, prauc: 0.1401, recall: 0.9004, escapan: 0.0996, npv: 0.9731, precision: 0.1078, accuracy: 0.3733, costo: -112.84 },
+  { modelo: 'Random forest', tecnica: 'Pesos de clase', prVal: 0.1262, umbral: 0.2899, roc: 0.6756, prauc: 0.1437, recall: 0.8681, escapan: 0.1319, npv: 0.9699, precision: 0.1132, accuracy: 0.4248, costo: -102.82 },
+  { modelo: 'Árbol de decisión', tecnica: 'Pesos de clase', prVal: 0.1246, umbral: 0.3723, roc: 0.6722, prauc: 0.1379, recall: 0.8478, escapan: 0.1522, npv: 0.9660, precision: 0.1119, accuracy: 0.4292, costo: -124.40 },
+  { modelo: 'Regresión logística', tecnica: 'Pesos de clase', prVal: 0.1197, umbral: 0.4671, roc: 0.6505, prauc: 0.1207, recall: 0.7770, escapan: 0.2230, npv: 0.9582, precision: 0.1156, accuracy: 0.4882, costo: -156.30 },
+  { modelo: 'Siempre “sin recargo”', tecnica: 'Línea base', base: true, prVal: null, umbral: null, roc: 0.5, prauc: 0.0830, recall: 0, escapan: 1, npv: 0.9170, precision: null, accuracy: 0.9170, costo: -724.6 },
+]
+// Modelos de precio · prueba final (148.494 cotizaciones)
+export const TABLA_PRECIO = [
+  { modelo: 'Random forest', tecnica: 'con multiplicador', elegido: true, mae: 1.0777, r2: 0.9671, dentro10: 0.7496 },
+  { modelo: 'Árbol de decisión', tecnica: 'con multiplicador', mae: 1.0896, r2: 0.9656, dentro10: 0.7358 },
+  { modelo: 'Ridge', tecnica: 'con multiplicador', mae: 1.3896, r2: 0.9514, dentro10: 0.6548 },
+  { modelo: 'Línea base', tecnica: 'mediana por producto', base: true, mae: 3.0370, r2: 0.7583, dentro10: 0.3413 },
+]
