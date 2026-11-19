@@ -4,11 +4,11 @@ import { findImg } from './data/gallery.js'
 import {
   HBar, Dumbbell, Waterfall, ZoneMap, FareCompare, tarifaEn, Balanceo,
   KMeansScatter, Curvas, BeneficioCurva, UMBRALES, N_TEST, ForkLine, SurgeCollapse,
-  ColumnBlocks, UtcBig, AsymBars, Donut, ActorIcon, PistaPanel, PistaClima, LimpiezaFlow, MatrizFN, TablaModelos, ColumnasFlow, ErrorRelativo, RecargoSiNo, HusoHorario, MultiplicadorBinario, WaffleSiNo, PrecioLog, PrecioHistDuo, MultiplicadorFlujo, ClimaMatriz, BalanceoGrande, Gauge, LluviaVsSeco, HoraLinea, RangoCompare, ArbolReglas,
+  ColumnBlocks, UtcBig, AsymBars, Donut, ActorIcon, PistaPanel, PistaClima, LimpiezaFlow, MatrizFN, TablaModelos, ColumnasFlow, ErrorRelativo, RecargoSiNo, HusoHorario, MultiplicadorBinario, WaffleSiNo, PrecioLog, PrecioHistDuo, MultiplicadorFlujo, BalanceoGrande, Gauge, LluviaVsSeco, HoraLinea, RangoCompare, ArbolReglas,
 } from './components/charts.jsx'
 import {
   DATASET, PLATAFORMAS, RECARGO, ZONAS, PESO_FACTORES, REGRESION, REGRESION_SIN_SURGE, REGRESION_DATOS, IMPORTANCIA_RECARGO,
-  CLASIFICACION, FINAL, SIEMPRE_NO, NIVELES, EQUIPO, PRECIO_PRODUCTO, CLIMA_CORR, COLUMNAS, MATRIZ_FN, SENS_FN, MULT_TOTAL, PRECIO_STATS,
+  CLASIFICACION, FINAL, SIEMPRE_NO, NIVELES, EQUIPO, PRECIO_PRODUCTO, COLUMNAS, MATRIZ_FN, SENS_FN, MULT_TOTAL, PRECIO_STATS,
 } from './data/metrics.js'
 
 // Secciones de la barra de progreso
@@ -175,7 +175,7 @@ function TablaComparativa() {
 /* ═════════════ Dominio · hipótesis iniciales ═════════════ */
 const HIPOTESIS_INI = [
   ['H1', 'Hay patrones por hora y día', 'recargo', '¿El recargo sube en ciertas horas?'],
-  ['H2', 'Producto y distancia definen el precio', 'precio', '¿Qué explica cuánto se paga?'],
+  ['H2', 'La categoría del servicio y la distancia definen el precio', 'precio', '¿Qué explica cuánto se paga?'],
   ['H3', 'El mal clima encarece los viajes', 'ambas', '¿La lluvia sube el precio?'],
   ['H4', 'Los productos forman grupos tarifarios', 'precio', '¿Los 12 productos se agrupan?'],
 ]
@@ -546,8 +546,8 @@ function HallazgoFormula() {
     label: f.label, value: f.v, text: fDec(f.v, 1) + '%', strong: i < 2, color: i < 2 ? 'var(--precio)' : 'var(--neutral)',
   }))
   return (
-    <div className="slide">
-      <Head ent={E(2)} eje="Precio · qué lo define" track="precio" title={<>El precio es una fórmula: <em>producto + distancia</em></>} />
+    <div className="slide precio-formula">
+      <Head ent={E(2)} eje="Precio · qué lo define" track="precio" title={<>El precio: <em>categoría del servicio + distancia</em></>} />
       <div className="grid" style={{ gridTemplateColumns: '1.45fr 1fr', gap: 40 }}>
         <div className="card rv" style={{ '--d': 2 }}>
           <h3>Qué parte de la variación del precio explica cada variable</h3>
@@ -556,10 +556,11 @@ function HallazgoFormula() {
         </div>
         <Side gap={30}>
           <div className="rv formula-eq" style={{ '--d': 3 }}>
-            <span>precio ≈</span><span className="fx-chip">producto</span><span>+</span><span className="fx-chip">distancia</span>
+            <span>precio ≈</span>
+            <div className="formula-terminos"><span className="fx-chip">categoría del servicio</span><span>+</span><span className="fx-chip">distancia</span></div>
           </div>
           <div className="rv" style={{ '--d': 4, display: 'flex', gap: 22, justifyContent: 'space-between' }}>
-            <Gauge value={77.4} label="Producto elegido" d={5} />
+            <Gauge value={77.4} label="Categoría del servicio" d={5} />
             <Gauge value={11.9} label="Distancia" color="color-mix(in srgb, var(--precio) 65%, var(--card))" d={8} />
             <Gauge value={0} label="Hora y clima" muted d={11} />
           </div>
@@ -630,25 +631,15 @@ function HallazgoApps() {
 
 /* ═════════════ E2 · Mito del clima ═════════════ */
 function MitoClima() {
-  const rows = CLIMA_CORR.map((c) => ({
-    label: c.label, value: Math.abs(c.r), text: (c.r < 0 ? '−' : '') + fDec(Math.abs(c.r), 3),
-    color: c.label.startsWith('Distancia') ? 'var(--precio)' : 'var(--neutral)', strong: c.label.startsWith('Distancia'),
-  }))
+  const diferencia = (RECARGO.seco - RECARGO.lluvia) * 100
   return (
-    <div className="slide">
-      <Head ent={E(2)} eje="El clima · mito derribado" track="ambas" title={<>“Cuando llueve, el viaje sale más caro.” <em>No.</em></>} />
-      <div className="grid" style={{ gridTemplateColumns: '1.4fr 1fr', gap: 40 }}>
-        <div className="card rv" style={{ '--d': 2 }}>
-          <h3>Correlación del clima con el precio y con el recargo</h3>
-          <p className="sub">Casi todas las celdas quedan en blanco: correlación ≈ 0</p>
-          <div style={{ marginTop: 10 }}><ClimaMatriz cell={170} /></div>
-        </div>
-        <Side gap={26}>
-          <div className="label rv" style={{ '--d': 3 }}>¿Hay más recargo cuando llueve?</div>
-          <LluviaVsSeco lluvia={RECARGO.lluvia} seco={RECARGO.seco} />
-          <Say d={10} size={21}>Con lluvia hay incluso <B>un poco menos</B>.</Say>
-          <HipVeredicto k="H3" ok={false} d={11} />
-        </Side>
+    <div className="slide clima-slide">
+      <Head ent={E(2)} eje="El clima · mito derribado" track="recargo" title={<>Con lluvia, el recargo <em>no aumenta</em></>} />
+      <div className="clima-comparacion">
+        <p className="clima-contexto rv" style={{ '--d': 2 }}>Frecuencia de recargo en las cotizaciones de Lyft</p>
+        <LluviaVsSeco lluvia={RECARGO.lluvia} seco={RECARGO.seco} />
+        <p className="clima-diferencia rv" style={{ '--d': 9 }}><B c="var(--recargo)">{fDec(diferencia, 1)} puntos porcentuales menos</B> con lluvia</p>
+        <HipVeredicto k="H3" ok={false} d={10} />
       </div>
     </div>
   )
@@ -869,7 +860,7 @@ function ModelosRecargo() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
           <div>
             <h3>¿Qué modelo encuentra mejor los recargos?</h3>
-            <p className="sub" style={{ margin: 0 }}>PR-AUC · {enValidacion ? 'validación (con esto elegimos)' : 'prueba final'} · las barras arrancan en el azar: cuánto mejora cada modelo sobre adivinar</p>
+            <p className="sub" style={{ margin: 0 }}>{tipo === 'pr' ? 'Precisión y recargos detectados · prueba final · compará los modelos al cambiar el umbral' : <>PR-AUC · {enValidacion ? 'validación (con esto elegimos)' : 'prueba final'} · las barras arrancan en el azar: cuánto mejora cada modelo sobre adivinar</>}</p>
           </div>
           <div className="seg-ctrl" style={{ flexShrink: 0 }}>
             {[['val', 'Validación'], ['test', 'Prueba'], ['pr', 'Curvas']].map(([v, label]) => <button key={v} className={tipo === v ? 'on' : ''} onClick={() => setTipo(v)}>{label}</button>)}
@@ -929,7 +920,11 @@ function Asimetria() {
       <Head ent={E(4)} eje="El costo de equivocarse" track="recargo" title={<>No todos los errores <em>cuestan lo mismo</em></>} />
       <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: 28, flex: 'none' }}>
         {/* Error 1: no avisa y hay recargo */}
-        <div className="card rv" style={{ '--d': 2, display: 'grid', gridTemplateColumns: '262px 1fr', gap: 26, alignItems: 'center', padding: '28px 32px', borderColor: 'color-mix(in srgb, var(--bad) 40%, transparent)', background: 'linear-gradient(180deg, var(--bad-soft), transparent 75%), var(--card)' }}>
+        <div className="card asim-error rv" style={{ '--d': 2, borderColor: 'color-mix(in srgb, var(--bad) 40%, transparent)', background: 'linear-gradient(180deg, var(--bad-soft), transparent 75%), var(--card)' }}>
+          <header className="asim-error-head">
+            <h3 className="asim-error-title bad">Falso negativo</h3>
+            <p>No avisa y hay recargo</p>
+          </header>
           <div className="phone-big"><Phone d={3}>
             <div className="ph-app">Lyft<span className="ph-route">Back Bay → Fenway</span></div>
             <div className="ph-row"><span>Tarifa estimada</span><span className="muted">sin aviso</span></div>
@@ -940,12 +935,15 @@ function Asimetria() {
             </div>
           </Phone></div>
           <div>
-            <div className="label bad asim-lbl">Falso negativo · no avisa y hay recargo</div>
             <div className="num" style={{ fontSize: 64, lineHeight: 1, marginTop: 16, color: 'var(--bad)', whiteSpace: 'nowrap' }}><Num value={8.73} format={(v) => '−USD ' + fDec(v, 2)} delay={900} /></div>
           </div>
         </div>
         {/* Error 2: avisa y no había */}
-        <div className="card rv" style={{ '--d': 4, display: 'grid', gridTemplateColumns: '262px 1fr', gap: 26, alignItems: 'center', padding: '28px 32px' }}>
+        <div className="card asim-error rv" style={{ '--d': 4 }}>
+          <header className="asim-error-head">
+            <h3 className="asim-error-title">Falso positivo</h3>
+            <p>Avisa y no había recargo</p>
+          </header>
           <div className="phone-big"><Phone d={5}>
             <div className="ph-alert pop" style={{ '--d': 12 }}>
               <b>⚠ Posible recargo</b>
@@ -959,7 +957,6 @@ function Asimetria() {
             </div>
           </Phone></div>
           <div>
-            <div className="label asim-lbl">Falso positivo · avisa y no había recargo</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 14, flexWrap: 'wrap' }}>
               <div className="num" style={{ fontSize: 64, lineHeight: 1, color: 'var(--text-2)', whiteSpace: 'nowrap' }}>−USD 1</div>
               <span className="supuesto-tag">supuesto</span>
@@ -1099,7 +1096,7 @@ function Recomendaciones() {
 function Hipotesis() {
   const hs = [
     ['H1', 'Hay patrones por hora y día', false, 'Según la hora, el recargo solo va de 7,0 % a 9,6 %'],
-    ['H2', 'Producto y distancia definen el precio', true, 'Producto explica el 77 % y distancia el 12 %'],
+    ['H2', 'La categoría del servicio y la distancia definen el precio', true, 'La categoría del servicio explica el 77 % y la distancia el 12 %'],
     ['H3', 'El mal clima encarece los viajes', false, 'Recargo con lluvia 7,9 % vs 8,3 % sin lluvia'],
     ['H4', 'Los productos forman grupos tarifarios', true, '3 familias de tarifa: económico, intermedio y premium'],
   ]
@@ -1152,7 +1149,7 @@ function Cierre() {
           <Track v="precio" />
           <p style={{ fontFamily: 'var(--serif)', fontSize: 42, lineHeight: 1.1, marginTop: 18 }}>Es una fórmula predecible.</p>
           <div className="num precio" style={{ fontSize: 72, marginTop: 16 }}>USD 1,08</div>
-          <p className="t2" style={{ fontSize: 20, marginTop: 4 }}>de error medio, con producto y distancia</p>
+          <p className="t2" style={{ fontSize: 20, marginTop: 4 }}>de error medio, con categoría del servicio y distancia</p>
         </div>
         <div className="card recargo-card" style={{ padding: '30px 36px' }}>
           <Track v="recargo" />
@@ -1217,7 +1214,7 @@ export const SLIDES = [
   ]),
   S('hipotesis-ini', 1, 'Hipótesis', 'Qué define el precio y cuándo aparece el recargo', '0:45', '1:15', HipotesisIniciales, [
     'Nuestra pregunta: **qué define el precio** de un viaje y **cuándo aparece el recargo**. Analizamos casi 700 mil cotizaciones de Uber y Lyft en Boston.',
-    'Arrancamos con **cuatro hipótesis**: patrones por hora y día, que producto y distancia definen el precio, que el mal clima encarece los viajes y que los productos forman grupos tarifarios. Al final volvemos a ellas.',
+    'Arrancamos con **cuatro hipótesis**: patrones por hora y día, que la categoría del servicio y la distancia definen el precio, que el mal clima encarece los viajes y que los productos forman grupos tarifarios. Al final volvemos a ellas.',
   ]),
   // ── ETL
   S('limpieza', 2, 'Limpieza', 'Limpiar con criterio de dominio', '1:15', '1:35', Limpieza, [
@@ -1240,14 +1237,14 @@ export const SLIDES = [
   S('clima-hora', 2, 'Recargo · la hora', 'La hora no cambia el recargo', '2:35', '2:55', ClimaHoraRecargo, [
     'Si hubiera patrones por hora, esta línea tendría picos claros. Es **casi plana**: a cualquier hora, el recargo aparece más o menos igual. **H1 no se confirma.**',
   ]),
-  S('h-clima', 2, 'Recargo y precio · el clima', 'El mito del clima', '2:55', '3:15', MitoClima, [
-    'Y un **mito destruido**: el clima no cambia el precio. La correlación es cero, y con lluvia hay incluso un poco menos de recargo. **H3 se rechaza.**',
+  S('h-clima', 2, 'Recargo · el clima', 'Con lluvia, el recargo no aumenta', '2:55', '3:15', MitoClima, [
+    'En las cotizaciones de **Lyft**, el recargo aparece en el **7,9 % con lluvia** y en el **8,3 % sin lluvia**. Con lluvia hay incluso un poco menos: **0,4 puntos porcentuales** de diferencia. **H3 no se confirma.**',
   ]),
   S('h-zonas', 2, 'Recargo · la zona', 'El recargo depende del lugar', '3:15', '3:30', HallazgoZonas, [
     'Lo que sí influye es la **zona**: saliendo de Back Bay el recargo es **7,3 veces** más frecuente que desde North End.',
   ]),
   S('h-formula', 2, 'Precio · qué lo define', 'El precio es una fórmula', '3:30', '3:50', HallazgoFormula, [
-    'Sobre el **precio**: la **categoría de servicio** y la **distancia** lo definen casi todo. **El horario no afecta el precio**, ni el clima. H2 se confirma.',
+    'Sobre el **precio**: la **categoría del servicio** y la **distancia** lo definen casi todo. **El horario no afecta el precio**, ni el clima. H2 se confirma.',
   ]),
   S('columnas', 2, 'Resultado del ETL', 'De 57 a 27 columnas', '3:50', '4:05', Columnas, [
     'Resultado del ETL: de **57 columnas pasamos a 27**. Sacamos clima repetido, horas en UTC, coordenadas y copias, y creamos 11 nuevas, como la hora local y has_surge.',
@@ -1280,7 +1277,7 @@ export const SLIDES = [
     '(Mover a «Antes: 0,57» y volver a «Elegido».) La curva es la prueba final: el 0,35 cae en la zona plana, cerca del mínimo.',
   ]),
   S('hipotesis', 4, 'Hipótesis · balance', 'Lo que creíamos y lo que encontramos', '6:55', '7:10', Hipotesis, [
-    'De las 4 hipótesis, **2 se confirmaron**: producto y distancia definen el precio, y los productos forman grupos. **2 no**: ni la hora ni el clima.',
+    'De las 4 hipótesis, **2 se confirmaron**: la categoría del servicio y la distancia definen el precio, y los productos forman grupos. **2 no**: ni la hora ni el clima.',
   ]),
   S('cierre', 4, 'Conclusión', 'Conclusión', '7:10', '7:30', Cierre, [
     'En resumen: el **precio** es una fórmula y se predice con un dólar de error. El **recargo** se anticipa: **9 de cada 10**, y cuando la app dice “sin recargo” acierta el 97 %.',

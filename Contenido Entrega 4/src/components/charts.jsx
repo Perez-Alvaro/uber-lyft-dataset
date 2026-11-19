@@ -482,44 +482,78 @@ export const GRUPOS_LEYENDA = Object.entries(GRUPO_COLOR)
 
 /* ───────────────── Curvas ROC / Precisión-Recall ───────────────── */
 const MODEL_ORDER = ['Regresión logística', 'Árbol de decisión', 'Random forest', 'Gradient boosting']
-export function Curvas({ tipo, width = 470, height = 360 }) {
-  const [h, setH] = useState(null)
-  const pad = { l: 48, r: 16, t: 14, b: 44 }
-  const ymax = tipo === 'roc' ? 1 : 0.3
-  const x = (v) => pad.l + v * (width - pad.l - pad.r)
-  const y = (v) => pad.t + (1 - Math.min(v, ymax) / ymax) * (height - pad.t - pad.b)
+const CURVA_ESTILO = {
+  'Regresión logística': { color: 'var(--mid)', dash: '3 5' },
+  'Árbol de decisión': { color: 'var(--eco)', dash: '10 5' },
+  'Random forest': { color: 'var(--precio)', dash: '16 4 3 4' },
+  'Gradient boosting': { color: 'var(--recargo)', dash: undefined },
+}
+export function Curvas({ tipo, width = 1290, height = 400 }) {
+  const [modelo, setModelo] = useState('Gradient boosting')
+  const [objetivo, setObjetivo] = useState(0.5)
+  const roc = tipo === 'roc'
+  const graphW = width - 332
+  const pad = { l: 62, r: 22, t: 60, b: 66 }
+  const ymax = roc ? 1 : Math.ceil(Math.max(...MODEL_ORDER.flatMap((m) => CURVAS.curvas[m].pr.map((p) => p[1]))) * 20) / 20
+  const x = (v) => pad.l + v * (graphW - pad.l - pad.r)
+  const y = (v) => pad.t + (1 - v / ymax) * (height - pad.t - pad.b)
   const path = (pts) => pts.map((p, i) => `${i ? 'L' : 'M'}${x(p[0]).toFixed(1)},${y(p[1]).toFixed(1)}`).join(' ')
-  const yt = tipo === 'roc' ? [0, 0.25, 0.5, 0.75, 1] : [0, 0.1, 0.2, 0.3]
-  const base = 0.08296994696523276 // tasa de recargo en la prueba
+  const yt = roc ? [0, 0.25, 0.5, 0.75, 1] : Array.from({ length: Math.round(ymax / 0.05) + 1 }, (_, i) => i * 0.05)
+  const base = CURVAS.positivos / CURVAS.n
+  const punto = CURVAS.curvas[modelo][tipo].reduce((a, b) => Math.abs(a[0] - objetivo) <= Math.abs(b[0] - objetivo) ? a : b)
+  const color = CURVA_ESTILO[modelo].color
+  const move = (e) => {
+    const bounds = e.currentTarget.getBoundingClientRect()
+    const px = (e.clientX - bounds.left) * graphW / bounds.width
+    setObjetivo(Math.max(0, Math.min(1, (px - pad.l) / (graphW - pad.l - pad.r))))
+  }
   return (
-    <div style={{ position: 'relative' }}>
-      <svg width={width} height={height} key={tipo}>
-        {yt.map((t) => (
-          <g key={t} className="axis"><line x1={pad.l} x2={width - pad.r} y1={y(t)} y2={y(t)} /><text x={pad.l - 8} y={y(t)} dy=".35em" textAnchor="end">{fDec(t, t === 0 || t === 1 ? 0 : 2)}</text></g>
-        ))}
-        {[0, 0.25, 0.5, 0.75, 1].map((t) => <text key={t} x={x(t)} y={height - 22} textAnchor="middle" className="tick">{fDec(t, t % 1 ? 2 : 0)}</text>)}
-        <text x={(pad.l + width - pad.r) / 2} y={height - 2} textAnchor="middle" className="tick">{tipo === 'roc' ? 'Falsas alarmas (FPR)' : 'Recall: recargos detectados'}</text>
-        {tipo === 'roc'
-          ? <line x1={x(0)} y1={y(0)} x2={x(1)} y2={y(1)} stroke="var(--muted)" strokeDasharray="4 5" />
-          : <line x1={x(0)} y1={y(base)} x2={x(1)} y2={y(base)} stroke="var(--muted)" strokeDasharray="4 5" />}
-        <text x={tipo === 'roc' ? x(0.62) : x(0.98)} y={tipo === 'roc' ? y(0.55) : y(base) + 18} textAnchor={tipo === 'roc' ? 'start' : 'end'} className="val-muted">azar</text>
-        {MODEL_ORDER.map((m, i) => {
-          const gb = m === 'Gradient boosting'
-          const on = h == null ? gb : h === m
-          return (
-            <path key={m} className="draw" style={{ '--d': i }} pathLength="1" d={path(CURVAS.curvas[m][tipo])} fill="none"
-              stroke={on ? 'var(--accent)' : 'var(--neutral)'} strokeWidth={on ? 3 : 1.5} strokeOpacity={on ? 1 : 0.7} />
-          )
-        })}
-      </svg>
-      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 6 }}>
-        {MODEL_ORDER.map((m) => (
-          <span key={m} className="chip" style={{ cursor: 'default', borderColor: (h ?? 'Gradient boosting') === m ? 'var(--accent)' : undefined }}
-            onMouseEnter={() => setH(m)} onMouseLeave={() => setH(null)}>
-            {m} <span className="num muted" style={{ fontSize: 12 }}>{fDec(tipo === 'roc' ? CURVAS.curvas[m].roc_auc : CURVAS.curvas[m].ap, 3)}</span>
-          </span>
-        ))}
+    <div className="curvas" style={{ width }}>
+      <div className="curvas-panel" style={{ gridTemplateColumns: `${graphW}px 308px` }}>
+        <svg width={graphW} height={height} onMouseMove={move} role="img" aria-label={roc ? 'Curvas ROC de los cuatro modelos' : 'Curvas de precisión y recargos detectados de los cuatro modelos'}>
+          <text x={pad.l} y={20} className="curvas-axis-title">{roc ? 'Recargos detectados' : 'Precisión: avisos que aciertan'}</text>
+          <text x={graphW - pad.r} y={20} textAnchor="end" className="curvas-axis-hint">Más arriba = mejor</text>
+          {yt.map((t) => (
+            <g key={t} className="axis">
+              <line x1={pad.l} x2={graphW - pad.r} y1={y(t)} y2={y(t)} />
+              <text x={pad.l - 12} y={y(t)} dy=".35em" textAnchor="end">{fDec(t * 100, 0)} %</text>
+            </g>
+          ))}
+          {[0, 0.25, 0.5, 0.75, 1].map((t) => (
+            <g key={t} className="axis">
+              <line x1={x(t)} x2={x(t)} y1={pad.t} y2={height - pad.b} style={{ strokeDasharray: '2 6' }} />
+              <text x={x(t)} y={height - pad.b + 24} textAnchor="middle">{fDec(t * 100, 0)} %</text>
+            </g>
+          ))}
+          <text x={(pad.l + graphW - pad.r) / 2} y={height - 8} textAnchor="middle" className="curvas-axis-title">{roc ? 'Falsas alarmas' : 'Recargos detectados (recall)'}</text>
+          <line x1={x(0)} y1={y(roc ? 0 : base)} x2={x(1)} y2={y(roc ? 1 : base)} stroke="var(--muted)" strokeWidth={1.5} strokeDasharray="6 6" />
+          <text x={x(0.98)} y={y(roc ? 0.8 : base) + 22} textAnchor="end" className="curvas-base">{roc ? 'Azar' : `Azar: ${fDec(base * 100, 1)} % de avisos acertados`}</text>
+          {[...MODEL_ORDER.filter((m) => m !== modelo), modelo].map((m) => (
+            <path key={m} d={path(CURVAS.curvas[m][tipo])} fill="none" stroke={CURVA_ESTILO[m].color}
+              strokeDasharray={CURVA_ESTILO[m].dash} strokeWidth={m === modelo ? 3.5 : 2.2} strokeOpacity={m === modelo ? 1 : 0.65} strokeLinejoin="round" />
+          ))}
+          <line x1={x(punto[0])} x2={x(punto[0])} y1={pad.t} y2={height - pad.b} stroke={color} strokeOpacity={0.65} strokeDasharray="4 5" />
+          <circle cx={x(punto[0])} cy={y(punto[1])} r={6} fill={color} stroke="var(--card)" strokeWidth={3} />
+        </svg>
+        <aside className="curvas-side">
+          <div className="curvas-legend-head"><span>Elegí un modelo</span><span>{roc ? 'ROC-AUC' : 'PR-AUC'}</span></div>
+          <div className="curvas-legend">
+            {MODEL_ORDER.map((m) => (
+              <button key={m} type="button" className={modelo === m ? 'on' : ''} style={{ '--curve': CURVA_ESTILO[m].color }} aria-pressed={modelo === m} onClick={() => setModelo(m)}>
+                <svg width={28} height={10} aria-hidden="true"><line x1={0} x2={28} y1={5} y2={5} stroke="var(--curve)" strokeWidth={3} strokeDasharray={CURVA_ESTILO[m].dash} /></svg>
+                <span>{m}</span><b className="num">{fDec(roc ? CURVAS.curvas[m].roc_auc : CURVAS.curvas[m].ap, 3)}</b>
+              </button>
+            ))}
+          </div>
+          <div className="curvas-readout" style={{ '--curve': color }}>
+            <p>{roc ? 'Con' : 'Al detectar'} <b>{fDec(punto[0] * 100, 1)} %</b> {roc ? 'de falsas alarmas' : 'de los recargos'}</p>
+            <div className="curvas-readout-value num">{fDec(punto[1] * 100, 1)} %</div>
+            <p>{roc ? 'de los recargos detectados' : 'de sus avisos acierta'}</p>
+            <input type="range" min={0} max={100} step={1} value={Math.round(objetivo * 100)} onChange={(e) => setObjetivo(+e.target.value / 100)} aria-label={roc ? 'Porcentaje de falsas alarmas a comparar' : 'Porcentaje de recargos a detectar'} />
+          </div>
+        </aside>
       </div>
+      <p className="curvas-help">Cada punto corresponde a un umbral distinto. Mové el cursor o el control para leer la curva seleccionada.</p>
     </div>
   )
 }
@@ -602,29 +636,38 @@ export const UMBRALES = CURVAS.umbral.map((p) => ({
 })).sort((a, b) => a.t - b.t)
 export const N_TEST = CURVAS.n
 export function BeneficioCurva({ t, width = 560, height = 230, elegido, antes }) {
-  const pad = { l: 64, r: 14, t: 18, b: 34 }
+  const pad = { l: 76, r: 18, t: 48, b: 52 }
   const xs = UMBRALES
   const x = (v) => pad.l + ((v - 0.2) / 0.6) * (width - pad.l - pad.r)
-  const ymin = -780, ymax = -40
+  const ymin = -800, ymax = 0
   const y = (v) => pad.t + (1 - (v - ymin) / (ymax - ymin)) * (height - pad.t - pad.b)
   const path = xs.map((p, i) => `${i ? 'L' : 'M'}${x(p.t).toFixed(1)},${y(p.b).toFixed(1)}`).join(' ')
   const cur = xs.reduce((a, p) => (Math.abs(p.t - t) < Math.abs(a.t - t) ? p : a), xs[0])
-  const pk = xs.reduce((a, p) => (p.b > a.b ? p : a), xs[0])
   const sinModelo = xs[xs.length - 1].b
   return (
-    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Costo total en la prueba final según el límite de riesgo. El límite 0,35 se fijó previamente en validación.">
+    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Costo neto en dólares cada 1.000 cotizaciones, según el umbral de aviso. Menor costo hacia arriba. Resultados de la prueba final, con umbral 0,35 fijado previamente en validación.">
+      <text x={pad.l} y={16} className="curvas-axis-title" style={{ fontSize: 14 }}>Costo neto (USD cada 1.000 cotizaciones)</text>
+      <text x={width - pad.r} y={16} textAnchor="end" className="curvas-axis-hint" style={{ fontSize: 12 }}>Menor costo arriba</text>
+      {[0, 200, 400, 600, 800].map((costo) => (
+        <g key={costo} className="axis">
+          <line x1={pad.l} x2={width - pad.r} y1={y(-costo)} y2={y(-costo)} />
+          <text x={pad.l - 12} y={y(-costo)} dy=".35em" textAnchor="end">{fInt(costo)}</text>
+        </g>
+      ))}
+      <line x1={pad.l} x2={pad.l} y1={pad.t} y2={height - pad.b} stroke="var(--line-2)" />
+      <line x1={pad.l} x2={width - pad.r} y1={height - pad.b} y2={height - pad.b} stroke="var(--line-2)" />
       <line x1={pad.l} x2={width - pad.r} y1={y(sinModelo)} y2={y(sinModelo)} stroke="var(--bad)" strokeDasharray="4 5" opacity=".6" />
-      <text x={pad.l - 8} y={pad.t + 6} textAnchor="end" className="tick" style={{ fontSize: 12 }}>menos</text>
-      <text x={pad.l - 8} y={pad.t + 20} textAnchor="end" className="tick" style={{ fontSize: 12 }}>costo ↑</text>
-      {[0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8].map((v) => <text key={v} x={x(v)} y={height - 12} textAnchor="middle" className="tick">{fDec(v, 1)}</text>)}
+      <text x={x(0.22)} y={y(sinModelo) - 8} className="tick" style={{ fontSize: 12, fill: 'var(--bad)' }}>Sin avisos</text>
+      {[0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8].map((v) => <text key={v} x={x(v)} y={height - pad.b + 22} textAnchor="middle" className="tick">{fDec(v, 1)}</text>)}
+      <text x={(pad.l + width - pad.r) / 2} y={height - 4} textAnchor="middle" className="curvas-axis-title" style={{ fontSize: 14 }}>Umbral de aviso (puntaje de riesgo)</text>
       <path d={`${path} L${x(0.8)},${y(ymin)} L${x(0.2)},${y(ymin)} Z`} fill="var(--accent-soft)" opacity={0.6} />
       <path className="draw" pathLength="1" d={path} fill="none" stroke="var(--accent)" strokeWidth={2.5} />
       {antes != null && <>
         <line x1={x(antes)} x2={x(antes)} y1={pad.t} y2={height - pad.b} stroke="var(--muted)" strokeDasharray="2 5" />
-        <text x={x(antes) + 6} y={pad.t + 10} className="val-muted" style={{ fontSize: 12 }}>antes: {fDec(antes, 2)}</text>
+        <text x={x(antes) + 6} y={pad.t - 10} className="val-muted" style={{ fontSize: 12 }}>antes: {fDec(antes, 2)}</text>
       </>}
       <line x1={x(elegido)} x2={x(elegido)} y1={pad.t} y2={height - pad.b} stroke="var(--text-2)" strokeDasharray="3 4" />
-      <text x={x(elegido) - 6} y={pad.t + 10} textAnchor="end" className="val-muted" style={{ fontSize: 12, fill: 'var(--text)' }}>elegido: {fDec(elegido, 2)}</text>
+      <text x={x(elegido) - 6} y={pad.t - 10} textAnchor="end" className="val-muted" style={{ fontSize: 12, fill: 'var(--text)' }}>elegido: {fDec(elegido, 2)}</text>
       <circle cx={x(cur.t)} cy={y(cur.b)} r={7} fill="var(--text)" stroke="var(--accent)" strokeWidth={3} />
     </svg>
   )
@@ -1239,7 +1282,7 @@ export function LluviaVsSeco({ lluvia, seco }) {
           <div className="lvs-t">{it.t}</div>
           <div className="num lvs-v">{fDec(it.v * 100, 1)} %</div>
           <div className="lvs-bar"><div className="growx" style={{ '--d': 8 + i * 2, width: `${(it.v / max) * 100}%` }} /></div>
-          <div className="lvs-s">de las cotizaciones con recargo</div>
+          <div className="lvs-s">de las cotizaciones {it.k === 'lluvia' ? 'con lluvia' : 'sin lluvia'}</div>
         </div>
       ))}
     </div>

@@ -255,6 +255,23 @@ svg { overflow: visible; display: block; }
 .seg-ctrl { display: inline-flex; background: var(--card-2); border: 1px solid var(--line); border-radius: 10px; padding: 3px; gap: 2px; }
 .seg-ctrl button { white-space: nowrap; background: none; border: 0; padding: 7px 13px; border-radius: 8px; cursor: pointer; font-size: 14px; color: var(--text-2); }
 .seg-ctrl button.on { background: var(--text); color: var(--bg); }
+.curvas-panel { display: grid; gap: 24px; align-items: start; }
+.curvas-panel > svg { cursor: crosshair; }
+.curvas-axis-title { fill: var(--text); font: 600 16px var(--sans); }
+.curvas-axis-hint, .curvas-base { fill: var(--muted); font: 14px var(--sans); }
+.curvas-side { padding-top: 4px; }
+.curvas-legend-head { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); margin: 0 10px 10px; }
+.curvas-legend { display: grid; gap: 5px; }
+.curvas-legend button { display: grid; grid-template-columns: 28px 1fr auto; align-items: center; gap: 10px; padding: 11px 10px; background: transparent; border: 1px solid transparent; border-radius: 9px; text-align: left; cursor: pointer; font-size: 14px; }
+.curvas-legend button b { font-size: 14px; }
+.curvas-legend button.on { border-color: color-mix(in srgb, var(--curve) 55%, transparent); background: color-mix(in srgb, var(--curve) 9%, transparent); }
+.curvas-legend button:focus-visible { outline: 2px solid var(--curve); outline-offset: 2px; }
+.curvas-readout { border-left: 3px solid var(--curve); background: color-mix(in srgb, var(--curve) 7%, transparent); padding: 12px 16px; margin-top: 16px; border-radius: 0 10px 10px 0; }
+.curvas-readout p { font-size: 15px; line-height: 1.4; color: var(--text-2); }
+.curvas-readout p b { color: var(--text); }
+.curvas-readout-value { font-size: 38px; color: var(--curve); margin: 4px 0; }
+.curvas-readout input { width: 100%; margin: 12px 0 0; accent-color: var(--curve); cursor: pointer; }
+.curvas-help { color: var(--muted); font-size: 14px; margin: 10px 0 0 62px; }
 input[type='range'] { -webkit-appearance: none; appearance: none; width: 100%; height: 26px; background: transparent; cursor: pointer; }
 input[type='range']::-webkit-slider-runnable-track { height: 6px; border-radius: 6px; background: linear-gradient(90deg, var(--accent) var(--p, 50%), var(--line-2) var(--p, 50%)); }
 input[type='range']::-moz-range-track { height: 6px; border-radius: 6px; background: var(--line-2); }
@@ -683,6 +700,10 @@ html.estatico .cf-arrow, html.estatico .err-chunk, html.estatico .sino-flow, htm
 .good-pill { color: var(--good); background: var(--good-soft); }
 .bad-pill { color: var(--bad); background: var(--bad-soft); }
 .formula-eq { display: flex; align-items: center; gap: 14px; font-family: var(--serif); font-size: 40px; flex-wrap: wrap; }
+.precio-formula .formula-eq { flex-direction: column; align-items: flex-start; gap: 10px; }
+.formula-terminos { display: flex; align-items: center; gap: 14px; }
+.precio-formula .gauge { width: 150px; flex: none; }
+.precio-formula .hipv-t { font-size: 18px; }
 .fx-chip { font-family: var(--sans); font-size: 22px; font-weight: 600; color: var(--precio); background: var(--precio-soft); border: 1px solid color-mix(in srgb, var(--precio) 40%, transparent); border-radius: 12px; padding: 6px 14px; }
 .gauge { display: flex; flex-direction: column; align-items: center; gap: 8px; }
 .gauge-lbl { font-size: 16px; font-weight: 600; text-align: center; }
@@ -718,6 +739,21 @@ html.estatico .cf-arrow, html.estatico .err-chunk, html.estatico .sino-flow, htm
 .lvs-bar { height: 12px; border-radius: 6px; background: var(--card-2); margin-top: 10px; overflow: hidden; }
 .lvs-bar > div { height: 100%; border-radius: 6px; background: var(--recargo); }
 .lvs-s { font-size: 14px; color: var(--muted); margin-top: 8px; }
+.clima-comparacion { width: 1240px; margin: 6px auto 0; }
+.clima-contexto { color: var(--text-2); font-size: 22px; margin-bottom: 18px; }
+.clima-slide .lvs { gap: 36px; }
+.clima-slide .lvs-card { position: relative; padding: 32px 36px; min-height: 326px; border-radius: 24px; }
+.clima-slide .lvs-lluvia { background: linear-gradient(135deg, rgba(74, 143, 216, .09), transparent 70%), var(--card); }
+.clima-slide .lvs-seco { background: linear-gradient(135deg, var(--accent-soft), transparent 70%), var(--card); }
+.clima-slide .lvs-sky { position: absolute; top: 32px; right: 30px; width: 150px; height: 90px; margin: 0; }
+.clima-slide .lvs-t { font-size: 28px; }
+.clima-slide .lvs-v { font-size: 116px; letter-spacing: -.06em; margin-top: 18px; }
+.clima-slide .lvs-bar { height: 14px; margin-top: 26px; background: color-mix(in srgb, var(--text) 7%, transparent); }
+.clima-slide .lvs-lluvia .lvs-bar > div { background: #4a8fd8; }
+.clima-slide .lvs-s { font-size: 18px; margin-top: 12px; }
+.clima-diferencia { text-align: center; font-size: 28px; line-height: 1.4; color: var(--text-2); margin: 24px 0; }
+.clima-slide .hipv { padding: 16px 24px; }
+.clima-slide .hipv-t { font-size: 23px; }
 @media (prefers-reduced-motion: reduce) { .gauge-arc, .gauge-glint, .lvs-drop, .lvs-rays, .lvu-bar::after { animation: none !important; } }
 html.estatico .gauge-arc, html.estatico .lvu-row .lvu-bar::after, html.estatico .lvs-rays { animation: none !important; }
 .arbol-ruta { animation: arbolGlow 2.8s ease-in-out 2.5s infinite; }
@@ -1297,6 +1333,11 @@ html.estatico .bsa-badge { animation: none; opacity: 1; }
 .afl-eq b { color: var(--bad); }
 .asim-formula-line .num.bad { color: var(--bad); font-size: 24px; }
 .asim-lbl { font-size: 15px; line-height: 1.5; }
+.asim-error { display: grid; grid-template-columns: 236px 1fr; gap: 16px 24px; align-items: center; padding: 20px 28px; }
+.asim-error-head { grid-column: 1 / -1; }
+.card .asim-error-title { font-size: 34px; line-height: 1.1; margin: 0 0 6px; }
+.asim-error-head p { color: var(--text-2); font-size: 19px; line-height: 1.4; }
+.asim-error .phone-big { zoom: .95; }
 .asim-formula-line { margin-top: 30px; padding: 22px 30px; gap: 18px; font-size: 21px; flex-wrap: nowrap; align-items: center; }
 .asim-formula-line .label { font-size: 14px; white-space: nowrap; }
 .afl-eq { font-size: 23px; white-space: nowrap; }

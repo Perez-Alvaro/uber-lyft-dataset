@@ -71,7 +71,7 @@ export const ZONAS = [
 
 // % de la varianza del precio que explica cada variable por sí sola (Entrega 2, gráfico 7)
 export const PESO_FACTORES = [
-  { label: 'Producto elegido', v: 77.4 },
+  { label: 'Categoría del servicio', v: 77.4 },
   { label: 'Nivel de servicio', v: 76.6 },
   { label: 'Distancia', v: 11.9 },
   { label: 'Multiplicador de recargo', v: 5.8 },
