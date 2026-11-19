@@ -240,15 +240,8 @@ function HipIcon({ k }) {
 }
 function HipotesisIniciales() {
   return (
-    <div className="slide">
+    <div className="slide hip-slide">
       <Head ent={E(1)} eje="Hipótesis" title={<>¿Qué define el precio de un viaje, <em>y cuándo aparece el recargo?</em></>} />
-      <div className="intro-ctx rv" style={{ '--d': 2 }}>
-        <span><Brand name="Uber" size={24} /> y <Brand name="Lyft" size={24} /> en Boston</span>
-        <span className="num"><Num value={DATASET.crudo} /> cotizaciones</span>
-        <span>12 zonas · 12 productos</span>
-        <span>nov – dic 2018</span>
-      </div>
-      <div className="label rv" style={{ '--d': 3, margin: '30px 0 14px' }}>Nuestras hipótesis de partida</div>
       <div className="hip-grid">
         {HIPOTESIS_INI.map(([k, t, v, q], i) => (
           <div key={k} className={'card hip-card rv hip-' + v} style={{ '--d': 4 + i * 2 }}>
@@ -510,26 +503,38 @@ function HoraUTC() {
 }
 
 /* ═════════════ E2 · Tratamiento por variable ═════════════ */
-function Tratamiento() {
+function TratamientoPrecio() {
   return (
-    <div className="slide">
-      <Head ent={E(2)} eje="Variables a predecir" track="ambas" title={<>Cómo preparamos <em>el precio y el recargo</em></>} />
-      <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: 26 }}>
-        <section className="card precio-card rv" style={{ '--d': 2, padding: '22px 28px' }}>
-          <Track v="precio" />
-          <h3 style={{ marginTop: 12 }}>Precio: ¿por qué logaritmo?</h3>
-          <p className="trat-step"><span className="num">1</span>Los precios están <B>sesgados</B>: el log los vuelve simétricos</p>
-          <PrecioHistDuo width={680} />
-          <p className="trat-step" style={{ marginTop: 18 }}><span className="num">2</span>El error pasa a medirse <B>en proporción al precio</B></p>
-          <div style={{ zoom: 0.78, marginTop: 6 }}><ErrorRelativo width={760} /></div>
-        </section>
-        <section className="card recargo-card rv" style={{ '--d': 4, padding: '22px 28px' }}>
-          <Track v="recargo" />
-          <h3 style={{ marginTop: 12 }}>Recargo: de 7 valores a “sí” o “no”</h3>
-          <p className="sub">Lyft sin Shared · {fInt(MULT_TOTAL)} cotizaciones · cada nivel por separado era muy poco</p>
-          <div style={{ marginTop: 18 }}><MultiplicadorFlujo width={680} /></div>
-        </section>
+    <div className="slide tratamiento-precio">
+      <Head ent={E(2)} eje="Variables a predecir" track="precio" title={<>Cómo preparamos <em>el precio</em></>} />
+      <div className="card precio-card tratamiento-precio-panel rv" style={{ '--d': 2 }}>
+        <h3>¿Por qué usamos el logaritmo?</h3>
+        <div className="tratamiento-precio-grid">
+          <section>
+            <p className="trat-step"><span className="num">1</span><span>Los precios están <B>sesgados</B></span></p>
+            <p className="tratamiento-explica">El logaritmo deja una distribución casi simétrica.</p>
+            <PrecioHistDuo width={800} height={230} />
+          </section>
+          <section className="tratamiento-error">
+            <p className="trat-step"><span className="num">2</span><span>El error se mide <B>en proporción al precio</B></span></p>
+            <p className="tratamiento-explica">Un error de USD 2 pesa distinto según el viaje.</p>
+            <div className="tratamiento-error-grafico"><ErrorRelativo width={480} /></div>
+          </section>
+        </div>
       </div>
+    </div>
+  )
+}
+
+function TratamientoRecargo() {
+  return (
+    <div className="slide tratamiento-recargo">
+      <Head ent={E(2)} eje="Variables a predecir" track="recargo" title={<>Cómo preparamos <em>el recargo</em></>} />
+      <section className="card recargo-card tratamiento-recargo-panel rv" style={{ '--d': 2 }}>
+        <h3>De 7 valores a “sí” o “no”</h3>
+        <p className="sub">Lyft sin Shared · {fInt(MULT_TOTAL)} cotizaciones · agrupamos los 6 niveles de aumento en una sola clase</p>
+        <div className="tratamiento-recargo-grafico"><MultiplicadorFlujo width={1040} /></div>
+      </section>
       <p className="tratamiento-cierre rv" style={{ '--d': 6 }}>Para anticipar el recargo <B>no usamos el precio final ni el multiplicador</B> como entrada: revelarían la respuesta.</p>
     </div>
   )
@@ -1224,9 +1229,13 @@ export const SLIDES = [
   S('uber-esconde', 2, 'Recargo · Uber vs Lyft', 'Uber esconde su recargo', '1:50', '2:10', UberEsconde, [
     'Sobre el **recargo**: **Uber es una caja negra**, cobra precio cerrado y nunca muestra el multiplicador. Lyft sí. Deducirlo acertaba solo el 61%, así que el recargo se estudia **solo con Lyft**.',
   ]),
-  S('tratamiento', 2, 'Variables a predecir', 'Cómo preparamos el precio y el recargo', '2:10', '2:35', Tratamiento, [
+  S('tratamiento', 2, 'Precio · variable a predecir', 'Cómo preparamos el precio', '2:10', '2:23', TratamientoPrecio, [
     '**Precio**: unos pocos viajes muy caros, hasta USD 97,5, estiraban la distribución (asimetría 1,05). Con el **logaritmo** queda casi simétrica (−0,10) y el modelo aprende errores en proporción al precio.',
+    'El mismo error de **USD 2** representa el **20 %** de un viaje de USD 10 y el **5 %** de uno de USD 40.',
+  ]),
+  S('tratamiento-recargo', 2, 'Recargo · variable a predecir', 'Cómo preparamos el recargo', '2:23', '2:35', TratamientoRecargo, [
     '**Recargo**: venía en 6 multiplicadores, de ×1,25 a ×3, y cada uno por separado era muy poco. Los unimos en **sí / no**: **20.975 con recargo, el 8,2 %**.',
+    'Para anticiparlo, **no usamos el precio final ni el multiplicador como entrada**, porque revelarían la respuesta.',
   ]),
   S('clima-hora', 2, 'Recargo · la hora', 'La hora no cambia el recargo', '2:35', '2:55', ClimaHoraRecargo, [
     'Si hubiera patrones por hora, esta línea tendría picos claros. Es **casi plana**: a cualquier hora, el recargo aparece más o menos igual. **H1 no se confirma.**',

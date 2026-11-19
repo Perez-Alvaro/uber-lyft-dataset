@@ -1643,8 +1643,8 @@ function MiniHist({ data, w, h, cola, d = 0 }) {
     </svg>
   )
 }
-export function PrecioHistDuo({ width = 720 }) {
-  const w = (width - 70) / 2, h = 120
+export function PrecioHistDuo({ width = 720, height = 120 }) {
+  const w = (width - 70) / 2, h = height
   return (
     <div className="phd" style={{ width }}>
       <div className="phd-col">

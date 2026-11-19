@@ -649,6 +649,17 @@ html.estatico .lf-arrow { animation: none; }
 .cf-arrow { animation: lfDash 3s linear infinite; }
 
 /* ───────────── Tratamiento: precio y recargo ───────────── */
+.tratamiento-precio-panel { padding: 32px; min-height: 540px; }
+.tratamiento-precio-panel h3, .tratamiento-recargo-panel h3 { font-size: 28px; }
+.tratamiento-precio-grid { display: grid; grid-template-columns: 800px 1fr; gap: 44px; margin-top: 24px; }
+.tratamiento-precio .trat-step { font-size: 23px; align-items: flex-start; min-height: 64px; margin: 0; }
+.tratamiento-explica { color: var(--text-2); font-size: 20px; line-height: 1.5; margin: 8px 0 28px; }
+.tratamiento-error { border-left: 1px solid var(--line-2); padding-left: 30px; }
+.tratamiento-error-grafico { margin-top: 48px; }
+.tratamiento-recargo-panel { padding: 26px 32px 14px; }
+.tratamiento-recargo-panel .sub { font-size: 20px; margin-bottom: 14px; }
+.tratamiento-recargo-grafico { width: 1227.2px; height: 403.56px; margin: 0 auto; }
+.tratamiento-recargo-grafico > svg { transform: scale(1.18); transform-origin: top left; }
 .err-in { opacity: 0; animation: errIn .7s cubic-bezier(.3,1.4,.5,1) forwards; }
 @keyframes errIn { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: none; } }
 .err-chunk { transform-box: fill-box; transform-origin: center; animation: errPulse 2.2s ease-in-out 3s infinite; }
@@ -1342,3 +1353,17 @@ html.estatico .hipv-stamp { animation: none; opacity: 1; }
 .um-ahorro span:last-child { font-size: 19px; color: var(--text-2); margin-top: 6px; }
 .um-explica { font-size: 20px; line-height: 1.4; color: var(--text-2); background: var(--accent-soft); border-radius: 12px; padding: 12px 18px; margin: 8px 0 0; animation: fade .4s ease both; }
 .gracias-t { font-family: var(--serif); font-style: italic; font-size: 180px; line-height: 1; }
+/* Hipótesis iniciales más grandes */
+.hip-slide .hip-grid { gap: 28px; margin-top: 10px; }
+.hip-slide .hip-card { grid-template-columns: 120px 1fr 170px; padding: 46px 40px; min-height: 230px; }
+.hip-slide .hip-k { font-size: 92px; }
+.hip-slide .hip-t { font-size: 34px; }
+.hip-slide .hip-q { font-size: 22px; margin-top: 12px; }
+.hip-slide .hip-ico { width: 160px; height: 106px; }
+.hip-slide .hip-q-badge { width: 32px; height: 32px; font-size: 20px; }
+.hip-slide .hip-card { grid-template-columns: 96px 1fr 140px; padding: 44px 36px; gap: 22px; }
+.hip-slide .hip-k { font-size: 80px; }
+.hip-slide .hip-t { font-size: 31px; }
+.hip-slide .hip-ico { width: 136px; height: 90px; }
+.hip-slide .hip-card { min-height: 268px; }
+.hip-slide .hip-grid { gap: 30px; }
