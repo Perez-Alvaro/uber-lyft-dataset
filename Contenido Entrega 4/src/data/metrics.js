@@ -17,8 +17,8 @@ export const DATASET = {
 
 export const ETL_PASOS = [
   { label: 'Dataset crudo (Kaggle)', valor: 693071, tipo: 'total' },
-  { label: 'Taxi sin precio', valor: -55095, nota: 'cobran por taxímetro' },
-  { label: 'Copias de una misma cotización', valor: -1060, nota: 'duplicados exactos' },
+  { label: 'Taxis', valor: -55095, nota: 'precio vacío' },
+  { label: 'Duplicados', valor: -1060, nota: 'la misma cotización repetida' },
   { label: 'Distancias imposibles', valor: -348, nota: '~0 millas en rutas reales' },
   { label: 'Dataset limpio', valor: 636568, tipo: 'total' },
 ]
@@ -300,3 +300,18 @@ export const TABLA_PRECIO = [
   { modelo: 'Ridge', tecnica: 'con multiplicador', mae: 1.3896, r2: 0.9514, dentro10: 0.6548 },
   { modelo: 'Línea base', tecnica: 'mediana por producto', base: true, mae: 3.0370, r2: 0.7583, dentro10: 0.3413 },
 ]
+
+// Multiplicador de recargo en Lyft sin Shared (dataset limpio de la Entrega 2, 255.953 cotizaciones)
+export const MULTIPLICADORES = [
+  { m: '×1,25', n: 11085 }, { m: '×1,5', n: 5065 }, { m: '×1,75', n: 2420 },
+  { m: '×2', n: 2239 }, { m: '×2,5', n: 154 }, { m: '×3', n: 12 },
+]
+export const MULT_SIN = 234978
+export const MULT_TOTAL = 255953
+
+// Distribución real del precio (dataset limpio, 636.568 cotizaciones)
+// PRECIO_HIST: 30 intervalos de USD 2,5 desde 0 (el último junta > USD 72,5)
+// LOGPRECIO_HIST: 30 intervalos iguales de log(precio) entre log(2,5) y log(100)
+export const PRECIO_HIST = [0, 11209, 74397, 103447, 86175, 53317, 78030, 40777, 11897, 35012, 39772, 38093, 16311, 24346, 4947, 9587, 1271, 2867, 2166, 914, 106, 580, 572, 185, 6, 101, 196, 102, 0, 185]
+export const LOGPRECIO_HIST = [211, 5538, 5060, 0, 400, 14073, 2240, 6016, 69955, 32032, 53528, 47555, 38620, 45480, 22855, 67581, 36298, 38353, 12285, 69947, 33877, 15826, 10858, 5737, 891, 764, 403, 90, 73, 22]
+export const PRECIO_STATS = { n: 636568, mediana: 13.5, media: 16.55, max: 97.5, p99: 42.5, asim: 1.045, asimLog: -0.10 }

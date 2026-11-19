@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { fInt, fDec, fPct, fUsd, Tip, Num } from '../lib/ui.jsx'
 import {
   PISTA_PRODUCTO, PISTA_ZONA, PISTA_CORR, PISTA_AUC, RECARGO_HORA,
-  PRECIO_RECARGO, ETL_PASOS, CALENDARIO, PARTICION, ZONAS, KMEANS, DECILES, RECARGO, BALANCEO, FINAL, MATRIZ_FN, TABLA_RECARGO, TABLA_PRECIO,
+  PRECIO_RECARGO, ETL_PASOS, CALENDARIO, PARTICION, ZONAS, KMEANS, DECILES, RECARGO, BALANCEO, FINAL, MATRIZ_FN, TABLA_RECARGO, TABLA_PRECIO, MULTIPLICADORES, MULT_SIN, MULT_TOTAL, PRECIO_HIST, LOGPRECIO_HIST, PRECIO_STATS,
 } from '../data/metrics.js'
 import CURVAS from '../data/curvas.json'
 import TARIFAS from '../data/tarifas.json'
@@ -275,6 +275,71 @@ const LBL = {
   'South Station': [28, 4, 'start'], 'Financial District': [26, 4, 'start'], 'West End': [-24, 10, 'end'],
   'North Station': [-22, -4, 'end'], 'Haymarket Square': [20, 8, 'start'], 'North End': [20, -2, 'start'],
 }
+
+/* Fondo de mapa estilizado (coordenadas reales aproximadas, misma proyección que ZoneMap) */
+const P = (lat, lon) => [(lon - LON0) * KX, (LAT1 - lat) * KY]
+// Curva suave (Catmull-Rom → Bézier) por los puntos dados
+const curva = (pts, close = false) => {
+  const q = pts.map(([la, lo]) => P(la, lo))
+  if (close) q.push(q[0], q[1], q[2])
+  let d = `M${q[0][0].toFixed(1)},${q[0][1].toFixed(1)}`
+  for (let i = 0; i < q.length - 1; i++) {
+    const p0 = q[i - 1] || q[i], p1 = q[i], p2 = q[i + 1], p3 = q[i + 2] || p2
+    const c1 = [p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6]
+    const c2 = [p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6]
+    d += ` C${c1[0].toFixed(1)},${c1[1].toFixed(1)} ${c2[0].toFixed(1)},${c2[1].toFixed(1)} ${p2[0].toFixed(1)},${p2[1].toFixed(1)}`
+  }
+  return d + (close ? ' Z' : '')
+}
+const RIO = [[42.3518, -71.120], [42.3527, -71.108], [42.3540, -71.100], [42.3555, -71.091], [42.3572, -71.083], [42.3592, -71.077], [42.3616, -71.0725], [42.3648, -71.0700], [42.3678, -71.0663], [42.3698, -71.0622], [42.3712, -71.0575], [42.3716, -71.0545]]
+const CUENCA = [[42.3560, -71.0880], [42.3572, -71.083], [42.3592, -71.077], [42.3610, -71.0740]]
+const PUERTO = [[42.3735, -71.0565], [42.3702, -71.0545], [42.3690, -71.0520], [42.3664, -71.0503], [42.3630, -71.0498], [42.3598, -71.0494], [42.3568, -71.0499], [42.3548, -71.0500], [42.3532, -71.0468], [42.3515, -71.0420], [42.3518, -71.0360], [42.3542, -71.0300], [42.3570, -71.0240], [42.3735, -71.0240]]
+const CANAL = [[42.3552, -71.0502], [42.3512, -71.0518], [42.3462, -71.0546], [42.3402, -71.0574], [42.3340, -71.0590]]
+const COMMON = [[42.3577, -71.0640], [42.3563, -71.0618], [42.3532, -71.0636], [42.3524, -71.0660], [42.3530, -71.0702], [42.3540, -71.0728], [42.3558, -71.0718], [42.3570, -71.0688]]
+const FENS = [[42.3460, -71.0975], [42.3442, -71.0928], [42.3412, -71.0918], [42.3385, -71.0948], [42.3398, -71.0990], [42.3432, -71.1000]]
+const CALLES = [
+  // Back Bay (paralelas) y su continuación al oeste
+  [[42.3562, -71.0700], [42.3530, -71.0800], [42.3505, -71.0890], [42.3490, -71.0950]], // Beacon
+  [[42.3532, -71.0712], [42.3508, -71.0790], [42.3487, -71.0870], [42.3487, -71.0945], [42.3503, -71.1035], [42.3508, -71.120]], // Commonwealth
+  [[42.3522, -71.0705], [42.3497, -71.0790], [42.3478, -71.0868]], // Newbury
+  [[42.3517, -71.0690], [42.3490, -71.0790], [42.3470, -71.0862], [42.3455, -71.0930], [42.3440, -71.1010]], // Boylston
+  [[42.3556, -71.0920], [42.3487, -71.0882], [42.3420, -71.0850], [42.3330, -71.0770], [42.3290, -71.0735]], // Mass Ave
+  [[42.3478, -71.0790], [42.3420, -71.0870], [42.3385, -71.0930], [42.3335, -71.1040]], // Huntington
+  [[42.3505, -71.0690], [42.3440, -71.0790], [42.3360, -71.0880], [42.3300, -71.0950]], // Columbus
+  [[42.3600, -71.0590], [42.3560, -71.0622], [42.3510, -71.0650], [42.3440, -71.0700], [42.3350, -71.0790]], // Tremont
+  [[42.3572, -71.0585], [42.3520, -71.0630], [42.3440, -71.0668], [42.3340, -71.0745]], // Washington
+  [[42.3605, -71.0590], [42.3602, -71.0640], [42.3613, -71.0710]], // Cambridge St
+  [[42.3664, -71.0535], [42.3600, -71.0512], [42.3556, -71.0522], [42.3518, -71.0552]], // Atlantic
+  [[42.3640, -71.0560], [42.3632, -71.0610], [42.3640, -71.0660]], // Causeway / North Station
+  [[42.3530, -71.1180], [42.3540, -71.1000], [42.3560, -71.0920], [42.3582, -71.0815], [42.3605, -71.0740]], // Storrow
+]
+const AUTOPISTAS = [
+  [[42.3492, -71.120], [42.3477, -71.0950], [42.3470, -71.0820], [42.3480, -71.0700], [42.3488, -71.0620], [42.3484, -71.0565]], // Mass Pike
+  [[42.3285, -71.0645], [42.3400, -71.0622], [42.3480, -71.0595], [42.3530, -71.0578]], // I-93 sur
+  [[42.3655, -71.0603], [42.3700, -71.0628], [42.3735, -71.0640]], // I-93 norte (Zakim)
+]
+function MapaFondo({ width, height }) {
+  const lbl = (la, lo, t, extra = {}) => { const [x, y] = P(la, lo); return <text x={x} y={y} className="mapa-lbl" {...extra}>{t}</text> }
+  return (
+    <g className="mapa-fondo" aria-hidden>
+      <defs>
+        <pattern id="mapa-dots" width="9" height="9" patternUnits="userSpaceOnUse"><circle cx="1.5" cy="1.5" r="0.9" className="mapa-dot" /></pattern>
+      </defs>
+      <rect width={width} height={height} fill="url(#mapa-dots)" />
+      <path d={curva(COMMON, true)} className="mapa-parque" />
+      <path d={curva(FENS, true)} className="mapa-parque" />
+      {CALLES.map((c, i) => <path key={'c' + i} d={curva(c)} className="mapa-calle" />)}
+      {AUTOPISTAS.map((c, i) => <path key={'a' + i} d={curva(c)} className="mapa-auto" />)}
+      <path d={curva(PUERTO, true)} className="mapa-agua" />
+      <path d={curva(RIO)} className="mapa-rio" />
+      <path d={curva(CUENCA)} className="mapa-rio cuenca" />
+      <path d={curva(CANAL)} className="mapa-canal" />
+      <path d={curva(RIO)} className="mapa-rio-flujo anim-loop" />
+      {lbl(42.3576, -71.1030, 'Río Charles', { transform: `rotate(-10 ${P(42.3576, -71.1030).join(' ')})` })}
+      {lbl(42.3650, -71.0420, 'Puerto de Boston')}
+    </g>
+  )
+}
 export function ZoneMap({ width = 700, height = 500 }) {
   const [h, setH] = useState(null)
   const max = ZONAS[0].tasa
@@ -283,12 +348,8 @@ export function ZoneMap({ width = 700, height = 500 }) {
   return (
     <div style={{ position: 'relative', width, height }}>
       <svg width={width} height={height}>
-        {[0.2, 0.4, 0.6, 0.8].map((f) => (
-          <g key={f}>
-            <line x1={0} x2={width} y1={height * f} y2={height * f} className="gridline" strokeDasharray="2 6" />
-            <line y1={0} y2={height} x1={width * f} x2={width * f} className="gridline" strokeDasharray="2 6" />
-          </g>
-        ))}
+        <defs><clipPath id="zm-clip"><rect width={width} height={height} rx={12} /></clipPath></defs>
+        <g clipPath="url(#zm-clip)"><MapaFondo width={width} height={height} /></g>
         {pts.map((p, i) => {
           const [dx, dy, anchor] = LBL[p.zona]
           const op = 0.25 + 0.75 * ((p.tasa - min) / (max - min))
@@ -303,7 +364,7 @@ export function ZoneMap({ width = 700, height = 500 }) {
             </g>
           )
         })}
-        <text x={width - 4} y={height - 6} textAnchor="end" className="val-muted" style={{ fontFamily: 'var(--sans)', fontSize: 12 }}>Ubicación aproximada (OpenStreetMap) · tamaño y color = % con recargo</text>
+        <text x={width - 4} y={height - 6} textAnchor="end" className="val-muted" style={{ fontFamily: 'var(--sans)', fontSize: 12 }}>Mapa esquemático · ubicaciones aproximadas · tamaño y color = % con recargo</text>
       </svg>
       {h != null && (
         <Tip x={pts[h].x} y={pts[h].y - pts[h].r}>
@@ -553,7 +614,6 @@ export function BeneficioCurva({ t, width = 560, height = 230, elegido, antes })
   return (
     <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Costo total en la prueba final según el límite de riesgo. El límite 0,35 se fijó previamente en validación.">
       <line x1={pad.l} x2={width - pad.r} y1={y(sinModelo)} y2={y(sinModelo)} stroke="var(--bad)" strokeDasharray="4 5" opacity=".6" />
-      <text x={pad.l + 6} y={y(sinModelo) - 6} className="lbl" style={{ fontSize: 12, fill: 'var(--bad)' }}>sin avisos: todos los recargos por sorpresa</text>
       <text x={pad.l - 8} y={pad.t + 6} textAnchor="end" className="tick" style={{ fontSize: 12 }}>menos</text>
       <text x={pad.l - 8} y={pad.t + 20} textAnchor="end" className="tick" style={{ fontSize: 12 }}>costo ↑</text>
       {[0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8].map((v) => <text key={v} x={x(v)} y={height - 12} textAnchor="middle" className="tick">{fDec(v, 1)}</text>)}
@@ -565,12 +625,6 @@ export function BeneficioCurva({ t, width = 560, height = 230, elegido, antes })
       </>}
       <line x1={x(elegido)} x2={x(elegido)} y1={pad.t} y2={height - pad.b} stroke="var(--text-2)" strokeDasharray="3 4" />
       <text x={x(elegido) - 6} y={pad.t + 10} textAnchor="end" className="val-muted" style={{ fontSize: 12, fill: 'var(--text)' }}>elegido: {fDec(elegido, 2)}</text>
-      <circle className="anim-loop peak-ring" cx={x(pk.t)} cy={y(pk.b)} r={10} fill="none" stroke="var(--good)" strokeWidth={2} />
-      <text x={x(pk.t)} y={y(pk.b) - 16} textAnchor="middle" className="lbl-strong" style={{ fontSize: 12, fill: 'var(--good)' }}>menor costo</text>
-      <text x={x(0.22)} y={y(-330)} className="lbl" style={{ fontSize: 12, fill: 'var(--bad)' }}>demasiadas</text>
-      <text x={x(0.22)} y={y(-330) + 15} className="lbl" style={{ fontSize: 12, fill: 'var(--bad)' }}>falsas alarmas</text>
-      <text x={x(0.79)} y={y(-430)} textAnchor="end" className="lbl" style={{ fontSize: 12, fill: 'var(--bad)' }}>se escapan recargos:</text>
-      <text x={x(0.79)} y={y(-430) + 15} textAnchor="end" className="lbl" style={{ fontSize: 12, fill: 'var(--bad)' }}>el costo se dispara</text>
       <circle cx={x(cur.t)} cy={y(cur.b)} r={7} fill="var(--text)" stroke="var(--accent)" strokeWidth={3} />
     </svg>
   )
@@ -992,11 +1046,13 @@ export function LimpiezaFlow({ width = 790 }) {
           <text x={W} y={barY + barH + 98} textAnchor="end" className="lbl-strong" style={{ fontSize: 16, fill: 'var(--bad)' }}>se eliminan {fInt(totalQuitado)} · {fDec((totalQuitado / crudo) * 100, 1)} %</text>
         </g>
       </svg>
-      <div className="lf-list">
+      <div className="label" style={{ marginTop: 6 }}>Qué borramos</div>
+      <div className="lf-cards">
         {quitados.map((q, i) => (
-          <div key={q.label} className={'lf-row rv' + (i === 0 ? ' key' : '')} style={{ '--d': 18 + i * 2 }}>
-            <span className="num lf-val">−{fInt(-q.valor)}</span>
-            <span><b>{q.label}</b><span className="muted"> · {q.nota}</span></span>
+          <div key={q.label} className={'lf-card rv' + (i === 0 ? ' key' : '')} style={{ '--d': 18 + i * 2 }}>
+            <span className="lf-card-t">{q.label}</span>
+            <span className="num lf-card-v">−{fInt(-q.valor)}</span>
+            <span className="lf-card-n">{q.nota}</span>
           </div>
         ))}
       </div>
@@ -1191,7 +1247,7 @@ export function LluviaVsSeco({ lluvia, seco }) {
 }
 
 /* ───────────────── Recargo por hora del día (casi plano) ───────────────── */
-export function HoraLinea({ width = 860, height = 420 }) {
+export function HoraLinea({ width = 860, height = 420, simple = false }) {
   const pad = { l: 46, r: 20, t: 26, b: 40 }, maxY = 12
   const x = (h) => pad.l + (h / 23) * (width - pad.l - pad.r)
   const y = (v) => pad.t + (1 - v / maxY) * (height - pad.t - pad.b)
@@ -1205,10 +1261,12 @@ export function HoraLinea({ width = 860, height = 420 }) {
       ))}
       {[0, 3, 6, 9, 12, 15, 18, 21].map((h) => <text key={h} x={x(h)} y={height - 12} textAnchor="middle" className="tick">{h} h</text>)}
       <rect className="fade" style={{ '--d': 10 }} x={pad.l} y={y(hi)} width={width - pad.l - pad.r} height={y(lo) - y(hi)} fill="var(--accent-soft)" />
-      <text className="fade" style={{ '--d': 12, fontSize: 15, fill: 'var(--recargo)' }} x={width - pad.r - 6} y={y(hi) - 8} textAnchor="end" fontWeight="600">todo el día se mueve entre {fDec(lo, 1)} % y {fDec(hi, 1)} %</text>
+      {simple
+        ? <text className="fade" style={{ '--d': 12, fontSize: 22, fill: 'var(--recargo)' }} x={(width + pad.l) / 2} y={y(hi) - 18} textAnchor="middle" fontWeight="600">Casi una línea plana: la hora no cambia el recargo</text>
+        : <text className="fade" style={{ '--d': 12, fontSize: 15, fill: 'var(--recargo)' }} x={width - pad.r - 6} y={y(hi) - 8} textAnchor="end" fontWeight="600">todo el día se mueve entre {fDec(lo, 1)} % y {fDec(hi, 1)} %</text>}
       <path className="draw" pathLength="1" d={d} fill="none" stroke="var(--recargo)" strokeWidth={3.5} strokeLinejoin="round" />
       {RECARGO_HORA.map((v, h) => <circle key={h} className="pop" style={{ '--d': 6 + h * 0.4 }} cx={x(h)} cy={y(v)} r={h === hMax || h === hMin ? 7 : 4} fill="var(--recargo)" stroke="var(--card)" strokeWidth={2} />)}
-      <g className="fade" style={{ '--d': 16 }}>
+      <g className="fade" style={{ '--d': 16, display: simple ? 'none' : undefined }}>
         <text x={x(hMax)} y={y(hi) - 16} textAnchor="middle" className="lbl-strong" style={{ fontSize: 15 }}>máx. {fDec(hi, 1)} % · 8 h</text>
         <text x={x(hMin)} y={y(lo) + 26} textAnchor="middle" className="lbl-strong" style={{ fontSize: 15 }}>mín. {fDec(lo, 1)} % · 11 h</text>
       </g>
@@ -1302,7 +1360,7 @@ export function ArbolReglas({ width = 760 }) {
 }
 
 /* ───────────────── Matriz de confusión: antes y después de darle costo al falso negativo ───────────────── */
-export function MatrizFN({ width = 1424 }) {
+export function MatrizFN({ width = 1100 }) {
   const [k, setK] = useState('antes')
   const [auto, setAuto] = useState(true)
   useEffect(() => {
@@ -1315,66 +1373,65 @@ export function MatrizFN({ width = 1424 }) {
   }, [auto])
   const m = MATRIZ_FN[k]
   const sinR = m.tn + m.fp, conR = m.fn + m.tp
-  const pct = (a, b) => (a / b) * 100
-  const filas = [
-    { real: 'No hubo recargo', n: sinR, celdas: [
-      { id: 'vn', t: '✓ Acierto', s: 'Dijo “sin recargo” y no hubo', v: m.tn, c: 'USD 0', p: pct(m.tn, sinR) },
-      { id: 'fp', t: '⚠ Falsa alarma', s: 'Avisó y no hubo: comparó de más', v: m.fp, c: `−USD ${fDec(FINAL.costoFalsa, 0)} c/u`, p: pct(m.fp, sinR) },
-    ] },
-    { real: 'Hubo recargo', n: conR, celdas: [
-      { id: 'fn', t: '✗ Se escapó', s: 'Dijo “sin recargo” y hubo: pagó por sorpresa', v: m.fn, c: m.costoFN ? `−USD ${fDec(m.costoFN, 2)} c/u` : 'costo USD 0', p: pct(m.fn, conR) },
-      { id: 'vp', t: '✓ Avisado', s: 'Avisó y hubo: pudo evitarlo', v: m.tp, c: `+USD ${fDec(FINAL.vp, 2)} c/u`, p: pct(m.tp, conR) },
-    ] },
+  const cells = [
+    { id: 'vn', sig: 'VN', t: 'Acierto', v: m.tn, p: m.tn / sinR, rgb: '120,118,110' },
+    { id: 'fp', sig: 'FP', t: 'Falsa alarma', v: m.fp, p: m.fp / sinR, rgb: '185,119,14' },
+    { id: 'fn', sig: 'FN', t: 'Se escapó', v: m.fn, p: m.fn / conR, rgb: '196,58,58' },
+    { id: 'vp', sig: 'VP', t: 'Avisado', v: m.tp, p: m.tp / conR, rgb: '12,138,44' },
   ]
   const pick = (v) => { setAuto(false); setK(v) }
+  const cw = (width - 230) / 2
   return (
-    <div className="mfn" style={{ width }}>
-      <div className="mfn-top">
+    <div className="mx" style={{ width }}>
+      <div className="mx-top">
         <div className="seg-ctrl mfn-seg">
-          <button className={k === 'antes' ? 'on' : ''} onClick={() => pick('antes')}>Antes · falso negativo = USD 0 · umbral {fDec(MATRIZ_FN.antes.umbral, 2)}</button>
-          <button className={k === 'despues' ? 'on' : ''} onClick={() => pick('despues')}>Después · falso negativo = −USD 8,73 · umbral {fDec(MATRIZ_FN.despues.umbral, 2)}</button>
+          <button className={k === 'antes' ? 'on' : ''} onClick={() => pick('antes')}>Antes · umbral {fDec(MATRIZ_FN.antes.umbral, 2)}</button>
+          <button className={k === 'despues' ? 'on' : ''} onClick={() => pick('despues')}>Después · umbral {fDec(MATRIZ_FN.despues.umbral, 2)}</button>
         </div>
-        <span className="mfn-hint">% de cada fila · {auto ? 'alterna solo' : 'elegido a mano'}</span>
       </div>
-      <div className="mfn-cols"><span /><span>La app dijo <b>“sin recargo”</b></span><span>La app avisó <b>“posible recargo”</b></span></div>
-      {filas.map((f) => (
-        <div key={f.real} className="mfn-row">
-          <div className="mfn-real"><span className="label">En realidad</span><b>{f.real}</b><span className="num">{fInt(f.n)} cotizaciones</span></div>
-          <div className="mfn-cells">
-            {f.celdas.map((c) => (
-              <div key={c.id} className={'mfn-cell ' + c.id} style={{ flexGrow: c.p }}>
-                <div className="mfn-head"><span className="mfn-t">{c.t}</span><span className="mfn-c">{c.c}</span></div>
-                <span className="num mfn-p">{fDec(c.p, 1)} %</span>
-                <span className="mfn-s"><b className="num">{fInt(c.v)}</b> · {c.s}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      ))}
+      <div className="mx-grid" style={{ gridTemplateColumns: `70px 160px ${cw}px ${cw}px` }}>
+        <span /><span />
+        <span className="mx-axis-top" style={{ gridColumn: '3 / 5' }}>Predicho</span>
+        <span /><span />
+        <span className="mx-colh">“Sin recargo”</span>
+        <span className="mx-colh">“Posible recargo”</span>
+        <span className="mx-axis-left" style={{ gridRow: '3 / 5' }}><span>Realidad</span></span>
+        <span className="mx-rowh">No hubo<br />recargo</span>
+        {cells.slice(0, 2).map((c) => <Celda key={c.id} c={c} />)}
+        <span className="mx-rowh">Hubo<br />recargo</span>
+        {cells.slice(2).map((c) => <Celda key={c.id} c={c} />)}
+      </div>
+    </div>
+  )
+}
+function Celda({ c }) {
+  const a = 0.1 + c.p * 0.75
+  return (
+    <div className={'mx-cell ' + c.id} style={{ background: `rgba(${c.rgb}, ${a})`, color: c.p > 0.45 ? '#fff' : `rgb(${c.rgb})` }}>
+      <span className="mx-sig">{c.sig} · {c.t}</span>
+      <span className="num mx-p">{fDec(c.p * 100, 1)} %</span>
+      <span className="num mx-v">{fInt(c.v)} cotizaciones</span>
     </div>
   )
 }
 
 /* ───────────────── Tabla comparativa de modelos (ordenable, filas animadas) ───────────────── */
 const COLS_RECARGO = [
-  { k: 'prVal', t: 'PR-AUC validación', f: (v) => (v == null ? '—' : fDec(v, 4)), hi: true, nota: 'criterio de elección' },
-  { k: 'prauc', t: 'PR-AUC prueba', f: (v) => fDec(v, 4), hi: true },
-  { k: 'roc', t: 'ROC-AUC', f: (v) => fDec(v, 4), hi: true },
-  { k: 'umbral', t: 'Umbral', f: (v) => (v == null ? '—' : fDec(v, 2)), sort: false },
-  { k: 'recall', t: 'Recall', f: (v) => fDec(v * 100, 1) + ' %', hi: true },
-  { k: 'escapan', t: 'Se escapan', f: (v) => fDec(v * 100, 1) + ' %', hi: false },
-  { k: 'npv', t: 'Acierta “sin recargo”', f: (v) => fDec(v * 100, 1) + ' %', hi: true },
-  { k: 'precision', t: 'Precisión', f: (v) => (v == null ? '—' : fDec(v * 100, 1) + ' %'), hi: true },
-  { k: 'accuracy', t: 'Accuracy', f: (v) => fDec(v * 100, 1) + ' %', hi: true },
-  { k: 'costo', t: 'Costo USD / 1.000', f: (v) => '−' + fDec(Math.abs(v), 0), hi: true },
+  { k: 'prVal', t: 'PR-AUC', s: 'validación', f: (v) => (v == null ? '—' : fDec(v, 3)), hi: true, eleccion: true },
+  { k: 'prauc', t: 'PR-AUC', s: 'prueba', f: (v) => fDec(v, 3), hi: true },
+  { k: 'roc', t: 'ROC-AUC', s: 'prueba', f: (v) => fDec(v, 3), hi: true },
+  { k: 'recall', t: 'Recall', s: 'recargos detectados', f: (v) => fDec(v * 100, 1) + ' %', hi: true },
+  { k: 'npv', t: 'Acierta “no”', s: 'al decir sin recargo', f: (v) => fDec(v * 100, 1) + ' %', hi: true },
+  { k: 'accuracy', t: 'Accuracy', s: 'aciertos totales', f: (v) => fDec(v * 100, 1) + ' %', hi: true },
+  { k: 'costo', t: 'Costo', s: 'USD cada 1.000', f: (v) => '−' + fDec(Math.abs(v), 0), hi: true },
 ]
 const COLS_PRECIO = [
-  { k: 'mae', t: 'Error medio (MAE)', f: (v) => fUsd(v), hi: false, nota: 'criterio de elección' },
-  { k: 'r2', t: 'R²', f: (v) => fDec(v, 3), hi: true },
-  { k: 'dentro10', t: 'Con error < 10 %', f: (v) => fDec(v * 100, 1) + ' %', hi: true },
+  { k: 'mae', t: 'Error medio', s: 'MAE en USD', f: (v) => fUsd(v), hi: false, eleccion: true },
+  { k: 'r2', t: 'R²', s: 'varianza explicada', f: (v) => fDec(v, 3), hi: true },
+  { k: 'dentro10', t: 'Error < 10 %', s: 'de las cotizaciones', f: (v) => fDec(v * 100, 1) + ' %', hi: true },
 ]
 const ORDEN = {
-  recargo: [['prVal', 'PR-AUC validación'], ['costo', 'Costo'], ['recall', 'Recall'], ['roc', 'ROC-AUC'], ['accuracy', 'Accuracy']],
+  recargo: [['prVal', 'PR-AUC validación'], ['recall', 'Recall'], ['costo', 'Costo'], ['accuracy', 'Accuracy']],
   precio: [['mae', 'Error medio'], ['r2', 'R²'], ['dentro10', 'Error < 10 %']],
 }
 export function TablaModelos({ width = 1424 }) {
@@ -1384,17 +1441,18 @@ export function TablaModelos({ width = 1424 }) {
   const cols = tipo === 'recargo' ? COLS_RECARGO : COLS_PRECIO
   const col = cols.find((c) => c.k === sk) || cols[0]
   const sorted = [...rows].sort((a, b) => {
+    if (a.base !== b.base) return a.base ? 1 : -1
     if (a[col.k] == null) return 1
     if (b[col.k] == null) return -1
     return col.hi ? b[col.k] - a[col.k] : a[col.k] - b[col.k]
   })
   const pos = Object.fromEntries(sorted.map((r, i) => [r.modelo, i]))
-  const rowH = tipo === 'recargo' ? 80 : 96
-  const nameW = tipo === 'recargo' ? 300 : 360
-  const vals = rows.map((r) => r[col.k]).filter((v) => v != null)
+  const rowH = tipo === 'recargo' ? 84 : 104
+  const nameW = 360
+  const vals = rows.filter((r) => !r.base).map((r) => r[col.k]).filter((v) => v != null)
   const mn = Math.min(...vals), mx = Math.max(...vals)
-  const bar = (v) => (v == null || mx === mn ? 0 : 0.15 + 0.85 * (col.hi ? (v - mn) / (mx - mn) : (mx - v) / (mx - mn)))
-  const grid = `${nameW}px 150px repeat(${cols.length}, minmax(0, 1fr))`
+  const bar = (v) => (v == null || mx === mn ? 0 : 0.2 + 0.8 * (col.hi ? (v - mn) / (mx - mn) : (mx - v) / (mx - mn)))
+  const grid = `${nameW}px repeat(${cols.length}, minmax(0, 1fr))`
   const cambiar = (t) => { setTipo(t); setSk(ORDEN[t][0][0]) }
   return (
     <div className="tm" style={{ width }}>
@@ -1403,21 +1461,27 @@ export function TablaModelos({ width = 1424 }) {
           <button className={tipo === 'recargo' ? 'on' : ''} onClick={() => cambiar('recargo')}>Recargo · clasificación</button>
           <button className={tipo === 'precio' ? 'on' : ''} onClick={() => cambiar('precio')}>Precio · regresión</button>
         </div>
-        <div className="tm-sort"><span>⇅ Ordenar:</span>{ORDEN[tipo].map(([k, l]) => <button key={k} className={sk === k ? 'on' : ''} onClick={() => setSk(k)}>{l}</button>)}</div>
+        <div className="tm-sort"><span>Ordenar por</span>{ORDEN[tipo].map(([k, l]) => <button key={k} className={sk === k ? 'on' : ''} onClick={() => setSk(k)}>{l}</button>)}</div>
       </div>
       <div className="tm-table">
         <div className="tm-row tm-headrow" style={{ gridTemplateColumns: grid }}>
-          <span>Modelo</span><span>{tipo === 'recargo' ? 'Balanceo' : 'Variables'}</span>
-          {cols.map((c) => <span key={c.k} className={c.k === col.k ? 'on' : ''}>{c.t}{c.nota && <em>{c.nota}</em>}</span>)}
+          <span className="tm-h-name">Modelo</span>
+          {cols.map((c) => (
+            <span key={c.k} className={'tm-h' + (c.k === col.k ? ' on' : '')}>
+              <b>{c.t}</b><small>{c.s}</small>{c.eleccion && <em>criterio de elección</em>}
+            </span>
+          ))}
         </div>
         <div className="tm-body" style={{ height: rows.length * rowH }}>
           {rows.map((r, i) => (
             <div key={r.modelo} className={'tm-row tm-data fade' + (r.elegido ? ' on' : '') + (r.base ? ' base' : '')} style={{ '--d': 3 + i, gridTemplateColumns: grid, height: rowH, transform: `translateY(${pos[r.modelo] * rowH}px)` }}>
-              <span className="tm-name">{r.elegido && <span className="tm-badge">★ Elegido</span>}{r.modelo}</span>
-              <span className="tm-tec">{r.tecnica}</span>
+              <span className="tm-name">
+                <span>{r.modelo}{r.base && <small className="tm-sub">{r.tecnica}</small>}</span>
+                {r.elegido && <span className="tm-badge">★ Elegido</span>}
+              </span>
               {cols.map((c) => (
                 <span key={c.k} className={'num tm-v' + (c.k === col.k ? ' on' : '')}>
-                  {c.k === col.k && r[c.k] != null && <i className="tm-bar" style={{ width: `${bar(r[c.k]) * 100}%` }} />}
+                  {c.k === col.k && r[c.k] != null && !r.base && <i className="tm-bar" style={{ width: `${bar(r[c.k]) * 100}%` }} />}
                   <b>{c.f(r[c.k])}</b>
                 </span>
               ))}
@@ -1425,6 +1489,308 @@ export function TablaModelos({ width = 1424 }) {
           ))}
         </div>
       </div>
+    </div>
+  )
+}
+
+/* ───────────────── Huso horario: la hora de Boston se corre 5 horas respecto de UTC ───────────────── */
+export function HusoHorario({ width = 1360 }) {
+  const cols = 29, gap = 5
+  const cw = (width - gap * (cols - 1)) / cols
+  const X = (c) => c * (cw + gap)
+  const top = Array.from({ length: cols }, (_, c) => ({ h: c % 24, wrap: c >= 24 }))
+  const bot = Array.from({ length: cols }, (_, c) => ({ h: (c - 5 + 24) % 24, wrap: c < 5 }))
+  const pad2 = (h) => String(h).padStart(2, '0')
+  return (
+    <div className="utc" style={{ width, '--shift': `${5 * (cw + gap)}px` }}>
+      <div className="utc-lbl"><span className="label">Hora del dataset</span><span className="utc-tag bad">UTC · hora de Londres</span></div>
+      <div className="utc-row">
+        {top.map((c, i) => (
+          <span key={i} className={'utc-cell' + (c.wrap ? ' wrap' : '') + (!c.wrap && c.h === 13 ? ' hot-bad' : '')} style={{ left: X(i), width: cw }}>{pad2(c.h)}</span>
+        ))}
+      </div>
+      <div className="utc-mid">
+        <div className="utc-link" style={{ left: X(13) + cw / 2 }} />
+        <div className="utc-shift-lbl" style={{ left: X(13) + cw / 2 + 18 }}><span className="num">−5 h</span> 13:00 UTC = 08:00 en Boston</div>
+      </div>
+      <div className="utc-row utc-bot">
+        {bot.map((c, i) => (
+          <span key={i} className={'utc-cell' + (c.wrap ? ' wrap' : '') + (!c.wrap && c.h === 8 ? ' hot' : '')} style={{ left: X(i), width: cw }}>{pad2(c.h)}</span>
+        ))}
+      </div>
+      <div className="utc-lbl"><span className="label">Hora real en Boston</span><span className="utc-tag acc">UTC − 5 · corregido</span></div>
+    </div>
+  )
+}
+
+/* ───────────────── Recargo: de multiplicadores a una variable sí / no (datos reales) ───────────────── */
+export function MultiplicadorBinario({ compacto = false }) {
+  const escala = 10 // % máximo del eje: los niveles por separado son muy chicos
+  const pct = (n) => (n / MULT_TOTAL) * 100
+  const total = MULTIPLICADORES.reduce((a, r) => a + r.n, 0)
+  const tonos = [1, 0.85, 0.7, 0.55, 0.42, 0.3]
+  const fmtP = (p) => (p < 0.1 ? fDec(p, 3) : fDec(p, 2)) + ' %'
+  return (
+    <div className="mb">
+      <div className="mb-head"><span>Nivel</span><span style={{ textAlign: 'right' }}>Cotizaciones</span><span>% del total · escala 0 – {escala} %</span></div>
+      {MULTIPLICADORES.map((r, i) => (
+        <div key={r.m} className="mb-row rv" style={{ '--d': 2 + i }}>
+          <span className="num mb-m">{r.m}</span>
+          <span className="num mb-n">{fInt(r.n)}</span>
+          <div className="mb-track">
+            <div className="growx mb-bar" style={{ '--d': 4 + i, width: `${Math.max(0.4, (pct(r.n) / escala) * 100)}%`, opacity: tonos[i] }} />
+            <span className="num mb-p">{fmtP(pct(r.n))}</span>
+          </div>
+        </div>
+      ))}
+      <div className="mb-sum">
+        <span className="mb-sum-lbl">Juntos</span>
+        <span className="num mb-n" style={{ fontWeight: 700, color: 'var(--text)' }}>{fInt(total)}</span>
+        <div className="mb-track mb-track-sum">
+          {(() => { let acc = 0; return MULTIPLICADORES.map((r, i) => {
+            const w = (pct(r.n) / escala) * 100, left = acc; acc += w
+            return <div key={r.m} className="mb-seg" style={{ left: `${left}%`, width: `${w}%`, opacity: tonos[i], animationDelay: `${1.6 + i * 0.25}s` }} />
+          }) })()}
+          <span className="num mb-p mb-p-sum" style={{ left: `${(pct(total) / escala) * 100}%` }}>{fDec(pct(total), 1)} %</span>
+        </div>
+      </div>
+      {compacto
+        ? <div className="mb-split">
+            <div className="mb-split-bar">
+              <div className="no" style={{ width: `${pct(MULT_SIN)}%` }}><b>No</b> {fInt(MULT_SIN)} · {fDec(pct(MULT_SIN), 1)} %</div>
+              <div className="si" style={{ width: `${100 - pct(MULT_SIN)}%` }} />
+            </div>
+            <div className="mb-split-si"><b>Sí</b> {fInt(total)} · {fDec(pct(total), 1)} %</div>
+          </div>
+        : <div className="mb-sin">Sin recargo (×1,0): <b className="num">{fInt(MULT_SIN)}</b> · {fDec(pct(MULT_SIN), 1)} % — fuera de escala</div>}
+    </div>
+  )
+}
+
+export function WaffleSiNo() {
+  const si = Math.round((MULTIPLICADORES.reduce((a, r) => a + r.n, 0) / MULT_TOTAL) * 100)
+  const set = new Set([7, 18, 26, 43, 57, 62, 80, 95].slice(0, si))
+  let k = 0
+  return (
+    <div className="wf">
+      <div className="wf-grid">
+        {Array.from({ length: 100 }, (_, i) => <i key={i} className={set.has(i) ? 'on' : undefined} style={set.has(i) ? { animationDelay: `${2 + (k++) * 0.3}s` } : { animationDelay: `${(i % 10) * 0.02 + Math.floor(i / 10) * 0.03}s` }} />)}
+      </div>
+      <div className="wf-leg">
+        <div><span className="wf-k no">No</span><b className="num">{fInt(MULT_SIN)}</b><span>91,8 %</span></div>
+        <div><span className="wf-k si">Sí</span><b className="num">{fInt(MULT_TOTAL - MULT_SIN)}</b><span>8,2 %</span></div>
+      </div>
+    </div>
+  )
+}
+
+/* ───────────────── Precio: distribución en USD vs en log(precio), datos reales ───────────────── */
+export function PrecioLog({ width = 600, height = 250 }) {
+  const [k, setK] = useState('usd')
+  const [auto, setAuto] = useState(true)
+  useEffect(() => {
+    if (!auto) return
+    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches || document.documentElement.classList.contains('estatico')
+    if (reduce) return
+    const id = setInterval(() => setK((v) => (v === 'usd' ? 'log' : 'usd')), 4200)
+    return () => clearInterval(id)
+  }, [auto])
+  const H = k === 'usd' ? PRECIO_HIST : LOGPRECIO_HIST
+  const mx = Math.max(...H)
+  const B = H.length, gap = 3, padB = 30
+  const bw = (width - gap * (B - 1)) / B
+  const lo = Math.log(2.5), hi = Math.log(100)
+  const ticks = k === 'usd'
+    ? [0, 10, 20, 30, 40, 50, 60, 70].map((v) => ({ x: (v / 75) * width, t: v === 70 ? '70+' : String(v) }))
+    : [3, 5, 10, 20, 40, 80].map((v) => ({ x: ((Math.log(v) - lo) / (hi - lo)) * width, t: String(v) }))
+  const pick = (v) => { setAuto(false); setK(v) }
+  return (
+    <div className="plog">
+      <div className="plog-top">
+        <div className="seg-ctrl">
+          <button className={k === 'usd' ? 'on' : ''} onClick={() => pick('usd')}>Precio en USD</button>
+          <button className={k === 'log' ? 'on' : ''} onClick={() => pick('log')}>log(precio)</button>
+        </div>
+        <div className="plog-asim">asimetría <b className={'num' + (k === 'usd' ? ' bad' : ' good')}>{fDec(k === 'usd' ? PRECIO_STATS.asim : PRECIO_STATS.asimLog, 2)}</b></div>
+      </div>
+      <svg width={width} height={height} style={{ overflow: 'visible' }}>
+        {H.map((v, i) => {
+          const h = (v / mx) * (height - padB - 10)
+          return <rect key={i} className="plog-bar" x={i * (bw + gap)} y={height - padB - h} width={bw} height={h} rx={2} fill={k === 'usd' && i >= 14 ? 'var(--bad)' : 'var(--precio)'} opacity={k === 'usd' && i >= 14 ? 0.75 : 0.85} />
+        })}
+        <line x1={0} x2={width} y1={height - padB} y2={height - padB} stroke="var(--line-2)" />
+        {ticks.map((t) => <text key={k + t.t} x={t.x} y={height - 10} textAnchor="middle" className="tick">USD {t.t}</text>)}
+        {k === 'usd'
+          ? <text className="fade" key="a1" x={(14 / B) * width + 6} y={height - padB - 60} className="lbl-strong" style={{ fontSize: 14, fill: 'var(--bad)' }}>cola larga: pocos viajes muy caros (hasta USD 97,5)</text>
+          : <text className="fade" key="a2" x={width} y={-4} textAnchor="end" className="lbl-strong" style={{ fontSize: 14, fill: 'var(--precio)' }}>con logaritmo queda casi simétrica</text>}
+      </svg>
+    </div>
+  )
+}
+
+/* ───────────────── Precio: histograma en USD vs en log, lado a lado ───────────────── */
+function MiniHist({ data, w, h, cola, d = 0 }) {
+  const mx = Math.max(...data), B = data.length, gap = 2
+  const bw = (w - gap * (B - 1)) / B
+  return (
+    <svg width={w} height={h} style={{ overflow: 'visible' }}>
+      {data.map((v, i) => {
+        const bh = (v / mx) * (h - 4)
+        const red = cola != null && i >= cola
+        return <rect key={i} className="growy" style={{ '--d': d + i * 0.12 }} x={i * (bw + gap)} y={h - bh} width={bw} height={bh} rx={1.5} fill={red ? 'var(--bad)' : 'var(--precio)'} opacity={red ? 0.8 : 0.85} />
+      })}
+      <line x1={0} x2={w} y1={h} y2={h} stroke="var(--line-2)" />
+    </svg>
+  )
+}
+export function PrecioHistDuo({ width = 720 }) {
+  const w = (width - 70) / 2, h = 120
+  return (
+    <div className="phd" style={{ width }}>
+      <div className="phd-col">
+        <div className="phd-t">En dólares</div>
+        <MiniHist data={PRECIO_HIST} w={w} h={h} cola={14} d={2} />
+        <div className="phd-ax"><span>USD 0</span><span className="bad">cola hasta USD 97,5</span></div>
+        <div className="phd-s">asimetría <b className="num bad">{fDec(PRECIO_STATS.asim, 2)}</b> · pocos viajes muy caros estiran todo</div>
+      </div>
+      <div className="phd-arrow fade" style={{ '--d': 8 }}><span>log</span>→</div>
+      <div className="phd-col">
+        <div className="phd-t">En logaritmo</div>
+        <MiniHist data={LOGPRECIO_HIST} w={w} h={h} d={10} />
+        <div className="phd-ax"><span>USD 2,5</span><span>USD 100</span></div>
+        <div className="phd-s">asimetría <b className="num good">{fDec(PRECIO_STATS.asimLog, 2)}</b> · casi simétrica</div>
+      </div>
+    </div>
+  )
+}
+
+/* ───────────────── Recargo: los multiplicadores confluyen en “sí” / “no” ───────────────── */
+export function MultiplicadorFlujo({ width = 720 }) {
+  const rowH = 38, chipW = 250, boxX = width - 210, boxW = 210
+  const rows = MULTIPLICADORES.map((r, i) => ({ ...r, y: 20 + i * rowH }))
+  const noY = 20 + 6 * rowH + 44
+  const H = noY + 50
+  const siTop = 10, siH = 6 * rowH - 4, siMid = siTop + siH / 2
+  const maxN = MULTIPLICADORES[0].n
+  const total = MULTIPLICADORES.reduce((a, r) => a + r.n, 0)
+  const flow = (y, ty) => `M${chipW + 6},${y} C${chipW + 110},${y} ${boxX - 110},${ty} ${boxX - 4},${ty}`
+  return (
+    <svg width={width} height={H} style={{ overflow: 'visible' }}>
+      <text x={0} y={2} className="label" style={{ fontSize: 12, fill: 'var(--muted)', letterSpacing: '.08em' }}>CON AUMENTO</text>
+      {rows.map((r, i) => (
+        <g key={r.m} className="fade" style={{ '--d': 2 + i }}>
+          <rect x={0} y={r.y - 14} width={chipW} height={28} rx={8} fill="var(--card)" stroke="var(--line)" />
+          <rect className="growx" style={{ '--d': 3 + i }} x={96} y={r.y - 6} width={Math.max(2, (r.n / maxN) * 80)} height={12} rx={3} fill="var(--recargo)" opacity={0.85} />
+          <text x={12} y={r.y} dy=".35em" fontFamily="var(--mono)" fontSize={17} fontWeight={700} fill="var(--recargo)">{r.m}</text>
+          <text x={chipW - 12} y={r.y} dy=".35em" textAnchor="end" fontFamily="var(--mono)" fontSize={14} fill="var(--text-2)">{fInt(r.n)}</text>
+          <path className="sino-flow anim-loop" style={{ animationDelay: `${i * 0.12}s` }} d={flow(r.y, siMid - 50 + i * 20)} fill="none" stroke="var(--recargo)" strokeWidth={2} strokeDasharray="3 7" />
+        </g>
+      ))}
+      <text x={0} y={noY - 26} className="label" style={{ fontSize: 12, fill: 'var(--muted)', letterSpacing: '.08em' }}>SIN AUMENTO</text>
+      <g className="fade" style={{ '--d': 9 }}>
+        <rect x={0} y={noY - 16} width={chipW} height={32} rx={8} fill="var(--card)" stroke="var(--line)" />
+        <text x={12} y={noY} dy=".35em" fontFamily="var(--mono)" fontSize={17} fontWeight={700} fill="var(--text-2)">×1,0</text>
+        <text x={chipW - 12} y={noY} dy=".35em" textAnchor="end" fontFamily="var(--mono)" fontSize={14} fill="var(--text-2)">{fInt(MULT_SIN)}</text>
+        <path className="sino-flow anim-loop" d={`M${chipW + 6},${noY} L${boxX - 4},${noY}`} fill="none" stroke="var(--neutral)" strokeWidth={2} strokeDasharray="3 7" />
+      </g>
+      <g className="pop" style={{ '--d': 12 }}>
+        <rect className="sino-yes" x={boxX} y={siTop} width={boxW} height={siH} rx={16} fill="var(--recargo)" />
+        <text x={boxX + boxW / 2} y={siMid - 26} textAnchor="middle" style={{ fontFamily: 'var(--serif)', fontSize: 56, fill: '#fff' }}>Sí</text>
+        <text x={boxX + boxW / 2} y={siMid + 18} textAnchor="middle" fill="#fff" fontFamily="var(--mono)" fontSize={20} fontWeight={700}>{fInt(total)}</text>
+        <text x={boxX + boxW / 2} y={siMid + 44} textAnchor="middle" fill="#fff" fontFamily="var(--mono)" fontSize={16} opacity=".9">{fDec((total / MULT_TOTAL) * 100, 1)} %</text>
+      </g>
+      <g className="pop" style={{ '--d': 14 }}>
+        <rect x={boxX} y={noY - 26} width={boxW} height={52} rx={14} fill="color-mix(in srgb, var(--text-2) 20%, var(--card))" />
+        <text x={boxX + 16} y={noY} dy=".35em" style={{ fontFamily: 'var(--serif)', fontSize: 30, fill: 'var(--text)' }}>No</text>
+        <text x={boxX + boxW - 14} y={noY - 8} dy=".35em" textAnchor="end" fontFamily="var(--mono)" fontSize={15} fontWeight={700} fill="var(--text)">{fInt(MULT_SIN)}</text>
+        <text x={boxX + boxW - 14} y={noY + 11} dy=".35em" textAnchor="end" fontFamily="var(--mono)" fontSize={13} fill="var(--text-2)">{fDec((MULT_SIN / MULT_TOTAL) * 100, 1)} %</text>
+      </g>
+    </svg>
+  )
+}
+
+/* ───────────────── Matriz: correlación del clima con precio y recargo ───────────────── */
+const CLIMA_MATRIZ = [
+  ['Temperatura', 0.000, -0.0037], ['Prob. de lluvia', 0.000, -0.0041], ['Intensidad de lluvia', 0.000, -0.0015],
+  ['Humedad', -0.001, -0.0029], ['Nubosidad', 0.001, -0.0045], ['Viento', 0.001, 0.0026], ['Visibilidad', 0.002, 0.0026],
+]
+const corrColor = (r) => {
+  const a = Math.min(1, Math.abs(r) * 2.2)
+  const base = r >= 0 ? '#c07a32' : '#3c78a8'
+  return `color-mix(in srgb, ${base} ${Math.round(8 + a * 92)}%, var(--card))`
+}
+export function ClimaMatriz({ cell = 112 }) {
+  const cols = ['Precio', 'Recargo']
+  const fmt = (r) => (Math.abs(r) < 0.005 ? '0,00' : fDec(r, 2))
+  return (
+    <div className="cmat">
+      <div className="cm-grid" style={{ gridTemplateColumns: `200px repeat(${cols.length}, ${cell}px)` }}>
+        <span />
+        {cols.map((c) => <span key={c} className="cm-col">{c}</span>)}
+        {CLIMA_MATRIZ.map(([n, p, r], i) => (
+          <div key={n} style={{ display: 'contents' }}>
+            <span className="cm-row">{n}</span>
+            {[p, r].map((v, j) => (
+              <span key={j} className="cm-cell pop" style={{ '--d': 4 + i * 1.2 + j * 0.6, background: corrColor(v), height: 40 }}>{fmt(v)}</span>
+            ))}
+          </div>
+        ))}
+        <div style={{ display: 'contents' }}>
+          <span className="cm-row cm-ref">Distancia <em>(referencia)</em></span>
+          <span className="cm-cell pop cm-hot" style={{ '--d': 14, background: corrColor(0.345), height: 44 }}>0,35</span>
+          <span className="cm-cell cm-na" style={{ height: 44 }}>—</span>
+        </div>
+      </div>
+      <div className="cm-legend">
+        <span className="num">−1</span>
+        <div className="cm-bar" />
+        <span className="num">+1</span>
+        <span className="cm-leg-t">correlación · cerca de 0 = no influye</span>
+      </div>
+    </div>
+  )
+}
+
+/* ───────────────── Balanceo: qué ve el modelo con cada técnica (versión grande) ───────────────── */
+const BAL_INFO = [
+  { ok: false, txt: 'datos reales, pero aprende a decir siempre “no”' },
+  { ok: false, txt: 'tira el 91 % de las cotizaciones sin recargo' },
+  { ok: false, txt: 'inventa cotizaciones que no existen (“0,37 de Back Bay”)' },
+  { ok: true, txt: 'datos reales; cada recargo cuenta ×11 al equivocarse' },
+]
+export function BalanceoGrande({ width = 1360 }) {
+  const nameW = 280, gap = 24
+  const barW = width - nameW - gap - 40 // 40 = relleno lateral de cada fila
+  const max = 361022
+  const x = (v) => (v / max) * (barW - 150)
+  return (
+    <div className="bg" style={{ width }}>
+      <div className="bg-head" style={{ gridTemplateColumns: `${nameW}px ${barW}px`, columnGap: gap }}>
+        <span>Técnica</span>
+        <span className="bg-leg"><i className="no" /> Sin recargo <i className="si" /> Con recargo <i className="peso" /> Peso extra del recargo</span>
+      </div>
+      {BALANCEO.map((b, i) => {
+        const info = BAL_INFO[i]
+        const w0 = x(b.filas0), w1 = Math.max(4, x(b.filas1))
+        const peso = b.elegido ? x(b.filas1 * 11.25) - w1 : 0
+        return (
+          <div key={b.tecnica} className={'bg-row rv' + (b.elegido ? ' on' : '')} style={{ '--d': 2 + i * 2, gridTemplateColumns: `${nameW}px ${barW}px`, columnGap: gap }}>
+            <div className="bg-name">
+              <span className={'bg-ico ' + (info.ok ? 'ok' : 'no')}>{info.ok ? '✓' : '✗'}</span>
+              <b>{b.tecnica}</b>
+            </div>
+            <div>
+              <div className="bg-bar">
+                <div className="growx bg-seg no" style={{ '--d': 3 + i * 2, width: w0 }} />
+                <div className="growx bg-seg si" style={{ '--d': 4 + i * 2, width: w1 }} />
+                {peso > 0 && <div className="bg-seg peso" style={{ width: peso }} />}
+                <span className="num bg-n">{fInt(b.filas0 + b.filas1)} filas</span>
+              </div>
+              <div className="bg-txt">{info.txt}</div>
+            </div>
+          </div>
+        )
+      })}
     </div>
   )
 }
